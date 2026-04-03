@@ -1,0 +1,163 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  password     String
+  role         String    @default("TEAM_MEMBER") // Enum polyfill
+  avatar       String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  memberships  TeamMembership[]
+  taskUpdates  TaskUpdate[]
+}
+
+model Team {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  color       String    @default("#00D4FF")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  memberships TeamMembership[]
+  assignments EventAssignment[]
+  tasks       Task[]
+}
+
+model TeamMembership {
+  id        String   @id @default(cuid())
+  userId    String
+  teamId    String
+  joinedAt  DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+}
+
+model Event {
+  id              String    @id @default(cuid())
+  title           String
+  date            DateTime
+  venue           String
+  mentor          String?
+  coMentor        String?
+  coInstructors   String[]
+  supportingTeam  String[]
+  participantCount Int      @default(0)
+  organizedBy     String?
+  leadBy          String?
+  objective       String?
+  description     String?
+  outcome         String?
+  isUpcoming      Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  images          EventImage[]
+  assignments     EventAssignment[]
+}
+
+model EventImage {
+  id        String   @id @default(cuid())
+  eventId   String
+  url       String
+  caption   String?
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model EventAssignment {
+  id        String   @id @default(cuid())
+  eventId   String
+  teamId    String
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, teamId])
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  status      String     @default("TODO") // Enum polyfill
+  dueDate     DateTime?
+  teamId      String
+  assignedTo  String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  team        Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  updates     TaskUpdate[]
+}
+
+model TaskUpdate {
+  id        String   @id @default(cuid())
+  taskId    String
+  authorId  String
+  message   String
+  createdAt DateTime @default(now())
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, createdAt])
+  @@index([authorId, createdAt])
+}
+
+model TeamMemberProfile {
+  id        String   @id @default(cuid())
+  name      String
+  role      String
+  bio       String?
+  photo     String?
+  linkedin  String?
+  github    String?
+  teamGroup String?
+  sortOrder Int      @default(0)
+  isPresident Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  date        DateTime?
+  image       String?
+  icon        String?
+  category    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Application {
+  id        String            @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  interest  String?
+  message   String?
+  status    String            @default("PENDING") // Enum polyfill
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model LabSetting {
+  id         String   @id @default(cuid())
+  key        String   @unique
+  value      String
+  updatedAt  DateTime @updatedAt
+}
