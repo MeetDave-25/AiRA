@@ -10,7 +10,7 @@ export default function GlobalNetflixIntro() {
     // so this will only run natively on hard initial loads!
     useEffect(() => {
         // Hide after 6.5 seconds so it feels grand
-        const t = setTimeout(() => setShow(false), 6500);
+        const t = setTimeout(() => setShow(false), 3500);
         return () => clearTimeout(t);
     }, []);
 

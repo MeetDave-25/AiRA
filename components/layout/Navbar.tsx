@@ -34,7 +34,7 @@ export default function Navbar() {
                 "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
                 scrolled
                     ? "glass-strong py-3 shadow-lg shadow-black/30"
-                    : "py-4 md:py-6 bg-aira-bg/20 md:bg-transparent backdrop-blur-md md:backdrop-blur-none"
+                    : "py-4 md:py-6 bg-aira-bg/80 md:bg-transparent backdrop-blur-lg md:backdrop-blur-none border-b border-white/5 md:border-none"
             )}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -93,9 +93,10 @@ export default function Navbar() {
                     {/* Mobile menu button */}
                     <button
                         onClick={() => setOpen(!open)}
-                        className="md:hidden p-2 rounded-lg text-slate-300 hover:text-aira-cyan bg-white/5 active:bg-white/10"
+                        className="md:hidden p-2.5 rounded-xl text-aira-cyan bg-aira-cyan/10 border border-aira-cyan/20 active:scale-95 transition-transform"
+                        aria-label="Toggle menu"
                     >
-                        {open ? <X size={26} /> : <Menu size={26} />}
+                        {open ? <X size={28} /> : <Menu size={28} />}
                     </button>
                 </div>
             </div>
@@ -104,21 +105,21 @@ export default function Navbar() {
             <AnimatePresence>
                 {open && (
                     <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="md:hidden glass-strong mt-1 mx-4 rounded-xl overflow-hidden"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="md:hidden glass-strong mt-2 mx-4 rounded-2xl overflow-hidden border border-aira-cyan/20 shadow-2xl shadow-aira-cyan/10"
                     >
-                        <div className="p-4 space-y-1">
+                        <div className="p-5 space-y-2">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
                                     onClick={() => setOpen(false)}
                                     className={cn(
-                                        "block px-4 py-3 rounded-lg text-sm font-medium transition-all",
+                                        "block px-5 py-4 rounded-xl text-base font-semibold transition-all",
                                         pathname === link.href
-                                            ? "text-aira-cyan bg-aira-cyan/10"
+                                            ? "text-aira-cyan bg-aira-cyan/10 border border-aira-cyan/20"
                                             : "text-slate-300 hover:text-aira-cyan hover:bg-white/5"
                                     )}
                                 >
@@ -128,9 +129,9 @@ export default function Navbar() {
                             <Link
                                 href="/portal/login"
                                 onClick={() => setOpen(false)}
-                                className="block px-4 py-3 rounded-lg text-sm font-medium text-aira-cyan bg-aira-cyan/10 border border-aira-cyan/30"
+                                className="block px-5 py-4 rounded-xl text-base font-bold text-white bg-gradient-to-r from-aira-cyan/20 to-aira-purple/20 border border-aira-cyan/30 text-center mt-4"
                             >
-                                {session ? "My Portal" : "Login"}
+                                {session ? "Access Portal" : "Login to Portal"}
                             </Link>
                         </div>
                     </motion.div>
