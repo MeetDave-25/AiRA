@@ -31,10 +31,10 @@ export default function Navbar() {
     return (
         <nav
             className={cn(
-                "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+                "fixed top-0 left-0 right-0 z-[9999] transition-all duration-500",
                 scrolled
                     ? "glass-strong py-3 shadow-lg shadow-black/30"
-                    : "py-4 md:py-6 bg-aira-bg/80 md:bg-transparent backdrop-blur-lg md:backdrop-blur-none border-b border-white/5 md:border-none"
+                    : "py-4 md:py-6 bg-aira-bg md:bg-transparent backdrop-blur-none md:backdrop-blur-none border-b border-white/10 md:border-none"
             )}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">

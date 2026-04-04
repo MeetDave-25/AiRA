@@ -9,7 +9,7 @@ export default function PublicLayout({
 }) {
     return (
         <div className="min-h-screen flex flex-col">
-            <GlobalNetflixIntro />
+            {/* <GlobalNetflixIntro /> */}
             <Navbar />
             <main className="flex-1 page-enter">{children}</main>
             <Footer />
