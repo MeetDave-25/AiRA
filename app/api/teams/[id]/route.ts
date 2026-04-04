@@ -7,7 +7,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (auth.error) return auth.error;
 
     const body = await req.json();
-    const team = await prisma.team.update({ where: { id: params.id }, data: body });
+    const { id, createdAt, updatedAt, ...updateData } = body;
+    const team = await prisma.team.update({
+        where: { id: params.id },
+        data: updateData
+    });
     return NextResponse.json(team);
 }
 

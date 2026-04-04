@@ -83,10 +83,12 @@ export async function POST(req: NextRequest) {
     const { title, description, status, dueDate, teamId, assignedTo } = body;
     const task = await prisma.task.create({
         data: {
-            title, description,
+            title,
+            description,
             status: status || "TODO",
-            dueDate: dueDate ? new Date(dueDate) : undefined,
-            teamId, assignedTo,
+            dueDate: dueDate ? new Date(dueDate) : null,
+            teamId,
+            assignedTo: assignedTo || null,
         },
     });
     return NextResponse.json(task, { status: 201 });

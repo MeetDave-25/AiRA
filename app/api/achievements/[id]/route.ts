@@ -7,9 +7,13 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (auth.error) return auth.error;
 
     const body = await req.json();
+    const { id, ...updateData } = body;
     const ach = await prisma.achievement.update({
         where: { id: params.id },
-        data: { ...body, date: body.date ? new Date(body.date) : undefined },
+        data: {
+            ...updateData,
+            date: updateData.date ? new Date(updateData.date) : undefined
+        },
     });
     return NextResponse.json(ach);
 }
