@@ -108,7 +108,7 @@ export default function Navbar() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden glass-strong mt-2 mx-4 rounded-2xl overflow-hidden border border-aira-cyan/20 shadow-2xl shadow-aira-cyan/10"
+                        className="md:hidden fixed left-0 right-0 top-20 mx-4 bg-aira-bg/95 backdrop-blur-xl border border-aira-cyan/40 rounded-2xl overflow-hidden shadow-2xl shadow-aira-cyan/20 z-[9998]"
                     >
                         <div className="p-5 space-y-2">
                             {navLinks.map((link) => (
