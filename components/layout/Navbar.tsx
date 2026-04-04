@@ -32,7 +32,9 @@ export default function Navbar() {
         <nav
             className={cn(
                 "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
-                scrolled ? "glass-strong py-3 shadow-lg shadow-black/30" : "py-6 bg-transparent"
+                scrolled
+                    ? "glass-strong py-3 shadow-lg shadow-black/30"
+                    : "py-4 md:py-6 bg-aira-bg/20 md:bg-transparent backdrop-blur-md md:backdrop-blur-none"
             )}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -44,7 +46,7 @@ export default function Navbar() {
                         </div>
                         <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-aira-cyan to-aira-purple opacity-30 blur-md group-hover:opacity-60 transition-opacity" />
                     </div>
-                    <span className="font-orbitron font-bold text-xl gradient-text-cyan hidden sm:block">
+                    <span className="font-orbitron font-bold text-lg sm:text-xl gradient-text-cyan">
                         AIRA<span className="text-aira-magenta"> Labs</span>
                     </span>
                 </Link>
@@ -91,9 +93,9 @@ export default function Navbar() {
                     {/* Mobile menu button */}
                     <button
                         onClick={() => setOpen(!open)}
-                        className="md:hidden p-2 rounded-lg text-slate-300 hover:text-aira-cyan"
+                        className="md:hidden p-2 rounded-lg text-slate-300 hover:text-aira-cyan bg-white/5 active:bg-white/10"
                     >
-                        {open ? <X size={22} /> : <Menu size={22} />}
+                        {open ? <X size={26} /> : <Menu size={26} />}
                     </button>
                 </div>
             </div>
