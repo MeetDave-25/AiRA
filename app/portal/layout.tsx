@@ -38,6 +38,7 @@ export default function PortalLayout({
     if (!session) return null; // Will redirect via useEffect
 
     const role: string = (session.user as any)?.role || "TEAM_MEMBER";
+    const userTeams = (session.user as any)?.teams || [];
 
     const navItems = [
         { href: "/portal/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["ADMIN", "TEAM_LEAD", "TEAM_MEMBER"] },
@@ -46,6 +47,7 @@ export default function PortalLayout({
         { href: "/portal/requirements", label: "Requirements", icon: FileText, roles: ["ADMIN", "TEAM_LEAD", "TEAM_MEMBER"] },
         { href: "/admin/events", label: "All Events", icon: Calendar, roles: ["ADMIN"] },
         { href: "/portal/events", label: "My Events", icon: Calendar, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
+        ...(userTeams.length > 0 ? [{ href: "/portal/team-dashboard", label: "Team Hub", icon: Users, roles: ["TEAM_LEAD", "TEAM_MEMBER"] }] : []),
         { href: "/admin/teams", label: "Teams & Users", icon: Users, roles: ["ADMIN"] },
         { href: "/admin/team-members", label: "Team Profiles", icon: Users, roles: ["ADMIN"] },
         { href: "/admin/applications", label: "Applications", icon: FileText, roles: ["ADMIN"] },
