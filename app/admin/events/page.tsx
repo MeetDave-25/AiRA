@@ -183,7 +183,11 @@ export default function AdminEventsPage() {
             if (!res.ok) throw new Error(data.error || "Failed to create event");
 
             if (selectedFiles.length) {
-                await uploadImages(data.id, selectedFiles, true);
+                try {
+                    await uploadImages(data.id, selectedFiles, true);
+                } catch (uploadError: any) {
+                    toast.error(uploadError?.message || "Event created but image upload failed");
+                }
             }
 
             toast.success("Event created!");
@@ -215,7 +219,11 @@ export default function AdminEventsPage() {
             if (!res.ok) throw new Error(data.error || "Failed to update event");
 
             if (selectedFiles.length) {
-                await uploadImages(editingEvent.id, selectedFiles, existingImages.length === 0);
+                try {
+                    await uploadImages(editingEvent.id, selectedFiles, existingImages.length === 0);
+                } catch (uploadError: any) {
+                    toast.error(uploadError?.message || "Event updated but image upload failed");
+                }
             }
 
             toast.success("Event updated!");

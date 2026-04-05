@@ -3,24 +3,34 @@ import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { generatePassword } from "@/lib/utils";
 import { requireAdmin } from "@/lib/admin-guard";
+import { addTeamMemberOffline, isDbOfflineError, listTeamMembershipsOffline } from "@/lib/offline-admin-store";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
-    const memberships = await prisma.teamMembership.findMany({
-        where: { teamId: params.id },
-        include: { user: { select: { id: true, name: true, email: true, role: true, avatar: true } } },
-    });
-    return NextResponse.json(memberships);
+    try {
+        const memberships = await prisma.teamMembership.findMany({
+            where: { teamId: params.id },
+            include: { user: { select: { id: true, name: true, email: true, role: true, avatar: true } } },
+        });
+        return NextResponse.json(memberships);
+    } catch (error) {
+        if (isDbOfflineError(error)) {
+            const memberships = await listTeamMembershipsOffline(params.id);
+            return NextResponse.json(memberships);
+        }
+        return NextResponse.json({ error: "Failed to fetch members" }, { status: 500 });
+    }
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
+    const body = await req.json();
+
     try {
-        const body = await req.json();
         const { name, email, role } = body;
 
         const normalizedName = String(name || "").trim();
@@ -73,6 +83,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             generatedPassword: rawPassword, // shown once to admin
         }, { status: 201 });
     } catch (error) {
+        if (isDbOfflineError(error)) {
+            try {
+                const result = await addTeamMemberOffline(params.id, body);
+                return NextResponse.json(result, { status: 201 });
+            } catch (offlineError) {
+                return NextResponse.json({ error: offlineError instanceof Error ? offlineError.message : "Failed to add member" }, { status: 400 });
+            }
+        }
         console.error("Add member error:", error);
         return NextResponse.json({ error: "Failed to add member" }, { status: 500 });
     }

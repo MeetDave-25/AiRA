@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
+import { createEventOffline, isDbOfflineError, listEventsOffline } from "@/lib/offline-admin-store";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
         const events = await prisma.event.findMany({
             include: {
@@ -14,6 +15,10 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json(events);
     } catch (error) {
+        if (isDbOfflineError(error)) {
+            const events = await listEventsOffline();
+            return NextResponse.json(events);
+        }
         console.error("GET /api/events error:", error);
         return NextResponse.json({
             error: "Failed to fetch events",
@@ -26,8 +31,9 @@ export async function POST(req: NextRequest) {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
+    const body = await req.json();
+
     try {
-        const body = await req.json();
         const {
             title, date, venue, mentor, coMentor, coInstructors,
             supportingTeam, participantCount, organizedBy, leadBy,
@@ -55,6 +61,10 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(event, { status: 201 });
     } catch (error) {
+        if (isDbOfflineError(error)) {
+            const event = await createEventOffline(body);
+            return NextResponse.json(event, { status: 201 });
+        }
         console.error("POST /api/events error:", error);
         return NextResponse.json({ error: "Failed to create event" }, { status: 500 });
     }
