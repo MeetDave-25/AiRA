@@ -23,6 +23,7 @@ model User {
   updatedAt    DateTime  @updatedAt
   memberships  TeamMembership[]
   taskUpdates  TaskUpdate[]
+  reports      Report[]
 }
 
 model Team {
@@ -35,6 +36,7 @@ model Team {
   memberships TeamMembership[]
   assignments EventAssignment[]
   tasks       Task[]
+  reports     Report[]
 }
 
 model TeamMembership {
@@ -162,4 +164,14 @@ model LabSetting {
   key        String   @unique
   value      String
   updatedAt  DateTime @updatedAt
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  teamId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }

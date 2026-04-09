@@ -50,6 +50,7 @@ export default function PortalLayout({
         ...(userTeams.length > 0 ? [{ href: "/portal/team-dashboard", label: "Team Hub", icon: Users, roles: ["TEAM_LEAD", "TEAM_MEMBER"] }] : []),
         { href: "/admin/teams", label: "Teams & Users", icon: Users, roles: ["ADMIN"] },
         { href: "/admin/team-members", label: "Team Profiles", icon: Users, roles: ["ADMIN"] },
+        { href: "/admin/reports", label: "Team Reports", icon: FileText, roles: ["ADMIN"] },
         { href: "/admin/applications", label: "Applications", icon: FileText, roles: ["ADMIN"] },
         { href: "/admin/achievements", label: "Achievements", icon: Award, roles: ["ADMIN"] },
         { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"] },
@@ -81,8 +82,8 @@ export default function PortalLayout({
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${active
-                                        ? "bg-aira-cyan/10 text-aira-cyan border border-aira-cyan/30"
-                                        : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+                                    ? "bg-aira-cyan/10 text-aira-cyan border border-aira-cyan/30"
+                                    : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
                                     }`}
                             >
                                 <Icon size={18} className={active ? "text-aira-cyan" : "text-slate-500"} />

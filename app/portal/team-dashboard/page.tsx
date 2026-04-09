@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Users, CheckCircle2, Clock3, AlertCircle, Plus, MessageSquare } from "lucide-react";
+import { Users, CheckCircle2, Clock3, AlertCircle, Plus, MessageSquare, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import AnimatedModal from "@/components/ui/AnimatedModal";
@@ -26,6 +26,10 @@ export default function TeamDashboardPage() {
     const [selectedTask, setSelectedTask] = useState<any | null>(null);
     const [updateMessage, setUpdateMessage] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+    const [isReportOpen, setIsReportOpen] = useState(false);
+    const [reportMessage, setReportMessage] = useState("");
+    const [memberForm, setMemberForm] = useState({ name: "", email: "", role: "TEAM_MEMBER" });
 
     // Fetch team data on mount
     useEffect(() => {
@@ -38,7 +42,7 @@ export default function TeamDashboardPage() {
         const loadTeamData = async () => {
             try {
                 const teamId = user.teams[0].id;
-                
+
                 // Fetch team details
                 const teamRes = await fetch(`/api/teams?teamId=${teamId}`);
                 const teams = teamRes.ok ? await teamRes.json() : [];
@@ -97,7 +101,7 @@ export default function TeamDashboardPage() {
             toast.success("Update posted!");
             setUpdateMessage("");
             setIsUpdateOpen(false);
-            
+
             // Refresh tasks
             const tasksRes = await fetch(`/api/tasks?teamId=${teamData.id}`);
             const tasks = tasksRes.ok ? await tasksRes.json() : [];
@@ -117,13 +121,75 @@ export default function TeamDashboardPage() {
                 body: JSON.stringify({ status }),
             });
             if (!res.ok) throw new Error("Failed to update");
-            
+
             setTeamTasks((prev) =>
                 prev.map((t) => (t.id === taskId ? { ...t, status } : t))
             );
             toast.success("Task status updated");
         } catch (error: any) {
             toast.error(error?.message || "Failed to update task");
+        }
+    };
+
+    const handleAddMember = async () => {
+        if (!memberForm.name) return toast.error("Name is required");
+        setIsSubmitting(true);
+        try {
+            const res = await fetch(`/api/teams/${teamData.id}/members`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(memberForm),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to add member");
+
+            toast.success("Member added!");
+            setIsAddMemberOpen(false);
+            setMemberForm({ name: "", email: "", role: "TEAM_MEMBER" });
+
+            const teamRes = await fetch(`/api/teams?teamId=${teamData.id}`);
+            const teams = teamRes.ok ? await teamRes.json() : [];
+            const currTeam = teams.find((t: any) => t.id === teamData.id);
+            if (currTeam?.memberships) setTeamMembers(currTeam.memberships.map((m: any) => m.user));
+        } catch (error: any) {
+            toast.error(error.message || "Failed to add member");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteMember = async (userId: string) => {
+        setIsSubmitting(true);
+        try {
+            const res = await fetch(`/api/teams/${teamData.id}/members/${userId}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Failed to remove member");
+            toast.success("Member removed!");
+            setTeamMembers(prev => prev.filter(m => m.id !== userId));
+        } catch (error: any) {
+            toast.error(error.message || "Could not remove member");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleSendReport = async () => {
+        if (!reportMessage.trim()) return toast.error("Report message is required");
+        setIsSubmitting(true);
+        try {
+            const res = await fetch("/api/reports", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ teamId: teamData.id, content: reportMessage.trim() }),
+            });
+            if (!res.ok) throw new Error("Failed to send report");
+
+            toast.success("Report successfully sent to Admin!");
+            setIsReportOpen(false);
+            setReportMessage("");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to send report");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -149,9 +215,19 @@ export default function TeamDashboardPage() {
                     borderLeft: `4px solid ${teamData?.color || "#00D4FF"}`,
                 }}
             >
-                <h1 className="font-orbitron font-bold text-3xl text-white mb-2">
-                    {teamData?.name}
-                </h1>
+                <div className="flex justify-between items-start mb-2">
+                    <h1 className="font-orbitron font-bold text-3xl text-white">
+                        {teamData?.name}
+                    </h1>
+                    {user?.role === "TEAM_LEAD" && (
+                        <button
+                            onClick={() => setIsReportOpen(true)}
+                            className="flex items-center gap-2 text-xs px-4 py-2 rounded-lg border border-aira-cyan text-aira-cyan hover:bg-aira-cyan/10 transition-colors"
+                        >
+                            <FileText size={14} /> Send Team Report
+                        </button>
+                    )}
+                </div>
                 <p className="text-slate-400 mb-4">{teamData?.description}</p>
                 <div className="flex gap-4 text-sm">
                     <span className="px-3 py-1 rounded-full border border-white/10 text-slate-300">
@@ -199,7 +275,7 @@ export default function TeamDashboardPage() {
             {/* Tasks Section */}
             <div className="space-y-4">
                 <h2 className="font-orbitron font-bold text-xl text-white">Team Tasks</h2>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* To Do */}
                     <div className="glass rounded-xl border border-white/5 p-4">
@@ -303,17 +379,38 @@ export default function TeamDashboardPage() {
 
             {/* Team Members */}
             <div className="glass rounded-xl border border-white/5 p-6">
-                <h2 className="font-orbitron font-bold text-lg text-white mb-4 flex items-center gap-2">
-                    <Users size={18} /> Team Members
-                </h2>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="font-orbitron font-bold text-lg text-white flex items-center gap-2">
+                        <Users size={18} /> Team Members
+                    </h2>
+                    {user?.role === "TEAM_LEAD" && (
+                        <button
+                            onClick={() => setIsAddMemberOpen(true)}
+                            className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg bg-aira-cyan text-aira-bg font-semibold hover:bg-white transition-colors"
+                        >
+                            <Plus size={14} /> Add Member
+                        </button>
+                    )}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {teamMembers.map((member) => (
-                        <div key={member.id} className="p-3 rounded-lg bg-slate-900/50 border border-white/5">
-                            <p className="font-medium text-white">{member.name}</p>
-                            <p className="text-xs text-slate-400 mb-2">{member.email}</p>
-                            <span className="inline-block text-xs px-2 py-1 rounded bg-aira-cyan/10 text-aira-cyan">
-                                {member.role.replace("_", " ")}
-                            </span>
+                        <div key={member.id} className="p-3 rounded-lg bg-slate-900/50 border border-white/5 flex justify-between items-center group">
+                            <div>
+                                <p className="font-medium text-white">{member.name}</p>
+                                <p className="text-xs text-slate-400 mb-2">{member.email}</p>
+                                <span className="inline-block text-xs px-2 py-1 rounded bg-aira-cyan/10 text-aira-cyan">
+                                    {member.role.replace("_", " ")}
+                                </span>
+                            </div>
+                            {user?.role === "TEAM_LEAD" && member.id !== user.id && (
+                                <button
+                                    onClick={() => handleDeleteMember(member.id)}
+                                    className="p-1.5 text-aira-magenta rounded hover:bg-aira-magenta/20 transition-colors opacity-0 group-hover:opacity-100"
+                                    title="Remove Member"
+                                >
+                                    <AlertCircle size={16} />
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -361,6 +458,55 @@ export default function TeamDashboardPage() {
                             rows={4}
                             className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60 resize-none"
                         />
+                    </div>
+                </div>
+            </AnimatedModal>
+
+            {/* Add Member Modal */}
+            <AnimatedModal
+                open={isAddMemberOpen}
+                onClose={() => setIsAddMemberOpen(false)}
+                title="Add Team Member"
+                subtitle="Create a new internal profile to join the portal"
+                footer={
+                    <div className="flex justify-end gap-3">
+                        <button onClick={() => setIsAddMemberOpen(false)} className="px-4 py-2 rounded-lg border border-white/15 text-slate-300">Cancel</button>
+                        <button disabled={isSubmitting} onClick={handleAddMember} className="px-4 py-2 rounded-lg bg-aira-cyan text-aira-bg font-semibold">
+                            {isSubmitting ? "Adding..." : "Add Member"}
+                        </button>
+                    </div>
+                }
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-xs text-slate-400 mb-1 block">Full Name</label>
+                        <input
+                            type="text"
+                            value={memberForm.name}
+                            onChange={(e) => setMemberForm({ ...memberForm, name: e.target.value })}
+                            className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs text-slate-400 mb-1 block">Email (Optional)</label>
+                        <input
+                            type="email"
+                            value={memberForm.email}
+                            onChange={(e) => setMemberForm({ ...memberForm, email: e.target.value })}
+                            className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white"
+                        />
+                        <p className="text-[10px] text-slate-500 mt-1">Leave blank to auto-generate a @airalabs.local login ID</p>
+                    </div>
+                    <div>
+                        <label className="text-xs text-slate-400 mb-1 block">Role</label>
+                        <select
+                            value={memberForm.role}
+                            onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })}
+                            className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white"
+                        >
+                            <option value="TEAM_MEMBER">Team Member</option>
+                            <option value="TEAM_LEAD">Team Lead</option>
+                        </select>
                     </div>
                 </div>
             </AnimatedModal>

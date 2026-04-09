@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/admin-guard";
+import { requireLeadOrAdmin } from "@/lib/admin-guard";
 import bcrypt from "bcryptjs";
 import { generatePassword } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-    const auth = await requireAdmin();
+    const auth = await requireLeadOrAdmin(params.id);
     if (auth.error) return auth.error;
 
     try {
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-    const auth = await requireAdmin();
+    const auth = await requireLeadOrAdmin(params.id);
     if (auth.error) return auth.error;
 
     const body = await req.json();

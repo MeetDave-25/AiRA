@@ -114,6 +114,20 @@ export default function TeamsAdminPage() {
         }
     };
 
+    const handleDeleteTeamMember = async (teamId: string, userId: string) => {
+        setIsSubmitting(true);
+        try {
+            const res = await fetch(`/api/teams/${teamId}/members/${userId}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Failed to remove member");
+            toast.success("Member removed!");
+            await fetchTeams();
+        } catch (error: any) {
+            toast.error(error.message || "Could not remove member");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const openAddMemberModal = (teamId: string) => {
         setMemberTeamId(teamId);
         setMemberForm({ name: "", email: "", role: "TEAM_MEMBER" });
@@ -248,6 +262,15 @@ export default function TeamsAdminPage() {
                                         <div className="flex items-center gap-2 text-xs">
                                             {m.user.role === "ADMIN" && <Shield size={12} className="text-aira-magenta" />}
                                             <span className="text-slate-500">{m.user.role.replace("_", " ")}</span>
+                                            {m.user.role !== "ADMIN" && (
+                                                <button
+                                                    onClick={() => handleDeleteTeamMember(team.id, m.user.id)}
+                                                    className="ml-2 p-1 text-aira-magenta hover:bg-aira-magenta/20 rounded"
+                                                    title="Remove Member"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            )}
                                         </div>
                                     </motion.div>
                                 ))}
