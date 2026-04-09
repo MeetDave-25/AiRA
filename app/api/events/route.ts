@@ -48,7 +48,16 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(events || []);
     } catch (error) {
         console.error("GET /api/events error:", error);
-        return NextResponse.json({ error: "Failed to fetch events", details: String(error) }, { status: 500 });
+        return NextResponse.json({
+            error: "Failed to fetch events",
+            details: error instanceof Error ? error.message : String(error),
+            env: {
+                hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+                hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+                hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
+                serviceKeyPrefix: process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(0, 10) ?? "NOT SET",
+            },
+        }, { status: 500 });
     }
 }
 
