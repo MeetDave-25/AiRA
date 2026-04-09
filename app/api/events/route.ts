@@ -46,7 +46,13 @@ export async function GET(req: NextRequest) {
         const { data: events, error } = await query;
         if (error) throw error;
 
-        return NextResponse.json(events || []);
+        const mappedEvents = (events || []).map((e: any) => ({
+            ...e,
+            images: e.EventImage || [],
+            assignments: e.EventAssignment || []
+        }));
+
+        return NextResponse.json(mappedEvents);
     } catch (error) {
         console.error("GET /api/events error:", error);
         return NextResponse.json({
@@ -114,7 +120,13 @@ export async function POST(req: NextRequest) {
             .eq("id", event.id)
             .single();
 
-        return NextResponse.json(full, { status: 201 });
+        const mappedFull = {
+            ...full,
+            images: full.EventImage || [],
+            assignments: full.EventAssignment || []
+        };
+
+        return NextResponse.json(mappedFull, { status: 201 });
     } catch (error) {
         console.error("POST /api/events error:", error);
         return NextResponse.json({ error: "Failed to create event", details: String(error) }, { status: 500 });

@@ -22,7 +22,11 @@ export async function GET() {
                     db.from("EventAssignment").select("*", { count: "exact", head: true }).eq("teamId", team.id),
                     db.from("Task").select("*", { count: "exact", head: true }).eq("teamId", team.id),
                 ]);
-                return { ...team, _count: { assignments: assignmentCount || 0, tasks: taskCount || 0 } };
+                return {
+                    ...team,
+                    memberships: (team.TeamMembership || []).map((m: any) => ({ ...m, user: m.User })),
+                    _count: { assignments: assignmentCount || 0, tasks: taskCount || 0 }
+                };
             })
         );
 

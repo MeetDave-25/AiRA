@@ -12,7 +12,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
             .single();
 
         if (error || !event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
-        return NextResponse.json(event);
+        return NextResponse.json({
+            ...event,
+            images: event.EventImage || [],
+            assignments: event.EventAssignment || []
+        });
     } catch (error) {
         return NextResponse.json({ error: "Failed to fetch event" }, { status: 500 });
     }
