@@ -52,7 +52,7 @@ export default function LoginPage() {
                     <h1 className="font-orbitron font-bold text-3xl text-white mb-2">
                         Welcome Back
                     </h1>
-                    <p className="text-slate-400 text-sm">Sign in to the AIRA Labs Portal</p>
+                    <p className="text-slate-400 text-sm">Sign in to the AiRA Lab Portal</p>
                 </div>
 
                 <div className="glass-strong rounded-3xl p-8 border border-white/10 shadow-2xl card-3d">
@@ -65,7 +65,7 @@ export default function LoginPage() {
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="admin@airalabs.com"
+                                    placeholder="admin@airalab.com"
                                     className="w-full pl-11 pr-4 py-3 rounded-xl bg-aira-card border border-aira-border/50 text-white placeholder-slate-600 focus:outline-none focus:border-aira-cyan/50 transition-colors"
                                     required
                                 />

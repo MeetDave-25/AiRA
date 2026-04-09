@@ -178,10 +178,10 @@ export default function AboutPage() {
                         <div className="relative">
                             <div className="w-44 h-56 sm:w-52 sm:h-64 rounded-3xl overflow-hidden border-2 border-aira-cyan/50 glow-cyan">
                                 <img
-                                    src={president?.photo || settings.lab_main_image || "https://placehold.co/300x400/020817/00D4FF?text=AIRA+Labs"}
-                                    alt="AIRA Labs"
+                                    src={president?.photo || settings.lab_main_image || "https://placehold.co/300x400/020817/00D4FF?text=AiRA+Lab"}
+                                    alt="AiRA Lab"
                                     className="w-full h-full object-cover"
-                                    onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/300x400/020817/00D4FF?text=AIRA+Labs"; }}
+                                    onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/300x400/020817/00D4FF?text=AiRA+Lab"; }}
                                 />
                             </div>
                             {/* Glow pulse rings */}
@@ -224,7 +224,7 @@ export default function AboutPage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     className="text-slate-300 text-lg leading-relaxed"
                 >
-                    {settings.lab_about_text || "AIRA Labs is a premier innovation and research laboratory at our college, fostering creativity, technology, and excellence."}
+                    {settings.lab_about_text || "AiRA Lab is a premier innovation and research laboratory at our college, fostering creativity, technology, and excellence."}
                 </motion.p>
             </section>
 

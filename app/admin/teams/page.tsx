@@ -184,7 +184,7 @@ export default function TeamsAdminPage() {
             <motion.div variants={itemVariants} className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 glass p-4 md:p-6 rounded-2xl border border-white/5 animated-border">
                 <div>
                     <h1 className="font-orbitron font-bold text-2xl md:text-3xl gradient-text-cyan text-glow-cyan">Teams & Users</h1>
-                    <p className="text-slate-400 text-sm mt-1">Manage access across AIRA Labs</p>
+                    <p className="text-slate-400 text-sm mt-1">Manage access across AiRA Lab</p>
                     <div className="flex gap-2 mt-4 text-xs">
                         <span className="px-2.5 py-1 rounded-full border border-aira-purple/30 bg-aira-purple/10 text-violet-300 font-medium">
                             Teams: {teams.length}

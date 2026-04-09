@@ -138,7 +138,7 @@ export default function AdminEventsPage() {
     };
 
     const openCreateModal = () => {
-        setForm({ ...baseForm, venue: "AIRA Labs", isUpcoming: true });
+        setForm({ ...baseForm, venue: "AiRA Lab", isUpcoming: true });
         setSelectedFiles([]);
         setExistingImages([]);
         setEditingEvent(null);

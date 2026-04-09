@@ -495,7 +495,7 @@ export default function TeamDashboardPage() {
                             onChange={(e) => setMemberForm({ ...memberForm, email: e.target.value })}
                             className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white"
                         />
-                        <p className="text-[10px] text-slate-500 mt-1">Leave blank to auto-generate a @airalabs.local login ID</p>
+                        <p className="text-[10px] text-slate-500 mt-1">Leave blank to auto-generate a @airalab.local login ID</p>
                     </div>
                     <div>
                         <label className="text-xs text-slate-400 mb-1 block">Role</label>

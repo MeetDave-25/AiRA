@@ -4,11 +4,11 @@ import { Toaster } from "react-hot-toast";
 import SessionProvider from "@/components/providers/SessionProvider";
 
 export const metadata: Metadata = {
-    title: "AIRA Labs — Innovation & Research Laboratory",
-    description: "AIRA Labs is a premier college innovation lab fostering creativity, technology, and excellence through events, research, and collaborative projects.",
-    keywords: "AIRA Labs, college innovation lab, events, research, technology",
+    title: "AiRA Lab — Innovation & Research Laboratory",
+    description: "AiRA Lab is a premier college innovation lab fostering creativity, technology, and excellence through events, research, and collaborative projects.",
+    keywords: "AiRA Lab, college innovation lab, events, research, technology",
     openGraph: {
-        title: "AIRA Labs",
+        title: "AiRA Lab",
         description: "Where Innovation Meets Excellence",
         type: "website",
     },

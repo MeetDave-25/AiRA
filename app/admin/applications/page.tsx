@@ -32,7 +32,7 @@ export default function ApplicationsPage() {
         <div className="space-y-6">
             <div className="glass p-6 rounded-2xl border border-white/5">
                 <h1 className="font-orbitron font-bold text-2xl text-white">Join Applications</h1>
-                <p className="text-slate-400 text-sm">Review requests to join AIRA Labs</p>
+                <p className="text-slate-400 text-sm">Review requests to join AiRA Lab</p>
             </div>
 
             <div className="space-y-4">

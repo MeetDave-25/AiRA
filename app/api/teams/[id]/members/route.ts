@@ -39,12 +39,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         let loginId = String(email || "").trim().toLowerCase();
         if (!loginId) {
             const slug = normalizedName.toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.+|\.+$/g, "") || "member";
-            loginId = `${slug}@airalabs.local`;
+            loginId = `${slug}@airalab.local`;
             let counter = 1;
             while (true) {
                 const { data } = await db.from("User").select("id").eq("email", loginId).maybeSingle();
                 if (!data) break;
-                loginId = `${slug}.${counter}@airalabs.local`;
+                loginId = `${slug}.${counter}@airalab.local`;
                 counter++;
             }
         }

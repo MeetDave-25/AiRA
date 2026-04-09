@@ -29,7 +29,7 @@ function ImageCarousel({
                     src={images[current].url}
                     alt={images[current].caption || "Event"}
                     className="w-full h-full object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/800x450/0d1526/00D4FF?text=AIRA+Labs+Event"; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/800x450/0d1526/00D4FF?text=AiRA+Lab+Event"; }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
             </div>

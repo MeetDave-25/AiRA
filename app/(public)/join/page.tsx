@@ -87,7 +87,7 @@ export default function JoinPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className="font-orbitron font-black text-4xl sm:text-5xl text-white mb-6 leading-tight"
                     >
-                        Be Part of<br /><span className="gradient-text">AIRA Labs</span>
+                        Be Part of<br /><span className="gradient-text">AiRA Lab</span>
                     </motion.h1>
 
                     <motion.p
@@ -195,7 +195,7 @@ export default function JoinPage() {
                             <div className="relative">
                                 <MessageSquare size={14} className="absolute left-3 top-3.5 text-slate-500" />
                                 <textarea
-                                    placeholder="Tell us about yourself and why you want to join AIRA Labs..."
+                                    placeholder="Tell us about yourself and why you want to join AiRA Lab..."
                                     value={form.message}
                                     onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))}
                                     rows={4}

@@ -40,7 +40,7 @@ export default function AchievementsPage() {
                     transition={{ delay: 0.2 }}
                     className="text-slate-400 max-w-xl mx-auto"
                 >
-                    Celebrating the milestones, recognitions, and successes that define AIRA Labs&apos; journey of excellence.
+                    Celebrating the milestones, recognitions, and successes that define AiRA Lab&apos; journey of excellence.
                 </motion.p>
             </div>
 

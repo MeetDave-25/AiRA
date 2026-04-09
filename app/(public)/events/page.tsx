@@ -30,17 +30,13 @@ function NetflixLoader({ onDone }: { onDone: () => void }) {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.7, delay: 0.4, type: "spring" }}
                 className="font-orbitron font-black text-6xl gradient-text text-glow-cyan mb-4"
-            >
-                AIRA
-            </motion.h1>
+            >AiRA</motion.h1>
             <motion.p
                 initial={{ opacity: 0, letterSpacing: "0.5em" }}
                 animate={{ opacity: 1, letterSpacing: "1em" }}
                 transition={{ duration: 0.7, delay: 0.8 }}
                 className="font-orbitron text-aira-cyan text-sm tracking-widest"
-            >
-                LABS
-            </motion.p>
+            >Lab</motion.p>
 
             <div className="netflix-loader mt-12">
                 {Array.from({ length: 10 }).map((_, i) => (
@@ -66,10 +62,10 @@ function EventCard({ event }: { event: any }) {
                 className="netflix-card relative rounded-xl overflow-hidden aspect-[2/3] bg-aira-card group"
             >
                 <img
-                    src={primaryImage?.url || "https://placehold.co/400x600/0d1526/00D4FF?text=AIRA+Labs"}
+                    src={primaryImage?.url || "https://placehold.co/400x600/0d1526/00D4FF?text=AiRA+Lab"}
                     alt={event.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/400x600/0d1526/00D4FF?text=AIRA+Labs"; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/400x600/0d1526/00D4FF?text=AiRA+Lab"; }}
                 />
 
                 {/* Overlay - always visible at bottom */}

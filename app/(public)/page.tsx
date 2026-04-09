@@ -192,9 +192,9 @@ export default function HomePage() {
                         transition={{ duration: 0.8, delay: 0.2 }}
                         className="font-orbitron font-black text-6xl sm:text-7xl lg:text-8xl leading-none mb-6"
                     >
-                        <span className="text-white">AIRA</span>
+                        <span className="text-white">AiRA</span>
                         <br />
-                        <span className="gradient-text text-glow-cyan">LABS</span>
+                        <span className="gradient-text text-glow-cyan">Lab</span>
                     </motion.h1>
 
                     <motion.p
@@ -225,7 +225,7 @@ export default function HomePage() {
                             href="/join"
                             className="flex items-center gap-2 px-8 py-4 rounded-xl glass border border-aira-magenta/40 text-aira-magenta font-semibold text-sm hover:bg-aira-magenta/10 hover:border-aira-magenta transition-all duration-300"
                         >
-                            Join AIRA Labs
+                            Join AiRA Lab
                         </Link>
                     </motion.div>
                 </motion.div>
@@ -278,7 +278,7 @@ export default function HomePage() {
                                             src={img}
                                             alt={event.title}
                                             className="w-full h-full object-cover"
-                                            onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/400x600/0d1526/00D4FF?text=AIRA+Labs"; }}
+                                            onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/400x600/0d1526/00D4FF?text=AiRA+Lab"; }}
                                         />
                                         <div className="netflix-overlay absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent p-4 flex flex-col justify-end">
                                             <div className="mb-2">
@@ -340,7 +340,7 @@ export default function HomePage() {
                             Ready to <span className="gradient-text">Innovate?</span>
                         </h2>
                         <p className="text-slate-300 mb-8 max-w-xl mx-auto">
-                            Join AIRA Labs and be part of a community that's building the future through technology and innovation.
+                            Join AiRA Lab and be part of a community that's building the future through technology and innovation.
                         </p>
                         <Link
                             href="/join"
