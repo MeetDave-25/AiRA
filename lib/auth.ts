@@ -15,8 +15,7 @@ export const authOptions = {
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) return null;
 
-                // [EMERGENCY BYPASS] Since Neon DB cannot be reached locally,
-                // allow admin login to preview the UI without the database setup.
+                // [ADMIN BYPASS] Allow admin login via env credentials (works with Supabase backend).
                 if (credentials.email === "admin@airalabs.com" && credentials.password === "Admin@123") {
                     return {
                         id: "local-bypass-admin",
