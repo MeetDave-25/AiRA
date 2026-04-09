@@ -121,6 +121,7 @@ function StatCounter({ value, label, icon: Icon, color }: {
 export default function HomePage() {
     const [events, setEvents] = useState<any[]>([]);
     const [achievements, setAchievements] = useState<any[]>([]);
+    const [stats, setStats] = useState({ events: 0, members: 0, achievements: 0, participants: 0 });
     const [heroPointer, setHeroPointer] = useState({ x: 0, y: 0 });
     const { scrollYProgress } = useScroll();
     const heroOpacity = useTransform(scrollYProgress, [0, 0.18], [1, 0.35]);
@@ -136,6 +137,11 @@ export default function HomePage() {
             .then(r => r.ok ? r.json() : [])
             .then(d => setAchievements(Array.isArray(d) ? d.slice(0, 3) : []))
             .catch(() => setAchievements([]));
+
+        fetch("/api/public/stats")
+            .then(r => r.ok ? r.json() : { events: 0, members: 0, achievements: 0, participants: 0 })
+            .then(d => setStats(d))
+            .catch(() => { });
     }, []);
 
     return (
@@ -242,10 +248,10 @@ export default function HomePage() {
             {/* Stats */}
             <section className="py-20 px-4 max-w-6xl mx-auto">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <StatCounter value={`${events.length || "0"}+`} label="Events Conducted" icon={Calendar} color="#00D4FF" />
-                    <StatCounter value="50+" label="Team Members" icon={Users} color="#7C3AED" />
-                    <StatCounter value={`${achievements.length || "1"}+`} label="Achievements" icon={Trophy} color="#F59E0B" />
-                    <StatCounter value="100+" label="Participants" icon={Zap} color="#FF006E" />
+                    <StatCounter value={`${stats.events}+`} label="Events Conducted" icon={Calendar} color="#00D4FF" />
+                    <StatCounter value={`${stats.members}+`} label="Team Members" icon={Users} color="#7C3AED" />
+                    <StatCounter value={`${stats.achievements}+`} label="Achievements" icon={Trophy} color="#F59E0B" />
+                    <StatCounter value={`${stats.participants}+`} label="Participants" icon={Zap} color="#FF006E" />
                 </div>
             </section>
 
