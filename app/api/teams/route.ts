@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
+import { v4 as uuidv4 } from "uuid";
 
 export async function GET() {
     const auth = await requireAdmin();
@@ -40,7 +41,13 @@ export async function POST(req: NextRequest) {
         const { name, description, color } = body;
         const { data: team, error } = await db
             .from("Team")
-            .insert({ name, description: description || null, color: color || "#00D4FF" })
+            .insert({
+                id: uuidv4(),
+                name,
+                description: description || null,
+                color: color || "#00D4FF",
+                updatedAt: new Date().toISOString()
+            })
             .select()
             .single();
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
+import { v4 as uuidv4 } from "uuid";
 
 export async function GET() {
     try {
@@ -23,7 +24,12 @@ export async function POST(req: NextRequest) {
     try {
         const { data, error } = await db
             .from("Achievement")
-            .insert({ ...body, date: body.date ? new Date(body.date).toISOString() : null })
+            .insert({
+                ...body,
+                id: uuidv4(),
+                date: body.date ? new Date(body.date).toISOString() : null,
+                updatedAt: new Date().toISOString()
+            })
             .select()
             .single();
         if (error) throw error;

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { v4 as uuidv4 } from "uuid";
 
 export async function GET(req: NextRequest) {
     try {
@@ -61,7 +62,16 @@ export async function POST(req: NextRequest) {
     const { title, description, status, dueDate, teamId, assignedTo } = body;
     const { data, error } = await db
         .from("Task")
-        .insert({ title, description: description || null, status: status || "TODO", dueDate: dueDate ? new Date(dueDate).toISOString() : null, teamId, assignedTo: assignedTo || null })
+        .insert({
+            id: uuidv4(),
+            title,
+            description: description || null,
+            status: status || "TODO",
+            dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+            teamId,
+            assignedTo: assignedTo || null,
+            updatedAt: new Date().toISOString()
+        })
         .select()
         .single();
 

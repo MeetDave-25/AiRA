@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
 import bcrypt from "bcryptjs";
 import { generatePassword } from "@/lib/utils";
+import { v4 as uuidv4 } from "uuid";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
     const auth = await requireAdmin();
@@ -58,7 +59,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         if (!existingUser) {
             const { data, error } = await db
                 .from("User")
-                .insert({ name: normalizedName, email: loginId, password: hashed, role: role || "TEAM_MEMBER" })
+                .insert({
+                    id: uuidv4(),
+                    name: normalizedName,
+                    email: loginId,
+                    password: hashed,
+                    role: role || "TEAM_MEMBER",
+                    updatedAt: new Date().toISOString()
+                })
                 .select()
                 .single();
             if (error) throw error;
@@ -74,14 +82,25 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             user = data;
         }
 
-        // Upsert membership
-        const { data: membership, error: memErr } = await db
+        let membership: any;
+        const { data: existingMem } = await db
             .from("TeamMembership")
-            .upsert({ userId: user.id, teamId: params.id }, { onConflict: "userId,teamId" })
-            .select()
-            .single();
+            .select("*")
+            .eq("userId", user.id)
+            .eq("teamId", params.id)
+            .maybeSingle();
 
-        if (memErr) throw memErr;
+        if (existingMem) {
+            membership = existingMem;
+        } else {
+            const { data: newMem, error: memErr } = await db
+                .from("TeamMembership")
+                .insert({ id: uuidv4(), userId: user.id, teamId: params.id })
+                .select()
+                .single();
+            if (memErr) throw memErr;
+            membership = newMem;
+        }
 
         return NextResponse.json({
             membership,

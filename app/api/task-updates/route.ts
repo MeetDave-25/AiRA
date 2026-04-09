@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { v4 as uuidv4 } from "uuid";
 
 export async function GET(req: NextRequest) {
     try {
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
         if (taskId === "ANNOUNCEMENT") {
             const { data: update, error } = await db
                 .from("TaskUpdate")
-                .insert({ taskId: null, message, authorId: userId })
+                .insert({ id: uuidv4(), taskId: null, message, authorId: userId })
                 .select("*, User!authorId(id, name, email)")
                 .single();
             if (error) throw error;
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest) {
 
         const { data: update, error } = await db
             .from("TaskUpdate")
-            .insert({ taskId, message, authorId: userId })
+            .insert({ id: uuidv4(), taskId, message, authorId: userId })
             .select("*, User!authorId(id, name, email), Task(id, title, status, Team(id, name, color))")
             .single();
 

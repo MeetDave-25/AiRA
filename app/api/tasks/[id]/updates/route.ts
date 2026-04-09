@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { v4 as uuidv4 } from "uuid";
 
 async function canAccessTask(taskId: string, userId: string, role: string) {
     if (role === "ADMIN") return true;
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const { data: update, error } = await db
         .from("TaskUpdate")
-        .insert({ taskId: params.id, authorId: userId, message })
+        .insert({ id: uuidv4(), taskId: params.id, authorId: userId, message })
         .select("*, User!authorId(id, name, email, role)")
         .single();
 

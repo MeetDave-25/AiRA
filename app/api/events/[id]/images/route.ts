@@ -44,7 +44,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
             const { data: image, error } = await db
                 .from("EventImage")
-                .insert({ eventId: params.id, url: `/uploads/events/${filename}`, isPrimary: i === 0 && isPrimary })
+                .insert({ id: uuidv4(), eventId: params.id, url: `/uploads/events/${filename}`, isPrimary: i === 0 && isPrimary })
                 .select()
                 .single();
 

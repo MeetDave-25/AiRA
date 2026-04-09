@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { v4 as uuidv4 } from "uuid";
 
 export async function GET(req: NextRequest) {
     try {
@@ -77,6 +78,7 @@ export async function POST(req: NextRequest) {
         const { data: event, error } = await db
             .from("Event")
             .insert({
+                id: uuidv4(),
                 title,
                 date: date ? new Date(date).toISOString() : new Date().toISOString(),
                 venue,
@@ -91,6 +93,7 @@ export async function POST(req: NextRequest) {
                 description: description || null,
                 outcome: outcome || null,
                 isUpcoming: isUpcoming === true || isUpcoming === "true",
+                updatedAt: new Date().toISOString()
             })
             .select()
             .single();
@@ -100,7 +103,7 @@ export async function POST(req: NextRequest) {
         // Create team assignments
         if (Array.isArray(teamIds) && teamIds.length > 0) {
             await db.from("EventAssignment").insert(
-                teamIds.map((tid: string) => ({ eventId: event.id, teamId: tid }))
+                teamIds.map((tid: string) => ({ id: uuidv4(), eventId: event.id, teamId: tid }))
             );
         }
 
