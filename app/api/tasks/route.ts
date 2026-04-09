@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -7,71 +7,49 @@ import { authOptions } from "@/lib/auth";
 export async function GET(req: NextRequest) {
     try {
         const session: any = await getServerSession(authOptions as any);
-        if (!session?.user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         const role = (session.user as any).role;
         const userId = (session.user as any).id;
         const { searchParams } = new URL(req.url);
         const teamId = searchParams.get("teamId");
 
-        let where: any = undefined;
+        let tasks: any[] = [];
 
         if (role === "ADMIN") {
-            where = teamId ? { teamId } : undefined;
+            const query = db.from("Task").select("*, Team(id, name, color)").order("createdAt", { ascending: false });
+            const { data } = teamId ? await query.eq("teamId", teamId) : await query;
+            tasks = data || [];
         } else {
-            const memberships = await prisma.teamMembership.findMany({
-                where: { userId },
-                select: { teamId: true },
-            });
+            const { data: memberships } = await db.from("TeamMembership").select("teamId").eq("userId", userId);
+            const teamIds = (memberships || []).map((m: any) => m.teamId);
 
-            const teamIds = memberships.map((m) => m.teamId);
+            let query = db.from("Task").select("*, Team(id, name, color)").order("createdAt", { ascending: false });
+            if (teamId) query = query.eq("teamId", teamId);
+            if (teamIds.length > 0) query = query.in("teamId", teamIds);
+            else query = query.eq("teamId", "no-match");
 
-            where = {
-                AND: [
-                    ...(teamId ? [{ teamId }] : []),
-                    {
-                        OR: [
-                            { assignedTo: userId },
-                            ...(teamIds.length ? [{ teamId: { in: teamIds } }] : []),
-                        ],
-                    },
-                ],
-            };
+            const { data } = await query;
+            tasks = (data || []).filter((t: any) => t.assignedTo === userId || teamIds.includes(t.teamId));
         }
 
-        const tasks = await prisma.task.findMany({
-            where,
-            orderBy: { createdAt: "desc" },
-            include: { team: { select: { id: true, name: true, color: true } } },
-        });
+        // Enrich with assigned user info
+        const assignedIds = Array.from(new Set(tasks.map((t: any) => t.assignedTo).filter(Boolean))) as string[];
+        let usersById: Record<string, any> = {};
+        if (assignedIds.length) {
+            const { data: users } = await db.from("User").select("id, name, email").in("id", assignedIds);
+            usersById = Object.fromEntries((users || []).map((u: any) => [u.id, u]));
+        }
 
-        const assignedUserIds = Array.from(
-            new Set(tasks.map((task) => task.assignedTo).filter(Boolean) as string[])
-        );
-
-        const users = assignedUserIds.length
-            ? await prisma.user.findMany({
-                where: { id: { in: assignedUserIds } },
-                select: { id: true, name: true, email: true },
-            })
-            : [];
-
-        const usersById = new Map(users.map((u) => [u.id, u]));
-
-        const enriched = tasks.map((task) => ({
+        const enriched = tasks.map((task: any) => ({
             ...task,
-            assignedUser: task.assignedTo ? usersById.get(task.assignedTo) || null : null,
+            assignedUser: task.assignedTo ? usersById[task.assignedTo] || null : null,
             isAssignedToMe: task.assignedTo === userId,
         }));
 
         return NextResponse.json(enriched);
     } catch (error) {
-        return NextResponse.json({
-            error: "Failed to fetch tasks",
-            details: error instanceof Error ? error.message : String(error)
-        }, { status: 500 });
+        return NextResponse.json({ error: "Failed to fetch tasks", details: String(error) }, { status: 500 });
     }
 }
 
@@ -81,15 +59,12 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const { title, description, status, dueDate, teamId, assignedTo } = body;
-    const task = await prisma.task.create({
-        data: {
-            title,
-            description,
-            status: status || "TODO",
-            dueDate: dueDate ? new Date(dueDate) : null,
-            teamId,
-            assignedTo: assignedTo || null,
-        },
-    });
-    return NextResponse.json(task, { status: 201 });
+    const { data, error } = await db
+        .from("Task")
+        .insert({ title, description: description || null, status: status || "TODO", dueDate: dueDate ? new Date(dueDate).toISOString() : null, teamId, assignedTo: assignedTo || null })
+        .select()
+        .single();
+
+    if (error) return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
+    return NextResponse.json(data, { status: 201 });
 }

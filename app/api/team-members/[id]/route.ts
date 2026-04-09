@@ -1,44 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
-import {
-    deleteTeamMemberProfileOffline,
-    isDbOfflineError,
-    updateTeamMemberProfileOffline,
-} from "@/lib/offline-admin-store";
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
     const body = await req.json();
-
     try {
         const isPresident = body.isPresident === true || body.isPresident === "true";
 
         if (isPresident) {
-            await prisma.teamMemberProfile.updateMany({
-                where: { isPresident: true },
-                data: { isPresident: false },
-            });
+            await db.from("TeamMemberProfile").update({ isPresident: false }).eq("isPresident", true);
         }
 
-        const member = await prisma.teamMemberProfile.update({
-            where: { id: params.id },
-            data: {
-                ...body,
-                sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : undefined,
+        const { id, createdAt, updatedAt, ...updateData } = body;
+        const { data, error } = await db
+            .from("TeamMemberProfile")
+            .update({
+                ...updateData,
+                sortOrder: updateData.sortOrder !== undefined ? Number(updateData.sortOrder) : undefined,
                 isPresident,
-            },
-        });
+            })
+            .eq("id", params.id)
+            .select()
+            .single();
 
-        return NextResponse.json(member);
+        if (error) throw error;
+        return NextResponse.json(data);
     } catch (error) {
-        if (isDbOfflineError(error)) {
-            const member = await updateTeamMemberProfileOffline(params.id, body);
-            if (!member) return NextResponse.json({ error: "Member not found" }, { status: 404 });
-            return NextResponse.json(member);
-        }
         return NextResponse.json({ error: "Failed to update member" }, { status: 500 });
     }
 }
@@ -47,14 +37,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
-    try {
-        await prisma.teamMemberProfile.delete({ where: { id: params.id } });
-        return NextResponse.json({ success: true });
-    } catch (error) {
-        if (isDbOfflineError(error)) {
-            await deleteTeamMemberProfileOffline(params.id);
-            return NextResponse.json({ success: true });
-        }
-        return NextResponse.json({ error: "Failed to delete member" }, { status: 500 });
-    }
+    await db.from("TeamMemberProfile").delete().eq("id", params.id);
+    return NextResponse.json({ success: true });
 }

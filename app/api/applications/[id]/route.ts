@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
@@ -7,14 +7,16 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (auth.error) return auth.error;
 
     const body = await req.json();
-    const app = await prisma.application.update({ where: { id: params.id }, data: body });
-    return NextResponse.json(app);
+    const { id, createdAt, updatedAt, ...updateData } = body;
+    const { data, error } = await db.from("Application").update(updateData).eq("id", params.id).select().single();
+    if (error) return NextResponse.json({ error: "Failed to update" }, { status: 500 });
+    return NextResponse.json(data);
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
-    await prisma.application.delete({ where: { id: params.id } });
+    await db.from("Application").delete().eq("id", params.id);
     return NextResponse.json({ success: true });
 }

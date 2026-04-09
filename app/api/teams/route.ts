@@ -1,32 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
-import { createTeamOffline, isDbOfflineError, listTeamsOffline } from "@/lib/offline-admin-store";
 
 export async function GET() {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
     try {
-        const teams = await Promise.race([
-            prisma.team.findMany({
-                include: {
-                    memberships: { include: { user: { select: { id: true, name: true, email: true, role: true, avatar: true } } } },
-                    _count: { select: { assignments: true, tasks: true } },
-                },
-                orderBy: { createdAt: "asc" },
-            }),
-            new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error("Teams query timeout")), 7000)
-            ),
-        ]);
+        const { data: teams, error } = await db
+            .from("Team")
+            .select("*, TeamMembership(*, User(id, name, email, role, avatar))")
+            .order("createdAt", { ascending: true });
 
-        return NextResponse.json(teams);
+        if (error) throw error;
+
+        // Add _count for assignments and tasks
+        const result = await Promise.all(
+            (teams || []).map(async (team: any) => {
+                const [{ count: assignmentCount }, { count: taskCount }] = await Promise.all([
+                    db.from("EventAssignment").select("*", { count: "exact", head: true }).eq("teamId", team.id),
+                    db.from("Task").select("*", { count: "exact", head: true }).eq("teamId", team.id),
+                ]);
+                return { ...team, _count: { assignments: assignmentCount || 0, tasks: taskCount || 0 } };
+            })
+        );
+
+        return NextResponse.json(result);
     } catch (error) {
-        if (isDbOfflineError(error)) {
-            const teams = await listTeamsOffline();
-            return NextResponse.json(teams);
-        }
         return NextResponse.json([], { status: 200 });
     }
 }
@@ -36,16 +36,17 @@ export async function POST(req: NextRequest) {
     if (auth.error) return auth.error;
 
     const body = await req.json();
-
     try {
         const { name, description, color } = body;
-        const team = await prisma.team.create({ data: { name, description, color: color || "#00D4FF" } });
+        const { data: team, error } = await db
+            .from("Team")
+            .insert({ name, description: description || null, color: color || "#00D4FF" })
+            .select()
+            .single();
+
+        if (error) throw error;
         return NextResponse.json(team, { status: 201 });
     } catch (error) {
-        if (isDbOfflineError(error)) {
-            const team = await createTeamOffline(body);
-            return NextResponse.json(team, { status: 201 });
-        }
         return NextResponse.json({ error: "Failed to create team" }, { status: 500 });
     }
 }

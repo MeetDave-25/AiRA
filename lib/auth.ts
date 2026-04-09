@@ -1,8 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/db";
-
+import { db } from "@/lib/db";
 
 export const authOptions = {
     providers: [
@@ -15,7 +14,7 @@ export const authOptions = {
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) return null;
 
-                // [ADMIN BYPASS] Allow admin login via env credentials (works with Supabase backend).
+                // [ADMIN BYPASS] Allow admin login via env credentials.
                 if (credentials.email === "admin@airalabs.com" && credentials.password === "Admin@123") {
                     return {
                         id: "local-bypass-admin",
@@ -28,19 +27,15 @@ export const authOptions = {
                 }
 
                 try {
-                    const user = await prisma.user.findUnique({
-                        where: { email: credentials.email },
-                        include: {
-                            memberships: { include: { team: true } },
-                        },
-                    });
+                    const { data: user, error } = await db
+                        .from("User")
+                        .select("id, name, email, password, role, avatar, TeamMembership(teamId, Team(id, name, color))")
+                        .eq("email", credentials.email)
+                        .single();
 
-                    if (!user) return null;
+                    if (error || !user) return null;
 
-                    const passwordMatch = await bcrypt.compare(
-                        credentials.password,
-                        user.password
-                    );
+                    const passwordMatch = await bcrypt.compare(credentials.password, user.password);
                     if (!passwordMatch) return null;
 
                     return {
@@ -49,13 +44,13 @@ export const authOptions = {
                         email: user.email,
                         role: user.role,
                         avatar: user.avatar,
-                        teams: user.memberships.map((m) => ({
-                            id: m.team.id,
-                            name: m.team.name,
-                            color: m.team.color,
+                        teams: (user.TeamMembership || []).map((m: any) => ({
+                            id: m.Team?.id,
+                            name: m.Team?.name,
+                            color: m.Team?.color,
                         })),
                     };
-                } catch (e) {
+                } catch {
                     return null;
                 }
             },

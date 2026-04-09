@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-    const settings = await prisma.labSetting.findMany();
+    const { data: settings } = await db.from("LabSetting").select("key, value");
     const result: Record<string, string> = {};
-    settings.forEach((s) => (result[s.key] = s.value));
+    (settings || []).forEach((s: any) => (result[s.key] = s.value));
     return NextResponse.json(result);
 }
 
@@ -16,14 +16,17 @@ export async function PUT(req: NextRequest) {
     if (auth.error) return auth.error;
 
     const body = await req.json();
+    const entries = Object.entries(body);
+
     const updates = await Promise.all(
-        Object.entries(body).map(([key, value]) =>
-            prisma.labSetting.upsert({
-                where: { key },
-                update: { value: value as string },
-                create: { key, value: value as string },
-            })
+        entries.map(([key, value]) =>
+            db.from("LabSetting")
+                .upsert({ key, value: value as string }, { onConflict: "key" })
+                .select()
+                .single()
+                .then(({ data }) => data)
         )
     );
+
     return NextResponse.json(updates);
 }

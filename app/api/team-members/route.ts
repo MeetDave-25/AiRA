@@ -1,29 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
-import {
-    createTeamMemberProfileOffline,
-    isDbOfflineError,
-    listTeamMemberProfilesOffline,
-} from "@/lib/offline-admin-store";
 
 export async function GET() {
     try {
-        const members = await Promise.race([
-            prisma.teamMemberProfile.findMany({
-                orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-            }),
-            new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error("Team members query timeout")), 7000)
-            ),
-        ]);
+        const { data, error } = await db
+            .from("TeamMemberProfile")
+            .select("*")
+            .order("sortOrder", { ascending: true })
+            .order("createdAt", { ascending: true });
 
-        return NextResponse.json(members);
+        if (error) throw error;
+        return NextResponse.json(data || []);
     } catch (error) {
-        if (isDbOfflineError(error)) {
-            const members = await listTeamMemberProfilesOffline();
-            return NextResponse.json(members);
-        }
         return NextResponse.json([], { status: 200 });
     }
 }
@@ -38,29 +27,18 @@ export async function POST(req: NextRequest) {
         const isPresident = body.isPresident === true || body.isPresident === "true";
 
         if (isPresident) {
-            await prisma.teamMemberProfile.updateMany({
-                where: { isPresident: true },
-                data: { isPresident: false },
-            });
+            await db.from("TeamMemberProfile").update({ isPresident: false }).eq("isPresident", true);
         }
 
-        const member = await prisma.teamMemberProfile.create({
-            data: {
-                ...body,
-                sortOrder: body.sortOrder ? Number(body.sortOrder) : 0,
-                isPresident,
-            }
-        });
-        return NextResponse.json(member, { status: 201 });
+        const { data, error } = await db
+            .from("TeamMemberProfile")
+            .insert({ ...body, sortOrder: body.sortOrder ? Number(body.sortOrder) : 0, isPresident })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return NextResponse.json(data, { status: 201 });
     } catch (error) {
-        if (isDbOfflineError(error)) {
-            const member = await createTeamMemberProfileOffline(body);
-            return NextResponse.json(member, { status: 201 });
-        }
-        console.error("POST /api/team-members error:", error);
-        return NextResponse.json({
-            error: "Failed to create team member",
-            details: error instanceof Error ? error.message : String(error)
-        }, { status: 500 });
+        return NextResponse.json({ error: "Failed to create team member", details: String(error) }, { status: 500 });
     }
 }

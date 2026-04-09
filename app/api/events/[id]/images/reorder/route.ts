@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
 
-export async function PUT(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
@@ -17,12 +14,10 @@ export async function PUT(
             return NextResponse.json({ error: "orderedIds is required" }, { status: 400 });
         }
 
-        const current = await prisma.eventImage.findMany({
-            where: { eventId: params.id },
-            select: { id: true },
-        });
+        const { data: current } = await db
+            .from("EventImage").select("id").eq("eventId", params.id);
 
-        const currentIds = new Set(current.map((img) => img.id));
+        const currentIds = new Set((current || []).map((img: any) => img.id));
         const isSameSet = orderedIds.length === currentIds.size && orderedIds.every((id) => currentIds.has(id));
 
         if (!isSameSet) {
@@ -30,19 +25,14 @@ export async function PUT(
         }
 
         const baseTime = Date.now() - orderedIds.length * 1000;
-
-        await prisma.$transaction(
+        await Promise.all(
             orderedIds.map((id, index) =>
-                prisma.eventImage.update({
-                    where: { id },
-                    data: { createdAt: new Date(baseTime + index * 1000) },
-                })
+                db.from("EventImage").update({ createdAt: new Date(baseTime + index * 1000).toISOString() }).eq("id", id)
             )
         );
 
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.error("PUT /api/events/[id]/images/reorder error:", error);
         return NextResponse.json({ error: "Failed to reorder images" }, { status: 500 });
     }
 }

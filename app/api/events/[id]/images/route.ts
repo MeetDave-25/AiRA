@@ -1,28 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/admin-guard";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import { requireAdmin } from "@/lib/admin-guard";
 
-export async function GET(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
-    const images = await prisma.eventImage.findMany({
-        where: { eventId: params.id },
-        orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
-    });
-    return NextResponse.json(images);
+    const { data: images, error } = await db
+        .from("EventImage")
+        .select("*")
+        .eq("eventId", params.id)
+        .order("isPrimary", { ascending: false })
+        .order("createdAt", { ascending: true });
+
+    if (error) return NextResponse.json({ error: "Failed to fetch images" }, { status: 500 });
+    return NextResponse.json(images || []);
 }
 
-export async function POST(
-    req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
@@ -44,14 +42,13 @@ export async function POST(
             const filepath = path.join(uploadDir, filename);
             await writeFile(filepath, buffer);
 
-            const image = await prisma.eventImage.create({
-                data: {
-                    eventId: params.id,
-                    url: `/uploads/events/${filename}`,
-                    isPrimary: i === 0 && isPrimary,
-                },
-            });
-            savedImages.push(image);
+            const { data: image, error } = await db
+                .from("EventImage")
+                .insert({ eventId: params.id, url: `/uploads/events/${filename}`, isPrimary: i === 0 && isPrimary })
+                .select()
+                .single();
+
+            if (!error && image) savedImages.push(image);
         }
 
         return NextResponse.json(savedImages, { status: 201 });

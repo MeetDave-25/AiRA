@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
 
 export async function GET() {
-    const achievements = await prisma.achievement.findMany({ orderBy: { date: "desc" } });
-    return NextResponse.json(achievements);
+    try {
+        const { data, error } = await db
+            .from("Achievement")
+            .select("*")
+            .order("date", { ascending: false });
+        if (error) throw error;
+        return NextResponse.json(data || []);
+    } catch (error) {
+        return NextResponse.json({ error: "Failed to fetch achievements" }, { status: 500 });
+    }
 }
 
 export async function POST(req: NextRequest) {
@@ -12,8 +20,15 @@ export async function POST(req: NextRequest) {
     if (auth.error) return auth.error;
 
     const body = await req.json();
-    const ach = await prisma.achievement.create({
-        data: { ...body, date: body.date ? new Date(body.date) : undefined },
-    });
-    return NextResponse.json(ach, { status: 201 });
+    try {
+        const { data, error } = await db
+            .from("Achievement")
+            .insert({ ...body, date: body.date ? new Date(body.date).toISOString() : null })
+            .select()
+            .single();
+        if (error) throw error;
+        return NextResponse.json(data, { status: 201 });
+    } catch (error) {
+        return NextResponse.json({ error: "Failed to create achievement" }, { status: 500 });
+    }
 }
