@@ -47,7 +47,7 @@ export default function Navbar() {
                         <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-aira-cyan to-aira-purple opacity-30 blur-md group-hover:opacity-60 transition-opacity" />
                     </div>
                     <span className="font-orbitron font-bold text-lg sm:text-xl gradient-text-cyan">
-                        AIRA<span className="text-aira-magenta"> Labs</span>
+                        AiRA<span className="text-aira-magenta"> Lab</span>
                     </span>
                 </Link>
 
