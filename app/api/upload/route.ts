@@ -18,9 +18,16 @@ export async function POST(req: NextRequest) {
         const filename = `${uuidv4()}.${ext}`;
         const uploadPath = `${type}/${filename}`; // Type defines the subfolder
 
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+
         const { error: storageError } = await db.storage
             .from("uploads")
-            .upload(uploadPath, file, { cacheControl: "3600", upsert: false });
+            .upload(uploadPath, buffer, {
+                cacheControl: "3600",
+                upsert: false,
+                contentType: file.type
+            });
 
         if (storageError) throw storageError;
 

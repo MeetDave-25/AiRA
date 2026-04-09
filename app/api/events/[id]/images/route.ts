@@ -33,12 +33,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             const ext = file.name.split(".").pop();
             const filename = `${uuidv4()}.${ext}`;
 
+            const bytes = await file.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+
             // Upload to Supabase Storage
             const { data: storageData, error: storageError } = await db.storage
                 .from("events")
-                .upload(filename, file, {
+                .upload(filename, buffer, {
                     cacheControl: "3600",
-                    upsert: false
+                    upsert: false,
+                    contentType: file.type
                 });
 
             if (storageError) {
