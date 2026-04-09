@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import { v4 as uuidv4 } from "uuid";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
@@ -29,22 +27,31 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         const files = formData.getAll("images") as File[];
         const isPrimary = formData.get("isPrimary") === "true";
 
-        const uploadDir = path.join(process.cwd(), "public", "uploads", "events");
-        await mkdir(uploadDir, { recursive: true });
-
         const savedImages = [];
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            const bytes = await file.arrayBuffer();
-            const buffer = Buffer.from(bytes);
             const ext = file.name.split(".").pop();
             const filename = `${uuidv4()}.${ext}`;
-            const filepath = path.join(uploadDir, filename);
-            await writeFile(filepath, buffer);
+
+            // Upload to Supabase Storage
+            const { data: storageData, error: storageError } = await db.storage
+                .from("events")
+                .upload(filename, file, {
+                    cacheControl: "3600",
+                    upsert: false
+                });
+
+            if (storageError) {
+                console.error("Supabase Storage Error:", storageError);
+                throw storageError;
+            }
+
+            const { data: publicUrlData } = db.storage.from("events").getPublicUrl(filename);
+            const publicUrl = publicUrlData.publicUrl;
 
             const { data: image, error } = await db
                 .from("EventImage")
-                .insert({ id: uuidv4(), eventId: params.id, url: `/uploads/events/${filename}`, isPrimary: i === 0 && isPrimary })
+                .insert({ id: uuidv4(), eventId: params.id, url: publicUrl, isPrimary: i === 0 && isPrimary })
                 .select()
                 .single();
 

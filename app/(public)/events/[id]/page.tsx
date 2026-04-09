@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { use } from "react";
 import { motion } from "framer-motion";
 import { Calendar, MapPin, Users, User, Target, FileText, Star, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
@@ -79,8 +78,8 @@ function InfoRow({ icon: Icon, label, value, color = "#00D4FF" }: { icon: any; l
     );
 }
 
-export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+export default function EventDetailPage({ params }: { params: { id: string } }) {
+    const { id } = params;
     const [event, setEvent] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -155,9 +154,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                 <button
                                     key={img.id}
                                     onClick={() => setCurrentImageIndex(i)}
-                                    className={`aspect-square rounded-lg overflow-hidden border transition ${
-                                        i === currentImageIndex ? "border-aira-cyan" : "border-white/10 hover:border-aira-cyan/40"
-                                    }`}
+                                    className={`aspect-square rounded-lg overflow-hidden border transition ${i === currentImageIndex ? "border-aira-cyan" : "border-white/10 hover:border-aira-cyan/40"
+                                        }`}
                                 >
                                     <img src={img.url} alt={`Event ${i + 1}`} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/100x100/0d1526/00D4FF?text=AL"; }} />
                                 </button>
