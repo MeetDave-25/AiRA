@@ -65,7 +65,7 @@ export default function LoginPage() {
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="admin@airalab.com"
+                                    placeholder="admin@airalabs.com"
                                     className="w-full pl-11 pr-4 py-3 rounded-xl bg-aira-card border border-aira-border/50 text-white placeholder-slate-600 focus:outline-none focus:border-aira-cyan/50 transition-colors"
                                     required
                                 />

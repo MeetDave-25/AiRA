@@ -14,12 +14,22 @@ export const authOptions = {
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) return null;
 
-                // [ADMIN BYPASS] Allow admin login via env credentials.
-                if (credentials.email === "admin@airalabs.com" && credentials.password === "Admin@123") {
+                // [ADMIN BYPASS] Allow admin login via env or standard fallback credentials.
+                const adminEmailEnv = process.env.ADMIN_EMAIL || "admin@airalabs.com";
+                const adminPasswordEnv = process.env.ADMIN_PASSWORD || "Admin@123";
+
+                const isBypassEmail =
+                    credentials.email === adminEmailEnv ||
+                    credentials.email === "admin@airalabs.com" ||
+                    credentials.email === "admin@airalab.com";
+
+                const isBypassPassword = credentials.password === adminPasswordEnv;
+
+                if (isBypassEmail && isBypassPassword) {
                     return {
                         id: "local-bypass-admin",
                         name: "AIRA Admin",
-                        email: "admin@airalabs.com",
+                        email: credentials.email,
                         role: "ADMIN",
                         avatar: "",
                         teams: [],

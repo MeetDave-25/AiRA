@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { createSupabaseAdmin } from "@/lib/supabase";
 import { requireAdmin } from "@/lib/admin-guard";
 import { v4 as uuidv4 } from "uuid";
 
@@ -7,14 +7,18 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
-    const { data: images, error } = await db
+    const supabase = createSupabaseAdmin();
+    const { data: images, error } = await supabase
         .from("EventImage")
         .select("*")
         .eq("eventId", params.id)
         .order("isPrimary", { ascending: false })
         .order("createdAt", { ascending: true });
 
-    if (error) return NextResponse.json({ error: "Failed to fetch images" }, { status: 500 });
+    if (error) {
+        console.error("Get images error:", error);
+        return NextResponse.json({ error: error.message || "Failed to fetch images" }, { status: 500 });
+    }
     return NextResponse.json(images || []);
 }
 
@@ -22,10 +26,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
+    const supabase = createSupabaseAdmin();
+
     try {
         const formData = await req.formData();
         const files = formData.getAll("images") as File[];
         const isPrimary = formData.get("isPrimary") === "true";
+
+        if (!files.length) {
+            return NextResponse.json({ error: "No images provided" }, { status: 400 });
+        }
 
         const savedImages = [];
         for (let i = 0; i < files.length; i++) {
@@ -36,8 +46,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             const bytes = await file.arrayBuffer();
             const buffer = Buffer.from(bytes);
 
-            // Upload to Supabase Storage
-            const { data: storageData, error: storageError } = await db.storage
+            // Upload to Supabase Storage using admin client directly
+            const { error: storageError } = await supabase.storage
                 .from("events")
                 .upload(filename, buffer, {
                     cacheControl: "3600",
@@ -47,24 +57,28 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
             if (storageError) {
                 console.error("Supabase Storage Error:", storageError);
-                throw storageError;
+                throw new Error(storageError.message || "Storage upload failed");
             }
 
-            const { data: publicUrlData } = db.storage.from("events").getPublicUrl(filename);
+            const { data: publicUrlData } = supabase.storage.from("events").getPublicUrl(filename);
             const publicUrl = publicUrlData.publicUrl;
 
-            const { data: image, error } = await db
+            const { data: image, error: dbError } = await supabase
                 .from("EventImage")
                 .insert({ id: uuidv4(), eventId: params.id, url: publicUrl, isPrimary: i === 0 && isPrimary })
                 .select()
                 .single();
 
-            if (!error && image) savedImages.push(image);
+            if (dbError) {
+                console.error("EventImage insert error:", dbError);
+                throw new Error(dbError.message || "Failed to save image record");
+            }
+            if (image) savedImages.push(image);
         }
 
         return NextResponse.json(savedImages, { status: 201 });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Image upload error:", error);
-        return NextResponse.json({ error: "Image upload failed" }, { status: 500 });
+        return NextResponse.json({ error: error?.message || "Image upload failed" }, { status: 500 });
     }
 }
