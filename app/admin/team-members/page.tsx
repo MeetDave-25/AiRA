@@ -5,6 +5,7 @@ import { Crown, Edit2, Plus, Trash2, UploadCloud } from "lucide-react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import AnimatedModal from "@/components/ui/AnimatedModal";
+import { compressImage } from "@/lib/image-compressor";
 
 type MemberForm = {
     name: string;
@@ -88,17 +89,23 @@ export default function TeamMembersAdminPage() {
 
     const uploadPhoto = async (file: File) => {
         setUploadingPhoto(true);
+        toast.loading("Compressing photo...", { id: "photo-upload" });
         try {
+            const compressed = await compressImage(file);
+
+            toast.loading("Uploading photo...", { id: "photo-upload" });
             const body = new FormData();
-            body.append("file", file);
+            body.append("file", compressed);
             body.append("type", "team-members");
+
             const res = await fetch("/api/upload", { method: "POST", body });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.error || "Photo upload failed");
+
             setForm((prev) => ({ ...prev, photo: data.url || prev.photo }));
-            toast.success("Photo uploaded");
+            toast.success("Photo uploaded", { id: "photo-upload" });
         } catch (error: any) {
-            toast.error(error?.message || "Photo upload failed");
+            toast.error(error?.message || "Photo upload failed", { id: "photo-upload" });
         } finally {
             setUploadingPhoto(false);
         }

@@ -5,6 +5,7 @@ import { Calendar, Edit2, ImagePlus, Plus, Star, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import AnimatedModal from "@/components/ui/AnimatedModal";
+import { compressImage } from "@/lib/image-compressor";
 
 type EventForm = {
     title: string;
@@ -122,10 +123,17 @@ export default function AdminEventsPage() {
 
     const uploadImages = async (eventId: string, files: File[], isPrimary: boolean) => {
         if (!files.length) return;
+
+        toast.loading("Compressing images...", { id: "upload" });
+        const compressedFiles = await Promise.all(
+            files.map((file) => compressImage(file))
+        );
+
         const formData = new FormData();
-        files.forEach((file) => formData.append("images", file));
+        compressedFiles.forEach((file) => formData.append("images", file));
         formData.append("isPrimary", String(isPrimary));
 
+        toast.loading("Uploading images...", { id: "upload" });
         const res = await fetch(`/api/events/${eventId}/images`, {
             method: "POST",
             body: formData,
@@ -135,6 +143,7 @@ export default function AdminEventsPage() {
             const data = await res.json().catch(() => ({}));
             throw new Error(data.error || "Failed to upload images");
         }
+        toast.dismiss("upload");
     };
 
     const openCreateModal = () => {

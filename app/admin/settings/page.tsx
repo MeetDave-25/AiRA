@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Save, UploadCloud } from "lucide-react";
 import toast from "react-hot-toast";
+import { compressImage } from "@/lib/image-compressor";
 
 export default function SettingsPage() {
     const [settings, setSettings] = useState<Record<string, string>>({});
@@ -33,8 +34,9 @@ export default function SettingsPage() {
     const handleImageUpload = async (file: File) => {
         setUploadingImage(true);
         try {
+            const compressed = await compressImage(file);
             const body = new FormData();
-            body.append("file", file);
+            body.append("file", compressed);
             body.append("type", "settings");
 
             const res = await fetch("/api/upload", {
