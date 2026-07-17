@@ -3,16 +3,40 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
 import { v4 as uuidv4 } from "uuid";
 
-export async function GET() {
-    const auth = await requireAdmin();
-    if (auth.error) return auth.error;
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+
+export async function GET(req: NextRequest) {
+    const session: any = await getServerSession(authOptions as any);
+    if (!session?.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    const role = (session.user as any)?.role;
+    const userId = (session.user as any)?.id;
 
     try {
-        const { data: teams, error } = await db
+        let query = db
             .from("Team")
             .select("*, TeamMembership(*, User(id, name, email, role, avatar))")
             .order("createdAt", { ascending: true });
 
+        // If not admin, strictly check the TeamMemberships
+        if (role !== "ADMIN") {
+            const { data: userMemberships } = await db
+                .from("TeamMembership")
+                .select("teamId")
+                .eq("userId", userId);
+            
+            const allowedTeamIds = (userMemberships || []).map((m: any) => m.teamId);
+            
+            if (allowedTeamIds.length === 0) {
+                return NextResponse.json([]);
+            }
+            query = query.in("id", allowedTeamIds);
+        }
+
+        const { data: teams, error } = await query;
         if (error) throw error;
 
         // Add _count for assignments and tasks
