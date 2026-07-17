@@ -109,8 +109,6 @@ export default function AboutPage() {
         fetch("/api/settings").then(r => r.ok ? r.json() : {}).then(d => setSettings(d)).catch(() => setSettings({}));
     }, []);
 
-    }, []);
-
     const nonPresidents = members.filter(m => !m.isPresident);
     const president = members.find(m => m.isPresident);
     const radius = 220; // orbit radius

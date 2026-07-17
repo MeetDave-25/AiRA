@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ClipboardList, MessageSquare } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { AnimatedModal } from "@/components/ui/AnimatedModal";
+import AnimatedModal from "@/components/ui/AnimatedModal";
 import toast from "react-hot-toast";
 
 export default function RequirementsPage() {
