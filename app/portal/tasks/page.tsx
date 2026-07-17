@@ -24,7 +24,8 @@ const baseForm: TaskForm = {
 
 export default function TasksPage() {
     const { data: session } = useSession();
-    const role = (session?.user as any)?.role || "TEAM_MEMBER";
+    const user = session?.user as any;
+    const role = user?.role || "TEAM_MEMBER";
 
     const [tasks, setTasks] = useState<any[]>([]);
     const [teams, setTeams] = useState<any[]>([]);
@@ -157,7 +158,10 @@ export default function TasksPage() {
         }
     };
 
-    const TaskCard = ({ task }: { task: any }) => (
+    const TaskCard = ({ task }: { task: any }) => {
+        const taskTeamRole = isAdmin ? "ADMIN" : (user?.teams?.find((t: any) => t.id === task?.teamId)?.memberRole || role);
+
+        return (
         <div className="bg-aira-card border border-white/5 p-4 rounded-xl shadow-lg hover:border-aira-cyan/30 transition-colors">
             <h4 className="font-medium text-sm text-white mb-2">{task.title}</h4>
             {task.description && <p className="text-xs text-slate-400 mb-2 line-clamp-2">{task.description}</p>}
@@ -178,24 +182,25 @@ export default function TasksPage() {
             </div>
 
             <div className="mt-3">
-                {role === "ADMIN" && (
+                {taskTeamRole === "ADMIN" && (
                     <button onClick={() => openTaskUpdateModal(task)} className="text-[10px] px-2 py-1 rounded border border-aira-cyan/40 text-aira-cyan hover:bg-aira-cyan/10">
                         View Lead Updates
                     </button>
                 )}
-                {role === "TEAM_LEAD" && (
+                {taskTeamRole === "TEAM_LEAD" && (
                      <button onClick={() => openTaskUpdateModal(task)} className="text-[10px] px-2 py-1 rounded border border-aira-magenta/40 text-aira-magenta hover:bg-aira-magenta/10">
                          {task.assignedUser ? "View Member Updates" : "Update Admin"}
                      </button>
                 )}
-                {role === "TEAM_MEMBER" && (
+                {taskTeamRole === "TEAM_MEMBER" && (
                      <button onClick={() => openTaskUpdateModal(task)} className="text-[10px] px-2 py-1 rounded border border-aira-magenta/40 text-aira-magenta hover:bg-aira-magenta/10">
                          Update Team Lead
                      </button>
                 )}
             </div>
         </div>
-    );
+        );
+    };
 
     return (
         <div className="space-y-6 min-h-screen">
@@ -305,20 +310,23 @@ export default function TasksPage() {
                 }
             >
                 <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
-                    {((role === "TEAM_MEMBER") || (role === "TEAM_LEAD" && !selectedTask?.assignedUser)) && (
-                        <div>
-                            <label className="block text-xs text-slate-400 mb-1">
-                                {role === "TEAM_MEMBER" ? "Message to Team Lead" : "Message to Admin"}
-                            </label>
-                            <textarea
-                                rows={3}
-                                value={updateMessage}
-                                onChange={(e) => setUpdateMessage(e.target.value)}
-                                placeholder="Share what is completed, blockers, next steps..."
-                                className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-magenta/60"
-                            />
-                        </div>
-                    )}
+                    {(() => {
+                        const taskTeamRole = isAdmin ? "ADMIN" : (user?.teams?.find((t: any) => t.id === selectedTask?.teamId)?.memberRole || role);
+                        return ((taskTeamRole === "TEAM_MEMBER") || (taskTeamRole === "TEAM_LEAD" && !selectedTask?.assignedUser)) && (
+                            <div>
+                                <label className="block text-xs text-slate-400 mb-1">
+                                    {taskTeamRole === "TEAM_MEMBER" ? "Message to Team Lead" : "Message to Admin"}
+                                </label>
+                                <textarea
+                                    rows={3}
+                                    value={updateMessage}
+                                    onChange={(e) => setUpdateMessage(e.target.value)}
+                                    placeholder="Share what is completed, blockers, next steps..."
+                                    className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-magenta/60"
+                                />
+                            </div>
+                        );
+                    })()}
 
                     <div className="space-y-2">
                         <p className="text-xs text-slate-400">Recent updates</p>

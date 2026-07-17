@@ -123,20 +123,25 @@ export default function RequirementsPage() {
                 }
             >
                 <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
-                    {((user?.role === "TEAM_MEMBER") || (user?.role === "TEAM_LEAD" && !selectedTask?.assignedTo)) && (
-                        <div>
-                            <label className="block text-xs text-slate-400 mb-2">
-                                {user?.role === "TEAM_MEMBER" ? "Message to Team Lead" : "Message to Admin"}
-                            </label>
-                            <textarea
-                                value={updateMessage}
-                                onChange={(e) => setUpdateMessage(e.target.value)}
-                                placeholder="Share progress, blockers, or status update..."
-                                rows={4}
-                                className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60 resize-none"
-                            />
-                        </div>
-                    )}
+                    {(() => {
+                        const isAdmin = user?.role === "ADMIN";
+                        const taskTeamRole = isAdmin ? "ADMIN" : (user?.teams?.find((t: any) => t.id === selectedTask?.teamId)?.memberRole || user?.role);
+                        
+                        return ((taskTeamRole === "TEAM_MEMBER") || (taskTeamRole === "TEAM_LEAD" && !selectedTask?.assignedTo)) && (
+                            <div>
+                                <label className="block text-xs text-slate-400 mb-2">
+                                    {taskTeamRole === "TEAM_MEMBER" ? "Message to Team Lead" : "Message to Admin"}
+                                </label>
+                                <textarea
+                                    value={updateMessage}
+                                    onChange={(e) => setUpdateMessage(e.target.value)}
+                                    placeholder="Share progress, blockers, or status update..."
+                                    rows={4}
+                                    className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60 resize-none"
+                                />
+                            </div>
+                        );
+                    })()}
                     
                     <div className="space-y-2">
                         <p className="text-xs text-slate-400">Recent updates</p>

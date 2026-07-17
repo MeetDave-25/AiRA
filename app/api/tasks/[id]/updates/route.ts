@@ -43,12 +43,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const message = String(body?.message || "").trim();
     if (!message) return NextResponse.json({ error: "Update message is required" }, { status: 400 });
 
+    const newId = uuidv4();
     const { data: update, error } = await db
         .from("TaskUpdate")
-        .insert({ id: uuidv4(), taskId: params.id, authorId: userId, message })
+        .insert({ id: newId, taskId: params.id, authorId: userId, message })
         .select("*, User!authorId(id, name, email, role)")
         .single();
 
-    if (error) return NextResponse.json({ error: "Failed to create update" }, { status: 500 });
+    if (error) {
+        console.error("TaskUpdate INSERT Error:", error);
+        return NextResponse.json({ error: "Failed to create update", details: error.message }, { status: 500 });
+    }
     return NextResponse.json(update, { status: 201 });
 }

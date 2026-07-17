@@ -560,10 +560,10 @@ export default function TeamDashboardPage() {
                 }
             >
                 <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
-                    {((user?.role === "TEAM_MEMBER") || (user?.role === "TEAM_LEAD" && !selectedTask?.assignedTo)) && (
+                    {((teamRole === "TEAM_MEMBER") || (teamRole === "TEAM_LEAD" && !selectedTask?.assignedTo)) && (
                         <div>
                             <label className="block text-xs text-slate-400 mb-2">
-                                {user?.role === "TEAM_MEMBER" ? "Message to Team Lead" : "Message to Admin"}
+                                {teamRole === "TEAM_MEMBER" ? "Message to Team Lead" : "Message to Admin"}
                             </label>
                             <textarea
                                 value={updateMessage}
