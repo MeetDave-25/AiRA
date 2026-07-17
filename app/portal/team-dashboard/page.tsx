@@ -20,6 +20,7 @@ export default function TeamDashboardPage() {
 
     const [teamData, setTeamData] = useState<any>(null);
     const [teamTasks, setTeamTasks] = useState<any[]>([]);
+    const [teamReports, setTeamReports] = useState<any[]>([]);
     const [teamMembers, setTeamMembers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isUpdateOpen, setIsUpdateOpen] = useState(false);
@@ -31,6 +32,8 @@ export default function TeamDashboardPage() {
     const [reportMessage, setReportMessage] = useState("");
     const [memberForm, setMemberForm] = useState({ name: "", email: "", role: "TEAM_MEMBER" });
     const [newMemberCredentials, setNewMemberCredentials] = useState<{ email: string; password: string } | null>(null);
+    const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+    const [taskForm, setTaskForm] = useState({ title: "", description: "", assignedTo: "", dueDate: "" });
 
     // Fetch team data on mount
     useEffect(() => {
@@ -59,6 +62,13 @@ export default function TeamDashboardPage() {
                 const tasksRes = await fetch(`/api/tasks?teamId=${teamId}`);
                 const tasks = tasksRes.ok ? await tasksRes.json() : [];
                 setTeamTasks(Array.isArray(tasks) ? tasks : []);
+
+                // Fetch reports if TEAM_LEAD
+                if (user.role === "TEAM_LEAD") {
+                    const reportsRes = await fetch(`/api/reports?teamId=${teamId}`);
+                    const reports = reportsRes.ok ? await reportsRes.json() : [];
+                    setTeamReports(Array.isArray(reports) ? reports : []);
+                }
             } catch (error) {
                 console.error("Error loading team data:", error);
                 toast.error("Failed to load team data");
@@ -188,11 +198,42 @@ export default function TeamDashboardPage() {
             });
             if (!res.ok) throw new Error("Failed to send report");
 
-            toast.success("Report successfully sent to Admin!");
+            toast.success("Report successfully sent!");
             setIsReportOpen(false);
             setReportMessage("");
+            
+            if (user.role === "TEAM_LEAD") {
+                const reportsRes = await fetch(`/api/reports?teamId=${teamData.id}`);
+                const reports = reportsRes.ok ? await reportsRes.json() : [];
+                setTeamReports(Array.isArray(reports) ? reports : []);
+            }
         } catch (error: any) {
             toast.error(error.message || "Failed to send report");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleCreateTask = async () => {
+        if (!taskForm.title) return toast.error("Title is required");
+        setIsSubmitting(true);
+        try {
+            const res = await fetch("/api/tasks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...taskForm, teamId: teamData.id }),
+            });
+            if (!res.ok) throw new Error("Failed to assign requirement");
+            
+            toast.success("Requirement assigned!");
+            setIsAddTaskOpen(false);
+            setTaskForm({ title: "", description: "", assignedTo: "", dueDate: "" });
+            
+            const tasksRes = await fetch(`/api/tasks?teamId=${teamData.id}`);
+            const tasks = tasksRes.ok ? await tasksRes.json() : [];
+            setTeamTasks(Array.isArray(tasks) ? tasks : []);
+        } catch (error: any) {
+            toast.error(error.message || "Failed to create task");
         } finally {
             setIsSubmitting(false);
         }
@@ -237,12 +278,12 @@ export default function TeamDashboardPage() {
                     <h1 className="font-orbitron font-bold text-3xl text-white">
                         {teamData?.name}
                     </h1>
-                    {user?.role === "TEAM_LEAD" && (
+                    {(user?.role === "TEAM_LEAD" || user?.role === "TEAM_MEMBER") && (
                         <button
                             onClick={() => setIsReportOpen(true)}
                             className="flex items-center gap-2 text-xs px-4 py-2 rounded-lg border border-aira-cyan text-aira-cyan hover:bg-aira-cyan/10 transition-colors"
                         >
-                            <FileText size={14} /> Send Team Report
+                            <FileText size={14} /> {user.role === "TEAM_LEAD" ? "Send Team Report to Admin" : "Send Daily Task Report"}
                         </button>
                     )}
                 </div>
@@ -292,7 +333,17 @@ export default function TeamDashboardPage() {
 
             {/* Tasks Section */}
             <div className="space-y-4">
-                <h2 className="font-orbitron font-bold text-xl text-white">Team Tasks</h2>
+                <div className="flex justify-between items-center">
+                    <h2 className="font-orbitron font-bold text-xl text-white">Team Tasks & Requirements</h2>
+                    {user?.role === "TEAM_LEAD" && (
+                        <button
+                            onClick={() => setIsAddTaskOpen(true)}
+                            className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg bg-aira-cyan text-aira-bg font-semibold hover:bg-white transition-colors"
+                        >
+                            <Plus size={14} /> Assign Requirement
+                        </button>
+                    )}
+                </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* To Do */}
@@ -434,6 +485,30 @@ export default function TeamDashboardPage() {
                 </div>
             </div>
 
+            {/* Daily Reports for Team Lead */}
+            {user?.role === "TEAM_LEAD" && (
+                <div className="glass rounded-xl border border-white/5 p-6">
+                    <h2 className="font-orbitron font-bold text-lg text-white mb-4 flex items-center gap-2">
+                        <FileText size={18} /> Daily Reports from Members
+                    </h2>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                        {teamReports.length === 0 ? (
+                            <p className="text-sm text-slate-400">No daily reports submitted yet.</p>
+                        ) : (
+                            teamReports.map((report) => (
+                                <div key={report.id} className="p-3 bg-slate-900/50 rounded border border-white/5">
+                                    <div className="flex justify-between items-center text-xs text-slate-400 mb-2">
+                                        <span className="font-bold text-aira-cyan">{report.author?.name}</span>
+                                        <span>{new Date(report.createdAt).toLocaleDateString()} {new Date(report.createdAt).toLocaleTimeString()}</span>
+                                    </div>
+                                    <p className="text-sm text-white whitespace-pre-wrap">{report.content}</p>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Update Task Modal */}
             <AnimatedModal
                 open={isUpdateOpen}
@@ -525,6 +600,69 @@ export default function TeamDashboardPage() {
                             <option value="TEAM_MEMBER">Team Member</option>
                             <option value="TEAM_LEAD">Team Lead</option>
                         </select>
+                    </div>
+                </div>
+            </AnimatedModal>
+
+            {/* Add Task/Requirement Modal */}
+            <AnimatedModal
+                open={isAddTaskOpen}
+                onClose={() => setIsAddTaskOpen(false)}
+                title="Assign Requirement"
+                subtitle="Create a new task or requirement for your team"
+                footer={
+                    <div className="flex justify-end gap-3">
+                        <button onClick={() => setIsAddTaskOpen(false)} className="px-4 py-2 rounded-lg border border-white/15 text-slate-300">Cancel</button>
+                        <button disabled={isSubmitting} onClick={handleCreateTask} className="px-4 py-2 rounded-lg bg-aira-cyan text-aira-bg font-semibold">
+                            {isSubmitting ? "Assigning..." : "Assign Requirement"}
+                        </button>
+                    </div>
+                }
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-xs text-slate-400 mb-1 block">Task Title</label>
+                        <input
+                            type="text"
+                            value={taskForm.title}
+                            onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
+                            className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white"
+                            placeholder="e.g. Update UI Components"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs text-slate-400 mb-1 block">Description</label>
+                        <textarea
+                            value={taskForm.description}
+                            onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+                            className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white h-24 resize-none"
+                            placeholder="Details about the requirement..."
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs text-slate-400 mb-1 block">Assign To (Optional)</label>
+                            <select
+                                value={taskForm.assignedTo}
+                                onChange={(e) => setTaskForm({ ...taskForm, assignedTo: e.target.value })}
+                                className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white"
+                            >
+                                <option value="">Unassigned (Open for team)</option>
+                                {teamMembers.map((m) => (
+                                    <option key={m.id} value={m.id}>{m.name} ({m.role.replace("_", " ")})</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs text-slate-400 mb-1 block">Due Date (Optional)</label>
+                            <input
+                                type="date"
+                                value={taskForm.dueDate}
+                                onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
+                                className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white"
+                                style={{ colorScheme: "dark" }}
+                            />
+                        </div>
                     </div>
                 </div>
             </AnimatedModal>

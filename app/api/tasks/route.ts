@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/admin-guard";
+import { requireAdmin, requireLeadOrAdmin } from "@/lib/admin-guard";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
@@ -55,10 +55,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-    const auth = await requireAdmin();
-    if (auth.error) return auth.error;
-
     const body = await req.json();
+    if (!body.teamId) return NextResponse.json({ error: "teamId is required" }, { status: 400 });
+
+    const auth = await requireLeadOrAdmin(body.teamId);
+    if (auth.error) return auth.error;
     const { title, description, status, dueDate, teamId, assignedTo } = body;
     const { data, error } = await db
         .from("Task")
