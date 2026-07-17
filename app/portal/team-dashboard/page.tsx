@@ -203,6 +203,19 @@ export default function TeamDashboardPage() {
             </div>
         );
     }
+    
+    if (!teamData) {
+        return (
+            <div className="flex items-center justify-center min-h-[70vh]">
+                <div className="text-center max-w-sm">
+                    <AlertCircle size={48} className="mx-auto text-aira-magenta mb-4 opacity-80" />
+                    <h2 className="text-2xl font-bold font-orbitron text-white mb-2">Team Not Found</h2>
+                    <p className="text-slate-400 mb-6">It looks like the team data could not be loaded, or you no longer have access. You might need to refresh your session.</p>
+                    <button onClick={() => location.reload()} className="px-6 py-2 bg-aira-cyan rounded-lg text-aira-bg font-bold">Refresh Page</button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
