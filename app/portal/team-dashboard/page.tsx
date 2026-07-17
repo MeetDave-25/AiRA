@@ -376,12 +376,14 @@ export default function TeamDashboardPage() {
                                     >
                                         <div className="flex justify-between items-start gap-2 mb-2">
                                             <p className="font-medium text-sm text-white flex-1">{task.title}</p>
-                                            <button
-                                                onClick={() => updateTaskStatus(task.id, "IN_PROGRESS")}
-                                                className="text-xs px-2 py-1 rounded bg-aira-cyan/20 text-aira-cyan hover:bg-aira-cyan/30 opacity-0 group-hover:opacity-100 transition"
-                                            >
-                                                Start
-                                            </button>
+                                            {(user?.role === "TEAM_LEAD" || task.isAssignedToMe) && (
+                                                <button
+                                                    onClick={() => updateTaskStatus(task.id, "IN_PROGRESS")}
+                                                    className="text-xs px-2 py-1 rounded bg-aira-cyan/20 text-aira-cyan hover:bg-aira-cyan/30 opacity-0 group-hover:opacity-100 transition"
+                                                >
+                                                    Start
+                                                </button>
+                                            )}
                                         </div>
                                         <p className="text-xs text-slate-400 mb-2">{task.description}</p>
                                         <button
@@ -415,14 +417,19 @@ export default function TeamDashboardPage() {
                                     >
                                         <div className="flex justify-between items-start gap-2 mb-2">
                                             <p className="font-medium text-sm text-white flex-1">{task.title}</p>
-                                            <button
-                                                onClick={() => updateTaskStatus(task.id, "DONE")}
-                                                className="text-xs px-2 py-1 rounded bg-aira-cyan/20 text-aira-cyan hover:bg-aira-cyan/30 opacity-0 group-hover:opacity-100 transition"
-                                            >
-                                                Complete
-                                            </button>
+                                            {(user?.role === "TEAM_LEAD" || task.isAssignedToMe) && (
+                                                <button
+                                                    onClick={() => updateTaskStatus(task.id, "DONE")}
+                                                    className="text-xs px-2 py-1 rounded bg-aira-cyan/20 text-aira-cyan hover:bg-aira-cyan/30 opacity-0 group-hover:opacity-100 transition"
+                                                >
+                                                    Complete
+                                                </button>
+                                            )}
                                         </div>
                                         <p className="text-xs text-slate-400 mb-2">{task.description}</p>
+                                        {task.assignedUser && (
+                                            <p className="text-[10px] text-slate-500 mb-2">Assigned to: <span className="text-aira-purple">{task.assignedUser.name}</span></p>
+                                        )}
                                         <button
                                             onClick={() => openTaskUpdateModal(task)}
                                             className="text-xs text-aira-cyan hover:underline flex items-center gap-1"

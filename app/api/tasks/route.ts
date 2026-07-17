@@ -21,17 +21,26 @@ export async function GET(req: NextRequest) {
             const query = db.from("Task").select("*, Team(id, name, color)").order("createdAt", { ascending: false });
             const { data } = teamId ? await query.eq("teamId", teamId) : await query;
             tasks = data || [];
-        } else {
+        } else if (role === "TEAM_LEAD") {
+            // Leads see all tasks in their team(s)
             const { data: memberships } = await db.from("TeamMembership").select("teamId").eq("userId", userId);
             const teamIds = (memberships || []).map((m: any) => m.teamId);
 
             let query = db.from("Task").select("*, Team(id, name, color)").order("createdAt", { ascending: false });
             if (teamId) query = query.eq("teamId", teamId);
-            if (teamIds.length > 0) query = query.in("teamId", teamIds);
+            else if (teamIds.length > 0) query = query.in("teamId", teamIds);
             else query = query.eq("teamId", "no-match");
 
             const { data } = await query;
-            tasks = (data || []).filter((t: any) => t.assignedTo === userId || teamIds.includes(t.teamId));
+            tasks = data || [];
+        } else {
+            // TEAM_MEMBER: only see tasks directly assigned to them
+            const { data } = await db
+                .from("Task")
+                .select("*, Team(id, name, color)")
+                .eq("assignedTo", userId)
+                .order("createdAt", { ascending: false });
+            tasks = data || [];
         }
 
         // Enrich with assigned user info
