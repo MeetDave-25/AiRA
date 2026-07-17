@@ -39,7 +39,7 @@ export const authOptions = {
                 try {
                     const { data: user, error } = await db
                         .from("User")
-                        .select("id, name, email, password, role, avatar, TeamMembership(teamId, Team(id, name, color))")
+                        .select("id, name, email, password, role, avatar, TeamMembership(teamId, memberRole, Team(id, name, color))")
                         .eq("email", credentials.email)
                         .single();
 
@@ -58,6 +58,7 @@ export const authOptions = {
                             id: m.Team?.id,
                             name: m.Team?.name,
                             color: m.Team?.color,
+                            memberRole: m.memberRole || "TEAM_MEMBER",
                         })),
                     };
                 } catch {

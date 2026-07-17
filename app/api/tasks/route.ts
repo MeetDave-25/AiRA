@@ -10,37 +10,57 @@ export async function GET(req: NextRequest) {
         const session: any = await getServerSession(authOptions as any);
         if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-        const role = (session.user as any).role;
+        const globalRole = (session.user as any).role;
         const userId = (session.user as any).id;
         const { searchParams } = new URL(req.url);
         const teamId = searchParams.get("teamId");
 
         let tasks: any[] = [];
 
-        if (role === "ADMIN") {
+        if (globalRole === "ADMIN") {
             const query = db.from("Task").select("*, Team(id, name, color)").order("createdAt", { ascending: false });
             const { data } = teamId ? await query.eq("teamId", teamId) : await query;
             tasks = data || [];
-        } else if (role === "TEAM_LEAD") {
-            // Leads see all tasks in their team(s)
-            const { data: memberships } = await db.from("TeamMembership").select("teamId").eq("userId", userId);
-            const teamIds = (memberships || []).map((m: any) => m.teamId);
-
-            let query = db.from("Task").select("*, Team(id, name, color)").order("createdAt", { ascending: false });
-            if (teamId) query = query.eq("teamId", teamId);
-            else if (teamIds.length > 0) query = query.in("teamId", teamIds);
-            else query = query.eq("teamId", "no-match");
-
-            const { data } = await query;
-            tasks = data || [];
         } else {
-            // TEAM_MEMBER: only see tasks directly assigned to them
-            const { data } = await db
-                .from("Task")
-                .select("*, Team(id, name, color)")
-                .eq("assignedTo", userId)
-                .order("createdAt", { ascending: false });
-            tasks = data || [];
+            // Get user's memberships with per-team role
+            const { data: memberships } = await db
+                .from("TeamMembership")
+                .select("teamId, memberRole")
+                .eq("userId", userId);
+
+            const leadTeamIds = (memberships || [])
+                .filter((m: any) => m.memberRole === "TEAM_LEAD")
+                .map((m: any) => m.teamId);
+            const memberTeamIds = (memberships || [])
+                .filter((m: any) => m.memberRole !== "TEAM_LEAD")
+                .map((m: any) => m.teamId);
+
+            // If asking for a specific team, check their role in that team
+            if (teamId) {
+                const teamMembership = (memberships || []).find((m: any) => m.teamId === teamId);
+                const teamRole = teamMembership?.memberRole || "TEAM_MEMBER";
+
+                if (teamRole === "TEAM_LEAD") {
+                    // Lead sees all tasks in this team
+                    const { data } = await db.from("Task").select("*, Team(id, name, color)")
+                        .eq("teamId", teamId).order("createdAt", { ascending: false });
+                    tasks = data || [];
+                } else {
+                    // Member only sees tasks assigned to them
+                    const { data } = await db.from("Task").select("*, Team(id, name, color)")
+                        .eq("teamId", teamId).eq("assignedTo", userId).order("createdAt", { ascending: false });
+                    tasks = data || [];
+                }
+            } else {
+                // All teams: leads see all tasks in lead teams, members only assigned tasks in member teams
+                const leadTasks = leadTeamIds.length > 0
+                    ? (await db.from("Task").select("*, Team(id, name, color)").in("teamId", leadTeamIds).order("createdAt", { ascending: false })).data || []
+                    : [];
+                const memberTasks = memberTeamIds.length > 0
+                    ? (await db.from("Task").select("*, Team(id, name, color)").in("teamId", memberTeamIds).eq("assignedTo", userId).order("createdAt", { ascending: false })).data || []
+                    : [];
+                tasks = [...leadTasks, ...memberTasks];
+            }
         }
 
         // Enrich with assigned user info

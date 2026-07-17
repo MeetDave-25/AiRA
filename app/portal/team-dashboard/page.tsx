@@ -17,6 +17,8 @@ export default function TeamDashboardPage() {
     const { data: session } = useSession();
     const router = useRouter();
     const user = session?.user as any;
+    // Derive per-team role from the first team's memberRole (set in auth.ts)
+    const teamRole = user?.teams?.[0]?.memberRole || user?.role || "TEAM_MEMBER";
 
     const [teamData, setTeamData] = useState<any>(null);
     const [teamTasks, setTeamTasks] = useState<any[]>([]);
@@ -64,8 +66,8 @@ export default function TeamDashboardPage() {
                 const tasks = tasksRes.ok ? await tasksRes.json() : [];
                 setTeamTasks(Array.isArray(tasks) ? tasks : []);
 
-                // Fetch reports if TEAM_LEAD
-                if (user.role === "TEAM_LEAD") {
+                // Fetch reports if TEAM_LEAD per team
+                if (teamRole === "TEAM_LEAD") {
                     const reportsRes = await fetch(`/api/reports?teamId=${teamId}`);
                     const reports = reportsRes.ok ? await reportsRes.json() : [];
                     setTeamReports(Array.isArray(reports) ? reports : []);

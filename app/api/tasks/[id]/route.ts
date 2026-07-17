@@ -27,16 +27,22 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const { data: existing, error: fetchErr } = await db.from("Task").select("*").eq("id", params.id).single();
     if (fetchErr || !existing) return NextResponse.json({ error: "Task not found" }, { status: 404 });
 
-    // Check if user is in the team
+    // Check per-team membership and role
     const { data: membership } = await db
-        .from("TeamMembership").select("id").eq("userId", userId).eq("teamId", existing.teamId).maybeSingle();
+        .from("TeamMembership")
+        .select("id, memberRole")
+        .eq("userId", userId)
+        .eq("teamId", existing.teamId)
+        .maybeSingle();
 
     if (!membership) {
         return NextResponse.json({ error: "Forbidden – not a member of this team" }, { status: 403 });
     }
 
-    // TEAM_MEMBER can only update tasks assigned directly to them
-    if (role === "TEAM_MEMBER" && existing.assignedTo !== userId) {
+    const teamRole = membership.memberRole || role; // fallback to global role
+
+    // TEAM_MEMBER (per-team) can only update tasks assigned directly to them
+    if (teamRole === "TEAM_MEMBER" && existing.assignedTo !== userId) {
         return NextResponse.json({ error: "Forbidden – only the team lead can update this task's status" }, { status: 403 });
     }
 

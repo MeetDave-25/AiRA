@@ -92,11 +92,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             .maybeSingle();
 
         if (existingMem) {
-            membership = existingMem;
+            // Update the memberRole for existing membership
+            const { data: updatedMem } = await db
+                .from("TeamMembership")
+                .update({ memberRole: role || "TEAM_MEMBER" })
+                .eq("id", existingMem.id)
+                .select()
+                .single();
+            membership = updatedMem || existingMem;
         } else {
             const { data: newMem, error: memErr } = await db
                 .from("TeamMembership")
-                .insert({ id: uuidv4(), userId: user.id, teamId: params.id })
+                .insert({ id: uuidv4(), userId: user.id, teamId: params.id, memberRole: role || "TEAM_MEMBER" })
                 .select()
                 .single();
             if (memErr) throw memErr;
