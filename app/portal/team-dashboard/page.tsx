@@ -30,6 +30,7 @@ export default function TeamDashboardPage() {
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [reportMessage, setReportMessage] = useState("");
     const [memberForm, setMemberForm] = useState({ name: "", email: "", role: "TEAM_MEMBER" });
+    const [newMemberCredentials, setNewMemberCredentials] = useState<{ email: string; password: string } | null>(null);
 
     // Fetch team data on mount
     useEffect(() => {
@@ -146,6 +147,10 @@ export default function TeamDashboardPage() {
             toast.success("Member added!");
             setIsAddMemberOpen(false);
             setMemberForm({ name: "", email: "", role: "TEAM_MEMBER" });
+            
+            if (data.generatedPassword) {
+                setNewMemberCredentials({ email: data.generatedLoginId, password: data.generatedPassword });
+            }
 
             const teamRes = await fetch(`/api/teams?teamId=${teamData.id}`);
             const teams = teamRes.ok ? await teamRes.json() : [];
@@ -522,6 +527,38 @@ export default function TeamDashboardPage() {
                         </select>
                     </div>
                 </div>
+            </AnimatedModal>
+
+            {/* Credentials Modal */}
+            <AnimatedModal
+                open={!!newMemberCredentials}
+                onClose={() => setNewMemberCredentials(null)}
+                title="Member Added Successfully!"
+                subtitle="Please copy these credentials immediately and send them to the team member. They will not be shown again."
+                footer={
+                    <div className="flex justify-end pr-2 pl-2 w-full">
+                        <button onClick={() => setNewMemberCredentials(null)} className="px-6 py-2 rounded-lg bg-aira-cyan text-aira-bg font-bold w-full">
+                            I have copied the credentials
+                        </button>
+                    </div>
+                }
+            >
+                {newMemberCredentials && (
+                    <div className="space-y-4">
+                        <div className="bg-slate-900 rounded border border-aira-cyan/30 p-4">
+                            <label className="text-xs text-slate-400 mb-1 block">Login Email / ID</label>
+                            <div className="text-white font-mono bg-black/40 p-2 rounded selectable bg-slate-800 break-all mb-3 select-all">
+                                {newMemberCredentials.email}
+                            </div>
+                            
+                            <label className="text-xs text-slate-400 mb-1 block">Generated Password</label>
+                            <div className="text-aira-cyan font-mono font-bold bg-black/40 p-2 rounded selectable bg-slate-800 select-all">
+                                {newMemberCredentials.password}
+                            </div>
+                        </div>
+                        <p className="text-xs text-aira-magenta">Keep this password secure. The team member will use this to sign in via the Portal Login.</p>
+                    </div>
+                )}
             </AnimatedModal>
         </div>
     );
