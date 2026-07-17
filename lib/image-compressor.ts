@@ -38,8 +38,8 @@ export const compressImage = async (file: File, maxWidth = 1920, maxHeight = 108
             // Draw image on canvas, resized
             ctx.drawImage(img, 0, 0, width, height);
 
-            // Export to blob as JPEG or WEBP (WEBP is extremely efficient)
-            const exportType = file.type === "image/png" ? "image/png" : "image/webp";
+            // Export to blob as JPEG or PNG
+            const exportType = file.type === "image/png" ? "image/png" : "image/jpeg";
 
             canvas.toBlob((blob) => {
                 if (!blob) {
@@ -47,10 +47,10 @@ export const compressImage = async (file: File, maxWidth = 1920, maxHeight = 108
                 }
 
                 // Create a new File from the Blob
-                // If converted to webp, rename extension to .webp
+                // If converted to jpeg, rename extension to .jpg
                 let newFileName = file.name;
-                if (exportType === "image/webp" && !newFileName.endsWith(".webp")) {
-                    newFileName = newFileName.replace(/\.[^/.]+$/, ".webp");
+                if (exportType === "image/jpeg" && !newFileName.endsWith(".jpg") && !newFileName.endsWith(".jpeg")) {
+                    newFileName = newFileName.replace(/\.[^/.]+$/, ".jpg");
                 }
 
                 const compressedFile = new File([blob], newFileName, {
