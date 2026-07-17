@@ -31,7 +31,7 @@ export default function TeamDashboardPage() {
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [reportMessage, setReportMessage] = useState("");
-    const [memberForm, setMemberForm] = useState({ name: "", email: "", role: "TEAM_MEMBER" });
+    const [memberForm, setMemberForm] = useState({ name: "", email: "", role: "TEAM_MEMBER", password: "" });
     const [newMemberCredentials, setNewMemberCredentials] = useState<{ email: string; password: string } | null>(null);
     const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
     const [taskForm, setTaskForm] = useState({ title: "", description: "", assignedTo: "", dueDate: "" });
@@ -169,11 +169,10 @@ export default function TeamDashboardPage() {
 
             toast.success("Member added!");
             setIsAddMemberOpen(false);
-            setMemberForm({ name: "", email: "", role: "TEAM_MEMBER" });
+            setMemberForm({ name: "", email: "", role: "TEAM_MEMBER", password: "" });
             
-            if (data.generatedPassword) {
-                setNewMemberCredentials({ email: data.generatedLoginId, password: data.generatedPassword });
-            }
+            // Always show credentials — either custom or generated
+            setNewMemberCredentials({ email: data.generatedLoginId, password: data.generatedPassword });
 
             const teamRes = await fetch(`/api/teams?teamId=${teamData.id}`);
             const teams = teamRes.ok ? await teamRes.json() : [];
@@ -612,6 +611,7 @@ export default function TeamDashboardPage() {
                             type="text"
                             value={memberForm.name}
                             onChange={(e) => setMemberForm({ ...memberForm, name: e.target.value })}
+                            placeholder="e.g. Ravi Sharma"
                             className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white"
                         />
                     </div>
@@ -621,9 +621,21 @@ export default function TeamDashboardPage() {
                             type="email"
                             value={memberForm.email}
                             onChange={(e) => setMemberForm({ ...memberForm, email: e.target.value })}
+                            placeholder="leave blank to auto-generate"
                             className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white"
                         />
                         <p className="text-[10px] text-slate-500 mt-1">Leave blank to auto-generate a @airalab.local login ID</p>
+                    </div>
+                    <div>
+                        <label className="text-xs text-slate-400 mb-1 block">Password</label>
+                        <input
+                            type="text"
+                            value={memberForm.password}
+                            onChange={(e) => setMemberForm({ ...memberForm, password: e.target.value })}
+                            placeholder="e.g. aira@1234 (leave blank to auto-generate)"
+                            className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white font-mono"
+                        />
+                        <p className="text-[10px] text-slate-500 mt-1">Leave blank to auto-generate a secure password</p>
                     </div>
                     <div>
                         <label className="text-xs text-slate-400 mb-1 block">Role</label>

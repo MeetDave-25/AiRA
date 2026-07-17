@@ -29,7 +29,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const body = await req.json();
 
     try {
-        const { name, email, role } = body;
+        const { name, email, role, password: customPassword } = body;
 
         const normalizedName = String(name || "").trim();
         if (!normalizedName) {
@@ -49,7 +49,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             }
         }
 
-        const rawPassword = generatePassword(12);
+        // Use custom password if provided, otherwise auto-generate
+        const rawPassword = (customPassword && String(customPassword).trim()) ? String(customPassword).trim() : generatePassword(10);
         const hashed = await bcrypt.hash(rawPassword, 12);
 
         // Upsert user
