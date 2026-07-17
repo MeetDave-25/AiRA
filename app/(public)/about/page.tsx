@@ -30,10 +30,10 @@ function MemberModal({ member, onClose }: { member: any; onClose: () => void }) 
                         <div className="relative inline-block mb-4">
                             <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-aira-cyan/50 glow-cyan mx-auto">
                                 <img
-                                    src={member.photo || "https://placehold.co/200x200/0d1526/00D4FF?text=" + member.name[0]}
+                                    src={member.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=200`}
                                     alt={member.name}
                                     className="w-full h-full object-cover"
-                                    onError={(e) => { (e.target as HTMLImageElement).src = `https://placehold.co/200x200/0d1526/00D4FF?text=${member.name[0]}`; }}
+                                    onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=200`; }}
                                 />
                             </div>
                             {member.isPresident && (
@@ -70,39 +70,32 @@ function MemberModal({ member, onClose }: { member: any; onClose: () => void }) 
 }
 
 // Orbiting member card
-function OrbitCard({ member, angle, radius, onClick }: { member: any; angle: number; radius: number; onClick: () => void }) {
-    const rad = (angle * Math.PI) / 180;
-    const x = Math.cos(rad) * radius;
-    const y = Math.sin(rad) * radius;
-
+function OrbitCard({ member, onClick }: { member: any; onClick: () => void }) {
     return (
-        <motion.button
+        <button
             onClick={onClick}
-            className="absolute"
-            style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)`, transform: "translate(-50%, -50%)" }}
-            whileHover={{ scale: 1.3 }}
-            whileTap={{ scale: 0.95 }}
+            className="group block"
             title={member.name}
         >
-            <div className="relative group">
-                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-aira-cyan/40 group-hover:border-aira-cyan group-hover:shadow-lg group-hover:shadow-aira-cyan/50 transition-all duration-300">
+            <div className="relative">
+                <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center bg-slate-900 border-2 border-aira-cyan/40 group-hover:border-aira-cyan group-hover:shadow-lg group-hover:shadow-aira-cyan/50 transition-all duration-300 transform group-hover:scale-110 active:scale-95 text-[10px] text-white">
                     <img
-                        src={member.photo || `https://placehold.co/100x100/0d1526/00D4FF?text=${member.name[0]}`}
+                        src={member.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=100`}
                         alt={member.name}
                         className="w-full h-full object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).src = `https://placehold.co/100x100/0d1526/00D4FF?text=${member.name[0]}`; }}
+                        onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=100`; }}
                     />
                 </div>
                 {member.isPresident && (
-                    <div className="absolute -top-1 -right-1 text-xs">👑</div>
+                    <div className="absolute -top-1 -right-1 text-xs z-10">👑</div>
                 )}
                 {/* Tooltip */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 rounded-lg glass text-xs text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    <div className="font-medium">{member.name}</div>
-                    <div className="text-aira-cyan text-xs">{member.role}</div>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 rounded-lg glass text-xs text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                    <div className="font-medium inline-block">{member.name}</div>
+                    <div className="text-aira-cyan text-[10px] sm:text-xs">{(member.role || "").slice(0, 20)}</div>
                 </div>
             </div>
-        </motion.button>
+        </button>
     );
 }
 
@@ -110,25 +103,12 @@ export default function AboutPage() {
     const [members, setMembers] = useState<any[]>([]);
     const [settings, setSettings] = useState<Record<string, string>>({});
     const [selectedMember, setSelectedMember] = useState<any>(null);
-    const [orbitAngle, setOrbitAngle] = useState(0);
-    const animRef = useRef<number>();
 
     useEffect(() => {
         fetch("/api/team-members").then(r => r.ok ? r.json() : []).then(d => setMembers(Array.isArray(d) ? d : [])).catch(() => setMembers([]));
         fetch("/api/settings").then(r => r.ok ? r.json() : {}).then(d => setSettings(d)).catch(() => setSettings({}));
     }, []);
 
-    // Slow orbit animation
-    useEffect(() => {
-        let last = performance.now();
-        function tick(now: number) {
-            const dt = now - last;
-            last = now;
-            setOrbitAngle(a => a + dt * 0.01); // degrees per ms
-            animRef.current = requestAnimationFrame(tick);
-        }
-        animRef.current = requestAnimationFrame(tick);
-        return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
     }, []);
 
     const nonPresidents = members.filter(m => !m.isPresident);
@@ -200,20 +180,26 @@ export default function AboutPage() {
                         )}
                     </motion.div>
 
-                    {/* Orbiting members */}
-                    {nonPresidents.map((member, i) => {
-                        const base = (360 / nonPresidents.length) * i;
-                        const current = (base + orbitAngle) % 360;
-                        return (
-                            <OrbitCard
-                                key={member.id}
-                                member={member}
-                                angle={current}
-                                radius={radius}
-                                onClick={() => setSelectedMember(member)}
-                            />
-                        );
-                    })}
+                    {/* Orbiting members container */}
+                    <div className="absolute inset-0 z-20 pointer-events-none" style={{ animation: "spin 30s linear infinite" }}>
+                        {nonPresidents.map((member, i) => {
+                            const angle = (360 / nonPresidents.length) * i;
+                            return (
+                                <div 
+                                    key={member.id} 
+                                    className="absolute left-1/2 top-1/2 -ml-7 -mt-7 pointer-events-auto"
+                                    style={{ transform: `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)` }}
+                                >
+                                    <div style={{ animation: "counterspin 30s linear infinite" }}>
+                                        <OrbitCard
+                                            member={member}
+                                            onClick={() => setSelectedMember(member)}
+                                        />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 
@@ -248,12 +234,12 @@ export default function AboutPage() {
                             onClick={() => setSelectedMember(member)}
                             className="glass rounded-2xl p-4 text-center hover:border-aira-cyan/40 border border-transparent transition-all card-3d group"
                         >
-                            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-aira-cyan/50 mx-auto mb-3 transition-all">
+                            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-aira-cyan/50 mx-auto mb-3 transition-all flex items-center justify-center bg-slate-900 text-xs text-white">
                                 <img
-                                    src={member.photo || `https://placehold.co/100x100/0d1526/00D4FF?text=${member.name[0]}`}
+                                    src={member.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=100`}
                                     alt={member.name}
                                     className="w-full h-full object-cover"
-                                    onError={(e) => { (e.target as HTMLImageElement).src = `https://placehold.co/100x100/0d1526/00D4FF?text=${member.name[0]}`; }}
+                                    onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=100`; }}
                                 />
                             </div>
                             {member.isPresident && <div className="text-xs mb-1">👑</div>}

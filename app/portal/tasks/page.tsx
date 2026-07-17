@@ -177,11 +177,23 @@ export default function TasksPage() {
                 {task.status !== "DONE" && <button onClick={() => updateStatus(task.id, "DONE")} className="text-[10px] px-2 py-1 rounded bg-aira-green/20 text-aira-green">Done</button>}
             </div>
 
-            {!isAdmin && (
-                <button onClick={() => openTaskUpdateModal(task)} className="mt-2 text-[10px] px-2 py-1 rounded border border-aira-magenta/40 text-aira-magenta hover:bg-aira-magenta/10">
-                    Update Admin
-                </button>
-            )}
+            <div className="mt-3">
+                {role === "ADMIN" && (
+                    <button onClick={() => openTaskUpdateModal(task)} className="text-[10px] px-2 py-1 rounded border border-aira-cyan/40 text-aira-cyan hover:bg-aira-cyan/10">
+                        View Lead Updates
+                    </button>
+                )}
+                {role === "TEAM_LEAD" && (
+                     <button onClick={() => openTaskUpdateModal(task)} className="text-[10px] px-2 py-1 rounded border border-aira-magenta/40 text-aira-magenta hover:bg-aira-magenta/10">
+                         {task.assignedUser ? "View Member Updates" : "Update Admin"}
+                     </button>
+                )}
+                {role === "TEAM_MEMBER" && (
+                     <button onClick={() => openTaskUpdateModal(task)} className="text-[10px] px-2 py-1 rounded border border-aira-magenta/40 text-aira-magenta hover:bg-aira-magenta/10">
+                         Update Team Lead
+                     </button>
+                )}
+            </div>
         </div>
     );
 
@@ -293,16 +305,20 @@ export default function TasksPage() {
                 }
             >
                 <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
-                    <div>
-                        <label className="block text-xs text-slate-400 mb-1">Message to admin</label>
-                        <textarea
-                            rows={3}
-                            value={updateMessage}
-                            onChange={(e) => setUpdateMessage(e.target.value)}
-                            placeholder="Share what is completed, blockers, next steps..."
-                            className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-magenta/60"
-                        />
-                    </div>
+                    {((role === "TEAM_MEMBER") || (role === "TEAM_LEAD" && !selectedTask?.assignedUser)) && (
+                        <div>
+                            <label className="block text-xs text-slate-400 mb-1">
+                                {role === "TEAM_MEMBER" ? "Message to Team Lead" : "Message to Admin"}
+                            </label>
+                            <textarea
+                                rows={3}
+                                value={updateMessage}
+                                onChange={(e) => setUpdateMessage(e.target.value)}
+                                placeholder="Share what is completed, blockers, next steps..."
+                                className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-magenta/60"
+                            />
+                        </div>
+                    )}
 
                     <div className="space-y-2">
                         <p className="text-xs text-slate-400">Recent updates</p>
