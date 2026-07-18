@@ -34,6 +34,7 @@ export default function TeamsAdminPage() {
     const [selectedUserId, setSelectedUserId] = useState<string>("");
     const [memberRole, setMemberRole] = useState<string>("TEAM_MEMBER");
     const [userSearch, setUserSearch] = useState<string>("");
+    const [showUserList, setShowUserList] = useState<boolean>(true);
 
     const fetchTeams = useCallback(async (showErrorToast = false) => {
         setIsLoading(true);
@@ -136,6 +137,7 @@ export default function TeamsAdminPage() {
         setSelectedUserId("");
         setMemberRole("TEAM_MEMBER");
         setUserSearch("");
+        setShowUserList(true);
         // fetch all users so admin can pick
         try {
             const res = await fetch("/api/users");
@@ -337,50 +339,80 @@ export default function TeamsAdminPage() {
                 }
             >
                 <div className="space-y-4">
-                    {/* Search filter */}
-                    <div className="relative">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input
-                            value={userSearch}
-                            onChange={e => setUserSearch(e.target.value)}
-                            placeholder="Search by name or email..."
-                            className="w-full rounded-xl border border-white/15 bg-slate-900 pl-8 pr-3 py-2.5 text-white outline-none focus:border-aira-cyan/60"
-                        />
-                    </div>
 
-                    {/* User list */}
-                    <div className="max-h-56 overflow-y-auto space-y-1 rounded-xl border border-white/10 bg-slate-900/50 p-1">
-                        {allUsers
-                            .filter(u => {
-                                const q = userSearch.toLowerCase();
-                                return !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
-                            })
-                            .map(u => (
+                    {/* Selected user pill — shown after picking */}
+                    {selectedUserId && !showUserList && (() => {
+                        const picked = allUsers.find(u => u.id === selectedUserId);
+                        return picked ? (
+                            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-aira-cyan/40 bg-aira-cyan/10">
+                                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+                                    {picked.name[0]?.toUpperCase()}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-sm text-white font-semibold truncate">{picked.name}</p>
+                                    <p className="text-[11px] text-slate-400 truncate">{picked.email}</p>
+                                </div>
                                 <button
-                                    key={u.id}
-                                    onClick={() => setSelectedUserId(u.id === selectedUserId ? "" : u.id)}
-                                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${selectedUserId === u.id
-                                            ? "bg-aira-cyan/20 border border-aira-cyan/40"
-                                            : "hover:bg-white/5 border border-transparent"
-                                        }`}
+                                    onClick={() => { setShowUserList(true); setUserSearch(""); }}
+                                    className="flex-shrink-0 text-[11px] px-2.5 py-1 rounded-lg border border-aira-cyan/40 text-aira-cyan hover:bg-aira-cyan/10 transition-colors"
                                 >
-                                    <div className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                                        {u.name[0]?.toUpperCase()}
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="text-sm text-white font-medium truncate">{u.name}</p>
-                                        <p className="text-[11px] text-slate-400 truncate">{u.email}</p>
-                                    </div>
-                                    <span className="ml-auto text-[10px] text-slate-500 flex-shrink-0">{u.role.replace("_", " ")}</span>
+                                    Change
                                 </button>
-                            ))}
-                        {allUsers.filter(u => {
-                            const q = userSearch.toLowerCase();
-                            return !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
-                        }).length === 0 && (
-                                <p className="text-xs text-slate-500 text-center py-4">No users found. Create users in System Users first.</p>
-                            )}
-                    </div>
+                            </div>
+                        ) : null;
+                    })()}
+
+                    {/* Search + user list — collapsed once a user is selected */}
+                    {showUserList && (
+                        <>
+                            <div className="relative">
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    value={userSearch}
+                                    onChange={e => setUserSearch(e.target.value)}
+                                    placeholder="Search by name or email..."
+                                    className="w-full rounded-xl border border-white/15 bg-slate-900 pl-8 pr-3 py-2.5 text-white outline-none focus:border-aira-cyan/60"
+                                />
+                            </div>
+
+                            <div className="max-h-56 overflow-y-auto space-y-1 rounded-xl border border-white/10 bg-slate-900/50 p-1">
+                                {allUsers
+                                    .filter(u => {
+                                        const q = userSearch.toLowerCase();
+                                        return !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+                                    })
+                                    .map(u => (
+                                        <button
+                                            key={u.id}
+                                            onClick={() => {
+                                                setSelectedUserId(u.id);
+                                                setShowUserList(false);
+                                                setUserSearch("");
+                                            }}
+                                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${selectedUserId === u.id
+                                                    ? "bg-aira-cyan/20 border border-aira-cyan/40"
+                                                    : "hover:bg-white/5 border border-transparent"
+                                                }`}
+                                        >
+                                            <div className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                                                {u.name[0]?.toUpperCase()}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-sm text-white font-medium truncate">{u.name}</p>
+                                                <p className="text-[11px] text-slate-400 truncate">{u.email}</p>
+                                            </div>
+                                            <span className="ml-auto text-[10px] text-slate-500 flex-shrink-0">{u.role.replace("_", " ")}</span>
+                                        </button>
+                                    ))}
+                                {allUsers.filter(u => {
+                                    const q = userSearch.toLowerCase();
+                                    return !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+                                }).length === 0 && (
+                                        <p className="text-xs text-slate-500 text-center py-4">No users found. Create users in System Users first.</p>
+                                    )}
+                            </div>
+                        </>
+                    )}
 
                     {/* Role picker */}
                     <div>
