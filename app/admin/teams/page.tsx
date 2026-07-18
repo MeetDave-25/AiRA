@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Trash2, Shield, User, Users } from "lucide-react";
+import { Plus, Trash2, Shield, User, Users, Search } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion, useReducedMotion } from "framer-motion";
 import AnimatedModal from "@/components/ui/AnimatedModal";
@@ -27,10 +27,13 @@ export default function TeamsAdminPage() {
     const [deleteTeamId, setDeleteTeamId] = useState<string | null>(null);
     const [memberTeamId, setMemberTeamId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [newLoginId, setNewLoginId] = useState<string>("");
-    const [newPassword, setNewPassword] = useState<string>("");
     const [teamForm, setTeamForm] = useState({ name: "", description: "", color: "#00D4FF" });
-    const [memberForm, setMemberForm] = useState({ name: "", email: "", role: "TEAM_MEMBER" });
+
+    // --- Add member: pick from existing users ---
+    const [allUsers, setAllUsers] = useState<any[]>([]);
+    const [selectedUserId, setSelectedUserId] = useState<string>("");
+    const [memberRole, setMemberRole] = useState<string>("TEAM_MEMBER");
+    const [userSearch, setUserSearch] = useState<string>("");
 
     const fetchTeams = useCallback(async (showErrorToast = false) => {
         setIsLoading(true);
@@ -128,17 +131,25 @@ export default function TeamsAdminPage() {
         }
     };
 
-    const openAddMemberModal = (teamId: string) => {
+    const openAddMemberModal = async (teamId: string) => {
         setMemberTeamId(teamId);
-        setMemberForm({ name: "", email: "", role: "TEAM_MEMBER" });
-        setNewLoginId("");
-        setNewPassword("");
+        setSelectedUserId("");
+        setMemberRole("TEAM_MEMBER");
+        setUserSearch("");
+        // fetch all users so admin can pick
+        try {
+            const res = await fetch("/api/users");
+            const data = res.ok ? await res.json() : [];
+            setAllUsers(Array.isArray(data) ? data : []);
+        } catch {
+            setAllUsers([]);
+        }
     };
 
     const handleAddMember = async () => {
         if (!memberTeamId) return;
-        if (!memberForm.name.trim()) {
-            toast.error("Name is required.");
+        if (!selectedUserId) {
+            toast.error("Please select a user.");
             return;
         }
 
@@ -148,16 +159,14 @@ export default function TeamsAdminPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    name: memberForm.name.trim(),
-                    email: memberForm.email.trim(),
-                    role: memberForm.role,
+                    userId: selectedUserId,
+                    role: memberRole,
                 }),
             });
             const data = await res.json();
             if (res.ok) {
-                setNewLoginId(data.generatedLoginId || data.user?.email || "");
-                setNewPassword(data.generatedPassword || "");
                 toast.success("Member added!");
+                setMemberTeamId(null);
                 await fetchTeams();
             } else {
                 toast.error(data.error || "Failed");
@@ -315,87 +324,73 @@ export default function TeamsAdminPage() {
 
             <AnimatedModal
                 open={!!memberTeamId}
-                onClose={() => {
-                    setMemberTeamId(null);
-                    setNewLoginId("");
-                    setNewPassword("");
-                }}
+                onClose={() => setMemberTeamId(null)}
                 title="Add Team Member"
-                subtitle="Login ID and password will be generated"
+                subtitle="Pick an existing user to add to this team"
                 footer={
                     <div className="flex justify-end gap-3">
-                        <button onClick={() => {
-                            setMemberTeamId(null);
-                            setNewLoginId("");
-                            setNewPassword("");
-                        }} className="px-4 py-2 rounded-lg border border-white/15 text-slate-300 hover:bg-white/5">Close</button>
-                        <button disabled={isSubmitting || !!newPassword} onClick={handleAddMember} className="px-4 py-2 rounded-lg bg-aira-cyan text-aira-bg font-semibold disabled:opacity-60">
-                            {isSubmitting ? "Adding..." : "Add Member"}
+                        <button onClick={() => setMemberTeamId(null)} className="px-4 py-2 rounded-lg border border-white/15 text-slate-300 hover:bg-white/5">Cancel</button>
+                        <button disabled={isSubmitting || !selectedUserId} onClick={handleAddMember} className="px-4 py-2 rounded-lg bg-aira-cyan text-aira-bg font-semibold disabled:opacity-60">
+                            {isSubmitting ? "Adding..." : "Add to Team"}
                         </button>
                     </div>
                 }
             >
                 <div className="space-y-4">
-                    <div>
-                        <label className="block text-xs text-slate-400 mb-1">Name</label>
-                        <input value={memberForm.name} onChange={(e) => setMemberForm({ ...memberForm, name: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" />
+                    {/* Search filter */}
+                    <div className="relative">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                            value={userSearch}
+                            onChange={e => setUserSearch(e.target.value)}
+                            placeholder="Search by name or email..."
+                            className="w-full rounded-xl border border-white/15 bg-slate-900 pl-8 pr-3 py-2.5 text-white outline-none focus:border-aira-cyan/60"
+                        />
                     </div>
-                    <div>
-                        <label className="block text-xs text-slate-400 mb-1">Email (optional)</label>
-                        <input type="email" value={memberForm.email} onChange={(e) => setMemberForm({ ...memberForm, email: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" />
-                        <p className="text-[11px] text-slate-500 mt-1">If left blank, login ID is auto-generated.</p>
+
+                    {/* User list */}
+                    <div className="max-h-56 overflow-y-auto space-y-1 rounded-xl border border-white/10 bg-slate-900/50 p-1">
+                        {allUsers
+                            .filter(u => {
+                                const q = userSearch.toLowerCase();
+                                return !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+                            })
+                            .map(u => (
+                                <button
+                                    key={u.id}
+                                    onClick={() => setSelectedUserId(u.id === selectedUserId ? "" : u.id)}
+                                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${selectedUserId === u.id
+                                            ? "bg-aira-cyan/20 border border-aira-cyan/40"
+                                            : "hover:bg-white/5 border border-transparent"
+                                        }`}
+                                >
+                                    <div className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                                        {u.name[0]?.toUpperCase()}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-sm text-white font-medium truncate">{u.name}</p>
+                                        <p className="text-[11px] text-slate-400 truncate">{u.email}</p>
+                                    </div>
+                                    <span className="ml-auto text-[10px] text-slate-500 flex-shrink-0">{u.role.replace("_", " ")}</span>
+                                </button>
+                            ))}
+                        {allUsers.filter(u => {
+                            const q = userSearch.toLowerCase();
+                            return !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+                        }).length === 0 && (
+                                <p className="text-xs text-slate-500 text-center py-4">No users found. Create users in System Users first.</p>
+                            )}
                     </div>
+
+                    {/* Role picker */}
                     <div>
-                        <label className="block text-xs text-slate-400 mb-1">Role</label>
-                        <select value={memberForm.role} onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60">
-                            <option value="TEAM_MEMBER">TEAM_MEMBER</option>
-                            <option value="TEAM_LEAD">TEAM_LEAD</option>
+                        <label className="block text-xs text-slate-400 mb-1">Role in this team</label>
+                        <select value={memberRole} onChange={e => setMemberRole(e.target.value)} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60">
+                            <option value="TEAM_MEMBER">TEAM MEMBER</option>
+                            <option value="TEAM_LEAD">TEAM LEAD</option>
                             <option value="ADMIN">ADMIN</option>
                         </select>
                     </div>
-
-                    {newPassword && (
-                        <div className="rounded-xl border border-aira-gold/30 bg-aira-gold/10 p-3">
-                            <p className="text-xs text-aira-gold mb-2">Generated credentials (shown once)</p>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[11px] text-slate-400 w-16">Login ID</span>
-                                    <code className="flex-1 rounded-md bg-slate-900/70 px-2 py-1 text-sm text-slate-200">{newLoginId}</code>
-                                    <button
-                                        onClick={async () => {
-                                            await navigator.clipboard.writeText(newLoginId);
-                                            toast.success("Login ID copied");
-                                        }}
-                                        className="px-2.5 py-1.5 text-xs rounded-md border border-aira-gold/40 text-aira-gold hover:bg-aira-gold/10"
-                                    >
-                                        Copy
-                                    </button>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[11px] text-slate-400 w-16">Password</span>
-                                    <code className="flex-1 rounded-md bg-slate-900/70 px-2 py-1 text-sm text-slate-200">{newPassword}</code>
-                                    <button
-                                        onClick={async () => {
-                                            await navigator.clipboard.writeText(newPassword);
-                                            toast.success("Password copied");
-                                        }}
-                                        className="px-2.5 py-1.5 text-xs rounded-md border border-aira-gold/40 text-aira-gold hover:bg-aira-gold/10"
-                                    >
-                                        Copy
-                                    </button>
-                                </div>
-                                <button
-                                    onClick={async () => {
-                                        await navigator.clipboard.writeText(`Login ID: ${newLoginId}\nPassword: ${newPassword}`);
-                                        toast.success("Credentials copied");
-                                    }}
-                                    className="w-full px-3 py-2 text-xs rounded-md border border-aira-gold/40 text-aira-gold hover:bg-aira-gold/10"
-                                >
-                                    Copy Both
-                                </button>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </AnimatedModal>
 
