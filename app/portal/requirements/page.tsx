@@ -9,9 +9,9 @@ import toast from "react-hot-toast";
 export default function RequirementsPage() {
     const { data: session } = useSession();
     const user: any = session?.user;
-    
+
     const [tasks, setTasks] = useState<any[]>([]);
-    
+
     const [isUpdateOpen, setIsUpdateOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<any | null>(null);
     const [updateMessage, setUpdateMessage] = useState("");
@@ -26,7 +26,7 @@ export default function RequirementsPage() {
     }, []);
 
     const requirements = useMemo(
-        () => tasks.filter((t) => t.status === "TODO" || t.status === "IN_PROGRESS"),
+        () => tasks.filter((t) => (t.status === "TODO" || t.status === "IN_PROGRESS") && !t.parentTaskId),
         [tasks]
     );
 
@@ -126,7 +126,7 @@ export default function RequirementsPage() {
                     {(() => {
                         const isAdmin = user?.role === "ADMIN";
                         const taskTeamRole = isAdmin ? "ADMIN" : (user?.teams?.find((t: any) => t.id === selectedTask?.teamId)?.memberRole || user?.role);
-                        
+
                         return ((taskTeamRole === "TEAM_MEMBER") || (taskTeamRole === "TEAM_LEAD" && !selectedTask?.assignedTo)) && (
                             <div>
                                 <label className="block text-xs text-slate-400 mb-2">
@@ -142,7 +142,7 @@ export default function RequirementsPage() {
                             </div>
                         );
                     })()}
-                    
+
                     <div className="space-y-2">
                         <p className="text-xs text-slate-400">Recent updates</p>
                         {taskUpdates.map((u) => (

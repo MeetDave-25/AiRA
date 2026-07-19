@@ -112,9 +112,7 @@ export default function DashboardPage() {
                             </div>
                         ))}
                         {tasks.length === 0 && <p className="text-xs text-slate-500">No tasks assigned yet.</p>}
-                        <Link href={role === "ADMIN" ? "/portal/tasks" : "/portal/team-dashboard"} className="text-xs text-aira-cyan block mt-4 hover:underline">
-                            Open tasks board →
-                        </Link>
+                        <Link href="/portal/tasks" className="text-xs text-aira-cyan block mt-4 hover:underline">Open tasks board →</Link>
                     </div>
                 </div>
 

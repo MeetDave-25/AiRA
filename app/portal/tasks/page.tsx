@@ -64,9 +64,10 @@ export default function TasksPage() {
         return team?.memberships?.map((m: any) => m.user) || [];
     }, [teams, form.teamId]);
 
-    const todo = tasks.filter((t) => t.status === "TODO");
-    const inProgress = tasks.filter((t) => t.status === "IN_PROGRESS");
-    const done = tasks.filter((t) => t.status === "DONE");
+    const mainTasks = tasks.filter((t) => !t.parentTaskId);
+    const todo = mainTasks.filter((t) => t.status === "TODO");
+    const inProgress = mainTasks.filter((t) => t.status === "IN_PROGRESS");
+    const done = mainTasks.filter((t) => t.status === "DONE");
 
     const updateStatus = async (taskId: string, status: string) => {
         try {
