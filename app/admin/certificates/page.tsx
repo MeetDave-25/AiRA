@@ -8,12 +8,17 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { compressImage } from "@/lib/image-compressor";
 
 export default function CertificatesPage() {
     const [title, setTitle] = useState("Certificate of Excellence");
     const [eventStr, setEventStr] = useState("Proudly presented at AiRA Lab 2026");
     const [description, setDescription] = useState("has successfully demonstrated exceptional dedication, skill, and commitment to excellence in the core tenets of AI research and application.");
     const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+
+    const [logoUrl, setLogoUrl] = useState("");
+    const [signatureUrl, setSignatureUrl] = useState("");
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     const [events, setEvents] = useState<any[]>([]);
     const [selectedEventId, setSelectedEventId] = useState("");
@@ -55,6 +60,34 @@ export default function CertificatesPage() {
             toast.success("Loaded names!", { id: toastId });
         } catch (error) {
             toast.error("Could not load attendees. You can paste them manually.", { id: toastId });
+        }
+    };
+
+    const handleImageUpload = async (file: File, type: "logoUrl" | "signatureUrl") => {
+        setUploadingImage(true);
+        const toastId = toast.loading("Uploading image...");
+        try {
+            const compressed = await compressImage(file);
+            const body = new FormData();
+            body.append("file", compressed);
+            body.append("type", "certificate_" + type);
+
+            const res = await fetch("/api/upload", {
+                method: "POST",
+                body,
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || "Upload failed");
+
+            if (type === "logoUrl") setLogoUrl(data.url);
+            if (type === "signatureUrl") setSignatureUrl(data.url);
+
+            toast.success("Image uploaded successfully!", { id: toastId });
+        } catch (error: any) {
+            toast.error(error?.message || "Image upload failed", { id: toastId });
+        } finally {
+            setUploadingImage(false);
         }
     };
 
@@ -176,6 +209,33 @@ export default function CertificatesPage() {
                             <label className="text-xs text-slate-400 mb-1 block">Sign Date</label>
                             <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ colorScheme: "dark" }} className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-aira-cyan/50" />
                         </div>
+
+                        {/* Image Uploads */}
+                        <div className="pt-2 border-t border-white/5 space-y-4">
+                            <div>
+                                <label className="text-xs text-slate-400 mb-1 flex justify-between">
+                                    Official Logo {logoUrl && <span className="text-aira-green">Uploaded ✓</span>}
+                                </label>
+                                <label className={`flex items-center justify-center w-full px-3 py-1.5 rounded-lg border border-dashed transition cursor-pointer text-xs ${logoUrl ? "border-aira-green text-aira-green bg-aira-green/5" : "border-white/20 text-slate-300 hover:border-aira-cyan hover:text-aira-cyan"}`}>
+                                    {uploadingImage ? "Uploading..." : logoUrl ? "Change Official Logo" : "Upload Official Logo"}
+                                    <input type="file" accept="image/*" className="hidden" disabled={uploadingImage} onChange={(e) => {
+                                        if (e.target.files?.[0]) handleImageUpload(e.target.files[0], "logoUrl");
+                                    }} />
+                                </label>
+                            </div>
+
+                            <div>
+                                <label className="text-xs text-slate-400 mb-1 flex justify-between">
+                                    Director Signature {signatureUrl && <span className="text-aira-green">Uploaded ✓</span>}
+                                </label>
+                                <label className={`flex items-center justify-center w-full px-3 py-1.5 rounded-lg border border-dashed transition cursor-pointer text-xs ${signatureUrl ? "border-aira-green text-aira-green bg-aira-green/5" : "border-white/20 text-slate-300 hover:border-aira-cyan hover:text-aira-cyan"}`}>
+                                    {uploadingImage ? "Uploading..." : signatureUrl ? "Change Signature" : "Upload Digital Signature"}
+                                    <input type="file" accept="image/*" className="hidden" disabled={uploadingImage} onChange={(e) => {
+                                        if (e.target.files?.[0]) handleImageUpload(e.target.files[0], "signatureUrl");
+                                    }} />
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="glass p-5 rounded-2xl border border-white/5 space-y-4">
@@ -219,6 +279,8 @@ export default function CertificatesPage() {
                             description={description}
                             date={date}
                             eventStr={eventStr}
+                            logoUrl={logoUrl}
+                            signatureUrl={signatureUrl}
                         />
                     </div>
                 </div>
@@ -234,6 +296,8 @@ export default function CertificatesPage() {
                     description={description}
                     date={date}
                     eventStr={eventStr}
+                    logoUrl={logoUrl}
+                    signatureUrl={signatureUrl}
                 />
             </div>
         </div>

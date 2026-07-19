@@ -9,22 +9,25 @@ export interface CertificateTemplateProps {
     eventStr: string;
     description: string;
     date: string;
+    logoUrl?: string;
+    signatureUrl?: string;
 }
 
 export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplateProps>(
-    ({ name, title, eventStr, description, date }, ref) => {
+    ({ name, title, eventStr, description, date, logoUrl, signatureUrl }, ref) => {
         return (
             <div
                 ref={ref}
-                className="relative bg-[#050505] overflow-hidden flex flex-col font-sans"
+                className="relative bg-[#050505] flex flex-col font-sans"
                 style={{
                     width: "1122px",
                     height: "794px",
                     boxSizing: "border-box",
+                    overflow: "hidden"
                 }}
             >
                 {/* Background Details */}
-                <div className="absolute top-0 left-0 right-0 bottom-0 border-[16px] border-[#0A0A0A] z-10 pointer-events-none" />
+                <div className="absolute top-0 left-0 w-full h-full border-[16px] border-[#0A0A0A] z-10 pointer-events-none" />
                 <div className="absolute top-[16px] left-[16px] right-[16px] bottom-[16px] border border-[#00D4FF]/30 z-10 pointer-events-none" />
 
                 {/* Safe Radial Gradients instead of CSS filter: blur */}
@@ -39,17 +42,23 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
                     style={{ backgroundImage: `url('https://www.transparenttextures.com/patterns/stardust.png')` }}
                 />
 
-                <div className="relative z-20 flex-1 flex flex-col pt-24 px-24 pb-16">
+                <div className="relative z-20 flex-1 flex flex-col pt-20 px-24 pb-16">
 
                     {/* Top Content: Centered */}
                     <div className="flex-1 flex flex-col items-center justify-start text-center">
-                        <div className="mb-8 flex items-center justify-center gap-4">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#00D4FF] to-[#7C3AED] flex items-center justify-center font-orbitron font-bold text-3xl text-white shadow-[0_0_30px_rgba(0,212,255,0.4)]">
-                                AL
-                            </div>
-                            <span className="font-orbitron font-extrabold text-4xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-[#00D4FF] to-white">
-                                AiRA<span className="text-[#FF2A85]"> Lab</span>
-                            </span>
+                        <div className="mb-6 flex items-center justify-center min-h-[80px]">
+                            {logoUrl ? (
+                                <img src={logoUrl} crossOrigin="anonymous" alt="Official Logo" className="h-[90px] object-contain" />
+                            ) : (
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#00D4FF] to-[#7C3AED] flex items-center justify-center font-orbitron font-bold text-3xl text-white shadow-[0_0_30px_rgba(0,212,255,0.4)]">
+                                        AL
+                                    </div>
+                                    <span className="font-orbitron font-extrabold text-4xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-[#00D4FF] to-white">
+                                        AiRA<span className="text-[#FF2A85]"> Lab</span>
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         <h1 className="text-5xl font-orbitron font-black text-[#00D4FF] uppercase tracking-[0.2em] mb-4" style={{ textShadow: "0 0 40px rgba(0,212,255,0.5)" }}>
@@ -82,11 +91,15 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
                         </div>
 
                         <div className="text-center w-64">
-                            <div className="h-12 flex items-end justify-center mb-1">
-                                <span className="font-serif text-4xl text-white opacity-90 -rotate-2" style={{ fontFamily: "Georgia, cursive", fontStyle: "italic" }}>AiRA Director</span>
+                            <div className="h-20 flex items-end justify-center mb-1 w-full relative">
+                                {signatureUrl ? (
+                                    <img src={signatureUrl} crossOrigin="anonymous" alt="Signature" className="h-[90%] object-contain mb-2 max-w-[200px]" />
+                                ) : (
+                                    <span className="font-serif text-4xl text-white opacity-90 -rotate-2" style={{ fontFamily: "Georgia, cursive", fontStyle: "italic" }}>AiRA Director</span>
+                                )}
                             </div>
                             <div className="w-full h-px bg-slate-700 mb-2" />
-                            <div className="text-sm text-[#7C3AED] tracking-widest uppercase font-semibold">Authorized Signature</div>
+                            <div className="text-sm text-[#7C3AED] tracking-widest uppercase font-semibold">AiRA Lab Director</div>
                         </div>
                     </div>
                 </div>
