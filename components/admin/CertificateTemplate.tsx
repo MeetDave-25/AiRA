@@ -11,10 +11,11 @@ export interface CertificateTemplateProps {
     date: string;
     logoUrl?: string;
     signatureUrl?: string;
+    collegeLogoUrl?: string;
 }
 
 export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplateProps>(
-    ({ name, title, eventStr, description, date, logoUrl, signatureUrl }, ref) => {
+    ({ name, title, eventStr, description, date, logoUrl, signatureUrl, collegeLogoUrl }, ref) => {
         return (
             <div
                 ref={ref}
@@ -42,25 +43,44 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
                     style={{ backgroundImage: `url('https://www.transparenttextures.com/patterns/stardust.png')` }}
                 />
 
-                <div className="relative z-20 flex-1 flex flex-col pt-20 px-24 pb-16">
+                <div className="relative z-20 flex-1 flex flex-col pt-16 px-16 pb-16">
 
-                    {/* Top Content: Centered */}
-                    <div className="flex-1 flex flex-col items-center justify-start text-center">
-                        <div className="mb-6 flex items-center justify-center min-h-[80px]">
-                            {logoUrl ? (
-                                <img src={logoUrl} crossOrigin="anonymous" alt="Official Logo" className="h-[90px] object-contain" />
+                    {/* Header: Left Logo, Center Title, Right Logo */}
+                    <div className="w-full flex items-center justify-between mb-8 px-4">
+
+                        {/* Partner / College Logo (Left) */}
+                        <div className="w-64 h-24 flex items-center justify-start">
+                            {collegeLogoUrl ? (
+                                <img src={collegeLogoUrl} crossOrigin="anonymous" alt="Partner Logo" className="h-full object-contain max-w-full" />
                             ) : (
-                                <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#00D4FF] to-[#7C3AED] flex items-center justify-center font-orbitron font-bold text-3xl text-white shadow-[0_0_30px_rgba(0,212,255,0.4)]">
-                                        AL
-                                    </div>
-                                    <span className="font-orbitron font-extrabold text-4xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-[#00D4FF] to-white">
-                                        AiRA<span className="text-[#FF2A85]"> Lab</span>
-                                    </span>
+                                <div className="w-24 h-24 rounded-full border-2 border-dashed border-[#00D4FF]/30 flex flex-col items-center justify-center text-slate-400 text-[10px] text-center p-2 opacity-50">
+                                    College / Partner Logo Placeholder
                                 </div>
                             )}
                         </div>
 
+                        {/* Center: AiRA Lab Classic Text Form */}
+                        <div className="flex-1 flex flex-col items-center justify-center">
+                            <span className="font-orbitron font-black text-5xl tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#00D4FF] to-[#7C3AED]">
+                                AiRA<span className="text-white"> Lab</span>
+                            </span>
+                            <p className="text-[11px] text-slate-300 tracking-[0.3em] uppercase mt-2 font-medium">Driving Next-Gen Innovation & AI Research</p>
+                        </div>
+
+                        {/* Official AiRA Logo Image (Right) */}
+                        <div className="w-64 h-24 flex items-center justify-end">
+                            {logoUrl ? (
+                                <img src={logoUrl} crossOrigin="anonymous" alt="Official Logo" className="h-full object-contain max-w-full" />
+                            ) : (
+                                <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-[#00D4FF]/20 to-[#7C3AED]/20 border border-white/10 flex items-center justify-center font-orbitron font-bold text-lg text-white opacity-50 text-center">
+                                    AiRA<br />Logo
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Main Content Area */}
+                    <div className="flex-1 flex flex-col items-center justify-start text-center pt-8">
                         <h1 className="text-5xl font-orbitron font-black text-[#00D4FF] uppercase tracking-[0.2em] mb-4" style={{ textShadow: "0 0 40px rgba(0,212,255,0.5)" }}>
                             {title || "Certificate of Excellence"}
                         </h1>

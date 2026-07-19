@@ -18,6 +18,7 @@ export default function CertificatesPage() {
 
     const [logoUrl, setLogoUrl] = useState("");
     const [signatureUrl, setSignatureUrl] = useState("");
+    const [collegeLogoUrl, setCollegeLogoUrl] = useState("");
     const [uploadingImage, setUploadingImage] = useState(false);
 
     const [events, setEvents] = useState<any[]>([]);
@@ -63,7 +64,7 @@ export default function CertificatesPage() {
         }
     };
 
-    const handleImageUpload = async (file: File, type: "logoUrl" | "signatureUrl") => {
+    const handleImageUpload = async (file: File, type: "logoUrl" | "signatureUrl" | "collegeLogoUrl") => {
         setUploadingImage(true);
         const toastId = toast.loading("Uploading image...");
         try {
@@ -82,6 +83,7 @@ export default function CertificatesPage() {
 
             if (type === "logoUrl") setLogoUrl(data.url);
             if (type === "signatureUrl") setSignatureUrl(data.url);
+            if (type === "collegeLogoUrl") setCollegeLogoUrl(data.url);
 
             toast.success("Image uploaded successfully!", { id: toastId });
         } catch (error: any) {
@@ -281,6 +283,7 @@ export default function CertificatesPage() {
                             eventStr={eventStr}
                             logoUrl={logoUrl}
                             signatureUrl={signatureUrl}
+                            collegeLogoUrl={collegeLogoUrl}
                         />
                     </div>
                 </div>
@@ -298,6 +301,7 @@ export default function CertificatesPage() {
                     eventStr={eventStr}
                     logoUrl={logoUrl}
                     signatureUrl={signatureUrl}
+                    collegeLogoUrl={collegeLogoUrl}
                 />
             </div>
         </div>
