@@ -61,7 +61,7 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
 
                         {/* Center: AiRA Lab Classic Text Form */}
                         <div className="flex-1 flex flex-col items-center justify-center">
-                            <span className="font-orbitron font-black text-5xl tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#00D4FF] to-[#7C3AED]">
+                            <span className="font-orbitron font-black text-5xl tracking-widest text-[#00D4FF]">
                                 AiRA<span className="text-white"> Lab</span>
                             </span>
                             <p className="text-[11px] text-slate-300 tracking-[0.3em] uppercase mt-2 font-medium">Driving Next-Gen Innovation & AI Research</p>
