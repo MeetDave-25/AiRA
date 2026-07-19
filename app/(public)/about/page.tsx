@@ -147,11 +147,12 @@ export default function AboutPage() {
                     {/* Orbit ring */}
                     <div className="absolute inset-0 rounded-full border border-aira-cyan/10" style={{ margin: `${(500 - radius * 2) / 2}px` }} />
 
-                    {/* Central image */}
+                    {/* Central image - floats perfectly centered */}
                     <motion.div
                         animate={{ y: [-6, 6, -6] }}
                         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
+                        className="absolute left-1/2 top-1/2 z-10"
+                        style={{ transform: "translate(-50%, -50%)" }}
                     >
                         <div className="relative">
                             <div className="w-44 h-56 sm:w-52 sm:h-64 rounded-3xl overflow-hidden border-2 border-aira-cyan/50 glow-cyan">
@@ -165,26 +166,27 @@ export default function AboutPage() {
                             {/* Glow pulse rings */}
                             <div className="absolute inset-0 rounded-3xl border border-aira-cyan/20 animate-ping" style={{ animationDuration: "3s" }} />
                         </div>
-
-                        {/* President info below central image */}
-                        {president && (
-                            <button
-                                onClick={() => setSelectedMember(president)}
-                                className="mt-4 text-center w-full group"
-                            >
-                                <p className="font-orbitron font-bold text-sm text-white group-hover:text-aira-cyan transition-colors">{president.name}</p>
-                                <p className="text-aira-cyan text-xs">{president.role}</p>
-                            </button>
-                        )}
                     </motion.div>
+
+                    {/* President label - positioned below center independently so it doesn't shift the image */}
+                    {president && (
+                        <button
+                            onClick={() => setSelectedMember(president)}
+                            className="absolute left-1/2 z-20 text-center group"
+                            style={{ top: "calc(50% + 140px)", transform: "translateX(-50%)" }}
+                        >
+                            <p className="font-orbitron font-bold text-sm text-white group-hover:text-aira-cyan transition-colors whitespace-nowrap">{president.name}</p>
+                            <p className="text-aira-cyan text-xs mt-0.5">{president.role}</p>
+                        </button>
+                    )}
 
                     {/* Orbiting members container */}
                     <div className="absolute inset-0 z-20 pointer-events-none" style={{ animation: "spin 30s linear infinite" }}>
                         {nonPresidents.map((member, i) => {
                             const angle = (360 / nonPresidents.length) * i;
                             return (
-                                <div 
-                                    key={member.id} 
+                                <div
+                                    key={member.id}
                                     className="absolute left-1/2 top-1/2 -ml-7 -mt-7 pointer-events-auto"
                                     style={{ transform: `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)` }}
                                 >
