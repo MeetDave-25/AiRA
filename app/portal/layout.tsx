@@ -43,8 +43,8 @@ export default function PortalLayout({
     const navItems = [
         { href: "/portal/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["ADMIN", "TEAM_LEAD", "TEAM_MEMBER"] },
         { href: "/admin", label: "Admin Analytics", icon: LayoutDashboard, roles: ["ADMIN"] },
-        { href: "/portal/tasks", label: "Tasks", icon: CheckSquare, roles: ["ADMIN", "TEAM_LEAD", "TEAM_MEMBER"] },
-        { href: "/portal/requirements", label: "Requirements", icon: FileText, roles: ["ADMIN", "TEAM_LEAD", "TEAM_MEMBER"] },
+        { href: "/portal/tasks", label: "Tasks", icon: CheckSquare, roles: ["ADMIN"] },
+        { href: "/portal/requirements", label: "Requirements", icon: FileText, roles: ["ADMIN"] },
         { href: "/admin/events", label: "All Events", icon: Calendar, roles: ["ADMIN"] },
         { href: "/portal/events", label: "My Events", icon: Calendar, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
         ...(userTeams.length > 0 ? [{ href: "/portal/team-dashboard", label: "Team Hub", icon: Users, roles: ["TEAM_LEAD", "TEAM_MEMBER"] }] : []),
