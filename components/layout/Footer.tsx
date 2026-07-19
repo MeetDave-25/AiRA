@@ -69,9 +69,9 @@ export default function Footer() {
                         </h3>
                         <ul className="space-y-3">
                             {[
-                                { icon: Mail, text: "contact@airalabs.edu" },
-                                { icon: Phone, text: "+91 00000 00000" },
-                                { icon: MapPin, text: "College Campus, Innovation Block" },
+                                { icon: Mail, text: "parth_ljcca@ljku.edu.in" },
+                                { icon: Phone, text: "+91 81609 01481" },
+                                { icon: MapPin, text: "LJCCA, L J College of Computer Application, Vastrapur, Ahmedabad" },
                             ].map(({ icon: Icon, text }, i) => (
                                 <li key={i} className="flex items-center gap-3 text-slate-400 text-sm">
                                     <Icon size={14} className="text-aira-cyan shrink-0" />
