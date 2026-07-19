@@ -47,7 +47,7 @@ export default function PortalLayout({
         { href: "/portal/requirements", label: "Requirements", icon: FileText, roles: ["ADMIN", "TEAM_LEAD", "TEAM_MEMBER"] },
         { href: "/admin/events", label: "All Events", icon: Calendar, roles: ["ADMIN"] },
         { href: "/portal/events", label: "My Events", icon: Calendar, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
-        ...(userTeams.length > 0 ? [{ href: "/portal/team-dashboard", label: "Team Hub", icon: Users, roles: ["TEAM_LEAD", "TEAM_MEMBER"] }] : []),
+        { href: "/portal/team-dashboard", label: "Team Hub", icon: Users, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
         { href: "/admin/users", label: "People", icon: Users, roles: ["ADMIN"] },
         { href: "/admin/teams", label: "Teams", icon: Users, roles: ["ADMIN"] },
         { href: "/admin/reports", label: "Team Reports", icon: FileText, roles: ["ADMIN"] },
