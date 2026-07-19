@@ -475,13 +475,13 @@ export default function TeamDashboardPage() {
                     <div className="space-y-4">
                         {/* Main Tasks assigned to Lead by Admin */}
                         <div className="glass rounded-xl border border-aira-cyan/20 p-4">
-                            <p className="text-xs text-aira-cyan font-semibold mb-1 flex items-center gap-2"><GitBranch size={12} /> Main Tasks Assigned to You by Admin</p>
+                            <p className="text-xs text-aira-cyan font-semibold mb-1 flex items-center gap-2"><GitBranch size={12} /> Main Tasks Assigned to the Team by Admin</p>
                             <p className="text-xs text-slate-500 mb-4">Break each task into sub-tasks and assign them to your team members below.</p>
                             <div className="space-y-3">
-                                {teamTasks.filter(t => !t.parentTaskId && t.assignedTo === user?.id).length === 0 && (
-                                    <p className="text-sm text-slate-500 text-center py-4">No main tasks assigned to you by Admin yet.</p>
+                                {teamTasks.filter(t => !t.parentTaskId).length === 0 && (
+                                    <p className="text-sm text-slate-500 text-center py-4">No main tasks assigned to the team by Admin yet.</p>
                                 )}
-                                {teamTasks.filter(t => !t.parentTaskId && t.assignedTo === user?.id).map((task) => {
+                                {teamTasks.filter(t => !t.parentTaskId).map((task) => {
                                     const isExpanded = expandedTaskId === task.id;
                                     const subs = subTasksMap[task.id] || [];
                                     const pct = task.subTaskCount > 0 ? Math.round((task.subTasksDone / task.subTaskCount) * 100) : 0;
