@@ -71,10 +71,28 @@ export async function GET(req: NextRequest) {
             usersById = Object.fromEntries((users || []).map((u: any) => [u.id, u]));
         }
 
+        // Fetch sub-task counts for parent tasks
+        const parentIds = tasks.map((t: any) => t.id);
+        let subTaskMap: Record<string, { total: number; done: number }> = {};
+        if (parentIds.length) {
+            const { data: subs } = await db
+                .from("Task")
+                .select("parentTaskId, status")
+                .in("parentTaskId", parentIds);
+            for (const s of subs || []) {
+                if (!subTaskMap[s.parentTaskId]) subTaskMap[s.parentTaskId] = { total: 0, done: 0 };
+                subTaskMap[s.parentTaskId].total++;
+                if (s.status === "DONE") subTaskMap[s.parentTaskId].done++;
+            }
+        }
+
         const enriched = tasks.map((task: any) => ({
             ...task,
             assignedUser: task.assignedTo ? usersById[task.assignedTo] || null : null,
             isAssignedToMe: task.assignedTo === userId,
+            isSubTask: !!task.parentTaskId,
+            subTaskCount: subTaskMap[task.id]?.total || 0,
+            subTasksDone: subTaskMap[task.id]?.done || 0,
         }));
 
         return NextResponse.json(enriched);
@@ -89,7 +107,7 @@ export async function POST(req: NextRequest) {
 
     const auth = await requireLeadOrAdmin(body.teamId);
     if (auth.error) return auth.error;
-    const { title, description, status, dueDate, teamId, assignedTo } = body;
+    const { title, description, status, dueDate, teamId, assignedTo, parentTaskId } = body;
     const { data, error } = await db
         .from("Task")
         .insert({
@@ -100,6 +118,7 @@ export async function POST(req: NextRequest) {
             dueDate: dueDate ? new Date(dueDate).toISOString() : null,
             teamId,
             assignedTo: assignedTo || null,
+            parentTaskId: parentTaskId || null,
             updatedAt: new Date().toISOString()
         })
         .select()

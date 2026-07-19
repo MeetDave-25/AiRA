@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Users, CheckCircle2, Clock3, AlertCircle, Plus, MessageSquare, FileText } from "lucide-react";
+import { Users, CheckCircle2, Clock3, AlertCircle, Plus, MessageSquare, FileText, ChevronDown, ChevronUp, GitBranch } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import AnimatedModal from "@/components/ui/AnimatedModal";
@@ -37,6 +37,13 @@ export default function TeamDashboardPage() {
     const [newMemberCredentials, setNewMemberCredentials] = useState<{ email: string; password: string } | null>(null);
     const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
     const [taskForm, setTaskForm] = useState({ title: "", description: "", assignedTo: "", dueDate: "" });
+
+    // Sub-task state
+    const [isSubTaskOpen, setIsSubTaskOpen] = useState(false);
+    const [subTaskParent, setSubTaskParent] = useState<any | null>(null);
+    const [subTaskForm, setSubTaskForm] = useState({ title: "", description: "", assignedTo: "", dueDate: "" });
+    const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+    const [subTasksMap, setSubTasksMap] = useState<Record<string, any[]>>({});
 
     // Fetch team data on mount
     useEffect(() => {
@@ -253,6 +260,65 @@ export default function TeamDashboardPage() {
         }
     };
 
+    const fetchSubTasks = async (taskId: string) => {
+        if (subTasksMap[taskId]) return; // already loaded
+        try {
+            const res = await fetch(`/api/tasks/${taskId}/subtasks`);
+            const data = res.ok ? await res.json() : [];
+            setSubTasksMap(prev => ({ ...prev, [taskId]: Array.isArray(data) ? data : [] }));
+        } catch {
+            setSubTasksMap(prev => ({ ...prev, [taskId]: [] }));
+        }
+    };
+
+    const toggleExpand = async (taskId: string) => {
+        if (expandedTaskId === taskId) {
+            setExpandedTaskId(null);
+        } else {
+            setExpandedTaskId(taskId);
+            await fetchSubTasks(taskId);
+        }
+    };
+
+    const openSubTaskModal = (task: any) => {
+        setSubTaskParent(task);
+        setSubTaskForm({ title: "", description: "", assignedTo: "", dueDate: "" });
+        setIsSubTaskOpen(true);
+    };
+
+    const handleCreateSubTask = async () => {
+        if (!subTaskForm.title.trim()) return toast.error("Sub-task title is required");
+        setIsSubmitting(true);
+        try {
+            const res = await fetch(`/api/tasks/${subTaskParent.id}/subtasks`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(subTaskForm),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to create sub-task");
+
+            toast.success("Sub-task created and assigned!");
+            setIsSubTaskOpen(false);
+            setSubTaskForm({ title: "", description: "", assignedTo: "", dueDate: "" });
+
+            // Refresh sub-tasks list for this parent
+            const subsRes = await fetch(`/api/tasks/${subTaskParent.id}/subtasks`);
+            const subs = subsRes.ok ? await subsRes.json() : [];
+            setSubTasksMap(prev => ({ ...prev, [subTaskParent.id]: Array.isArray(subs) ? subs : [] }));
+
+            // Refresh team tasks for updated subTaskCount
+            const tasksRes = await fetch(`/api/tasks?teamId=${teamData.id}`);
+            const tasks = tasksRes.ok ? await tasksRes.json() : [];
+            setTeamTasks(Array.isArray(tasks) ? tasks : []);
+        } catch (error: any) {
+            toast.error(error.message || "Failed to create sub-task");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -378,8 +444,8 @@ export default function TeamDashboardPage() {
                                         <div className="flex justify-between items-start gap-2 mb-2">
                                             <p className="font-semibold text-sm text-white flex-1">{task.title}</p>
                                             <span className={`text-[10px] px-2 py-0.5 rounded-full border ${task.status === "DONE" ? "text-aira-green border-aira-green/30 bg-aira-green/10" :
-                                                    task.status === "IN_PROGRESS" ? "text-aira-cyan border-aira-cyan/30 bg-aira-cyan/10" :
-                                                        "text-slate-400 border-white/10 bg-white/5"
+                                                task.status === "IN_PROGRESS" ? "text-aira-cyan border-aira-cyan/30 bg-aira-cyan/10" :
+                                                    "text-slate-400 border-white/10 bg-white/5"
                                                 }`}>{task.status.replace("_", " ")}</span>
                                         </div>
                                         {task.description && <p className="text-xs text-slate-400 mb-3">{task.description}</p>}
@@ -404,64 +470,120 @@ export default function TeamDashboardPage() {
                     </div>
                 )}
 
-                {/* For TEAM_LEAD: full board view with member updates */}
+                {/* For TEAM_LEAD: main tasks from admin + sub-task creation */}
                 {teamRole === "TEAM_LEAD" && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {/* To Do */}
-                        <div className="glass rounded-xl border border-white/5 p-4">
-                            <h3 className="text-sm font-semibold text-aira-cyan mb-3 flex items-center gap-2">
-                                <AlertCircle size={14} /> To Do ({taskStats.todo})
-                            </h3>
-                            <div className="space-y-2 max-h-96 overflow-y-auto">
-                                {teamTasks.filter((t) => t.status === "TODO").map((task) => (
-                                    <motion.div key={task.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-                                        className="p-3 rounded-lg bg-slate-900/50 border border-white/5 hover:border-aira-cyan/30 group cursor-pointer transition"
-                                    >
-                                        <div className="flex justify-between items-start gap-2 mb-1">
-                                            <p className="font-medium text-sm text-white flex-1">{task.title}</p>
-                                            <button onClick={() => updateTaskStatus(task.id, "IN_PROGRESS")}
-                                                className="text-xs px-2 py-1 rounded bg-aira-cyan/20 text-aira-cyan hover:bg-aira-cyan/30 opacity-0 group-hover:opacity-100 transition"
-                                            >Start</button>
+                    <div className="space-y-4">
+                        {/* Main Tasks assigned to Lead by Admin */}
+                        <div className="glass rounded-xl border border-aira-cyan/20 p-4">
+                            <p className="text-xs text-aira-cyan font-semibold mb-1 flex items-center gap-2"><GitBranch size={12} /> Main Tasks Assigned to You by Admin</p>
+                            <p className="text-xs text-slate-500 mb-4">Break each task into sub-tasks and assign them to your team members below.</p>
+                            <div className="space-y-3">
+                                {teamTasks.filter(t => !t.parentTaskId && t.assignedTo === user?.id).length === 0 && (
+                                    <p className="text-sm text-slate-500 text-center py-4">No main tasks assigned to you by Admin yet.</p>
+                                )}
+                                {teamTasks.filter(t => !t.parentTaskId && t.assignedTo === user?.id).map((task) => {
+                                    const isExpanded = expandedTaskId === task.id;
+                                    const subs = subTasksMap[task.id] || [];
+                                    const pct = task.subTaskCount > 0 ? Math.round((task.subTasksDone / task.subTaskCount) * 100) : 0;
+                                    return (
+                                        <div key={task.id} className="rounded-xl border border-white/10 bg-slate-900/50 overflow-hidden">
+                                            <div className="p-4">
+                                                <div className="flex justify-between items-start gap-2 mb-1">
+                                                    <div className="flex-1">
+                                                        <p className="font-semibold text-sm text-white">{task.title}</p>
+                                                        {task.description && <p className="text-xs text-slate-400 mt-1">{task.description}</p>}
+                                                    </div>
+                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full border shrink-0 ${task.status === "DONE" ? "text-aira-green border-aira-green/30" : task.status === "IN_PROGRESS" ? "text-aira-cyan border-aira-cyan/30" : "text-slate-400 border-white/10"}`}>
+                                                        {task.status.replace("_", " ")}
+                                                    </span>
+                                                </div>
+                                                {task.dueDate && <p className="text-[11px] text-aira-magenta mb-2">Due: {new Date(task.dueDate).toLocaleDateString()}</p>}
+                                                {task.subTaskCount > 0 && (
+                                                    <div className="mb-3">
+                                                        <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+                                                            <span>Sub-tasks</span>
+                                                            <span>{task.subTasksDone}/{task.subTaskCount} done</span>
+                                                        </div>
+                                                        <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-aira-cyan rounded-full transition-all" style={{ width: `${pct}%` }} />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <div className="flex gap-2 flex-wrap mt-2">
+                                                    <button onClick={() => openSubTaskModal(task)}
+                                                        className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-aira-cyan text-aira-bg font-semibold hover:bg-white transition">
+                                                        <Plus size={12} /> Create Sub-task
+                                                    </button>
+                                                    <button onClick={() => toggleExpand(task.id)}
+                                                        className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg border border-white/15 text-slate-300 hover:border-aira-cyan/40 hover:text-aira-cyan transition">
+                                                        {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                                        {isExpanded ? "Hide" : "View"} Sub-tasks {task.subTaskCount > 0 ? `(${task.subTaskCount})` : ""}
+                                                    </button>
+                                                    <button onClick={() => openTaskUpdateModal(task)}
+                                                        className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg border border-aira-magenta/40 text-aira-magenta hover:bg-aira-magenta/10 transition">
+                                                        <MessageSquare size={12} /> Update Admin
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            {isExpanded && (
+                                                <div className="border-t border-white/10 bg-black/20 p-3 space-y-2">
+                                                    {subs.length === 0 ? (
+                                                        <p className="text-xs text-slate-500 text-center py-2">No sub-tasks yet. Click "Create Sub-task" above.</p>
+                                                    ) : subs.map((sub: any) => (
+                                                        <div key={sub.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-white/5">
+                                                            <GitBranch size={12} className="text-aira-purple mt-0.5 shrink-0" />
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-xs font-medium text-white">{sub.title}</p>
+                                                                {sub.assignedUser && <p className="text-[10px] text-aira-purple">👤 {sub.assignedUser.name}</p>}
+                                                                {sub.description && <p className="text-[10px] text-slate-500 mt-0.5">{sub.description}</p>}
+                                                            </div>
+                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${sub.status === "DONE" ? "bg-aira-green/20 text-aira-green" : sub.status === "IN_PROGRESS" ? "bg-aira-cyan/20 text-aira-cyan" : "bg-white/10 text-slate-400"}`}>
+                                                                {sub.status.replace("_", " ")}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
-                                        {task.assignedUser
-                                            ? <p className="text-[10px] text-aira-purple mb-1">👤 {task.assignedUser.name}</p>
-                                            : <p className="text-[10px] text-slate-500 mb-1">Unassigned</p>}
-                                        {task.description && <p className="text-xs text-slate-400 mb-2">{task.description}</p>}
-                                        <button onClick={() => openTaskUpdateModal(task)}
-                                            className="text-xs text-aira-cyan hover:underline flex items-center gap-1">
-                                            <MessageSquare size={12} /> {task.assignedUser ? "View Member Updates" : "Update Admin"}
-                                        </button>
-                                    </motion.div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
 
-                        {/* In Progress */}
+                        {/* All team tasks overview */}
                         <div className="glass rounded-xl border border-white/5 p-4">
-                            <h3 className="text-sm font-semibold text-aira-purple mb-3 flex items-center gap-2">
-                                <Clock3 size={14} /> In Progress ({taskStats.inProgress})
-                            </h3>
-                            <div className="space-y-2 max-h-96 overflow-y-auto">
-                                {teamTasks.filter((t) => t.status === "IN_PROGRESS").map((task) => (
-                                    <motion.div key={task.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-                                        className="p-3 rounded-lg bg-slate-900/50 border border-white/5 hover:border-aira-purple/30 group cursor-pointer transition"
-                                    >
-                                        <div className="flex justify-between items-start gap-2 mb-1">
-                                            <p className="font-medium text-sm text-white flex-1">{task.title}</p>
-                                            <button onClick={() => updateTaskStatus(task.id, "DONE")}
-                                                className="text-xs px-2 py-1 rounded bg-aira-green/20 text-aira-green hover:bg-aira-green/30 opacity-0 group-hover:opacity-100 transition"
-                                            >Done</button>
-                                        </div>
-                                        {task.assignedUser
-                                            ? <p className="text-[10px] text-aira-purple mb-1">👤 {task.assignedUser.name}</p>
-                                            : <p className="text-[10px] text-slate-500 mb-1">Unassigned</p>}
-                                        {task.description && <p className="text-xs text-slate-400 mb-2">{task.description}</p>}
-                                        <button onClick={() => openTaskUpdateModal(task)}
-                                            className="text-xs text-aira-cyan hover:underline flex items-center gap-1">
-                                            <MessageSquare size={12} /> {task.assignedUser ? "View Member Updates" : "Update Admin"}
-                                        </button>
-                                    </motion.div>
-                                ))}
+                            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2"><Users size={14} /> All Team Tasks Overview</h3>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                <div>
+                                    <p className="text-[10px] text-aira-cyan mb-2 uppercase tracking-widest">Active</p>
+                                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                                        {teamTasks.filter(t => t.status !== "DONE").map(task => (
+                                            <div key={task.id} className="p-2.5 rounded-lg bg-slate-900/50 border border-white/5 flex justify-between items-center gap-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs text-white truncate">{task.title}</p>
+                                                    {task.assignedUser && <p className="text-[10px] text-aira-purple">👤 {task.assignedUser.name}</p>}
+                                                    {task.parentTaskId && <p className="text-[10px] text-slate-500">↳ sub-task</p>}
+                                                </div>
+                                                <button onClick={() => openTaskUpdateModal(task)} className="text-[10px] text-aira-cyan hover:underline whitespace-nowrap flex items-center gap-0.5">
+                                                    <MessageSquare size={10} /> Updates
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {teamTasks.filter(t => t.status !== "DONE").length === 0 && <p className="text-xs text-slate-500 py-3">No active tasks.</p>}
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-aira-green mb-2 uppercase tracking-widest">Completed</p>
+                                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                                        {teamTasks.filter(t => t.status === "DONE").map(task => (
+                                            <div key={task.id} className="p-2.5 rounded-lg bg-slate-900/50 border border-white/5 flex items-center gap-2">
+                                                <CheckCircle2 size={12} className="text-aira-green shrink-0" />
+                                                <p className="text-xs text-slate-400 line-through truncate">{task.title}</p>
+                                            </div>
+                                        ))}
+                                        {teamTasks.filter(t => t.status === "DONE").length === 0 && <p className="text-xs text-slate-500 py-3">None completed yet.</p>}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -732,6 +854,72 @@ export default function TeamDashboardPage() {
                                 type="date"
                                 value={taskForm.dueDate}
                                 onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
+                                className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white"
+                                style={{ colorScheme: "dark" }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </AnimatedModal>
+
+            {/* Sub-task Creation Modal */}
+            <AnimatedModal
+                open={isSubTaskOpen}
+                onClose={() => { setIsSubTaskOpen(false); setSubTaskParent(null); }}
+                title="Create Sub-task"
+                subtitle={subTaskParent ? `Breaking down: "${subTaskParent.title}"` : ""}
+                footer={
+                    <div className="flex justify-end gap-3">
+                        <button onClick={() => setIsSubTaskOpen(false)} className="px-4 py-2 rounded-lg border border-white/15 text-slate-300">Cancel</button>
+                        <button disabled={isSubmitting} onClick={handleCreateSubTask} className="px-4 py-2 rounded-lg bg-aira-cyan text-aira-bg font-semibold disabled:opacity-60">
+                            {isSubmitting ? "Creating..." : "Create & Assign"}
+                        </button>
+                    </div>
+                }
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-xs text-slate-400 mb-1 block">Sub-task Title *</label>
+                        <input
+                            type="text"
+                            value={subTaskForm.title}
+                            onChange={(e) => setSubTaskForm({ ...subTaskForm, title: e.target.value })}
+                            placeholder="e.g. Design the login screen"
+                            className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white focus:border-aira-cyan/50 outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs text-slate-400 mb-1 block">Description (Optional)</label>
+                        <textarea
+                            value={subTaskForm.description}
+                            onChange={(e) => setSubTaskForm({ ...subTaskForm, description: e.target.value })}
+                            placeholder="Details about this sub-task..."
+                            rows={3}
+                            className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white resize-none focus:border-aira-cyan/50 outline-none"
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs text-slate-400 mb-1 block">Assign To Member *</label>
+                            <select
+                                value={subTaskForm.assignedTo}
+                                onChange={(e) => setSubTaskForm({ ...subTaskForm, assignedTo: e.target.value })}
+                                className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white"
+                            >
+                                <option value="">Select a member</option>
+                                {teamMembers
+                                    .filter((m: any) => m.id !== user?.id)
+                                    .map((m: any) => (
+                                        <option key={m.id} value={m.id}>{m.name}</option>
+                                    ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs text-slate-400 mb-1 block">Due Date (Optional)</label>
+                            <input
+                                type="date"
+                                value={subTaskForm.dueDate}
+                                onChange={(e) => setSubTaskForm({ ...subTaskForm, dueDate: e.target.value })}
                                 className="w-full bg-slate-900 rounded border border-white/10 px-3 py-2 text-white"
                                 style={{ colorScheme: "dark" }}
                             />

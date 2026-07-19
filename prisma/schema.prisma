@@ -40,12 +40,13 @@ model Team {
 }
 
 model TeamMembership {
-  id        String   @id @default(cuid())
-  userId    String
-  teamId    String
-  joinedAt  DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  userId     String
+  teamId     String
+  memberRole String   @default("TEAM_MEMBER")
+  joinedAt   DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@unique([userId, teamId])
 }
@@ -94,17 +95,20 @@ model EventAssignment {
 }
 
 model Task {
-  id          String     @id @default(cuid())
-  title       String
-  description String?
-  status      String     @default("TODO") // Enum polyfill
-  dueDate     DateTime?
-  teamId      String
-  assignedTo  String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  team        Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  updates     TaskUpdate[]
+  id           String     @id @default(cuid())
+  title        String
+  description  String?
+  status       String     @default("TODO") // Enum polyfill
+  dueDate      DateTime?
+  teamId       String
+  assignedTo   String?
+  parentTaskId String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  team         Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  parent       Task?      @relation("SubTasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subTasks     Task[]     @relation("SubTasks")
+  updates      TaskUpdate[]
 }
 
 model TaskUpdate {
