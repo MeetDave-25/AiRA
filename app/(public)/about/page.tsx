@@ -145,7 +145,7 @@ export default function AboutPage() {
                 {/* Orbit system */}
                 <div className="relative w-[500px] h-[500px] sm:w-[600px] sm:h-[600px]">
                     {/* Orbit ring */}
-                    <div className="absolute inset-0 rounded-full border border-aira-cyan/10" style={{ margin: `${(500 - radius * 2) / 2}px` }} />
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-aira-cyan/10" style={{ width: radius * 2, height: radius * 2 }} />
 
                     {/* Central image - floats perfectly centered */}
                     <motion.div
