@@ -53,6 +53,7 @@ export default function PortalLayout({
         { href: "/admin/reports", label: "Team Reports", icon: FileText, roles: ["ADMIN"] },
         { href: "/admin/applications", label: "Applications", icon: FileText, roles: ["ADMIN"] },
         { href: "/admin/achievements", label: "Achievements", icon: Award, roles: ["ADMIN"] },
+        { href: "/admin/certificates", label: "Certificates", icon: FileText, roles: ["ADMIN"] },
         { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"] },
     ];
 
