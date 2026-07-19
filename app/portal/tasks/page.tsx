@@ -162,43 +162,43 @@ export default function TasksPage() {
         const taskTeamRole = isAdmin ? "ADMIN" : (user?.teams?.find((t: any) => t.id === task?.teamId)?.memberRole || role);
 
         return (
-        <div className="bg-aira-card border border-white/5 p-4 rounded-xl shadow-lg hover:border-aira-cyan/30 transition-colors">
-            <h4 className="font-medium text-sm text-white mb-2">{task.title}</h4>
-            {task.description && <p className="text-xs text-slate-400 mb-2 line-clamp-2">{task.description}</p>}
-            <div className="space-y-1">
-                <div className="flex justify-between items-end text-xs">
-                    <span className="text-slate-500">{task.team?.name || "No Team"}</span>
-                    {task.dueDate && <span className="text-aira-magenta">{new Date(task.dueDate).toLocaleDateString()}</span>}
+            <div className="bg-aira-card border border-white/5 p-4 rounded-xl shadow-lg hover:border-aira-cyan/30 transition-colors">
+                <h4 className="font-medium text-sm text-white mb-2">{task.title}</h4>
+                {task.description && <p className="text-xs text-slate-400 mb-2 line-clamp-2">{task.description}</p>}
+                <div className="space-y-1">
+                    <div className="flex justify-between items-end text-xs">
+                        <span className="text-slate-500">{task.team?.name || "No Team"}</span>
+                        {task.dueDate && <span className="text-aira-magenta">{new Date(task.dueDate).toLocaleDateString()}</span>}
+                    </div>
+                    {task.assignedUser && (
+                        <div className="text-[11px] text-aira-cyan">Assigned: {task.assignedUser.name}</div>
+                    )}
                 </div>
-                {task.assignedUser && (
-                    <div className="text-[11px] text-aira-cyan">Assigned: {task.assignedUser.name}</div>
-                )}
-            </div>
 
-            <div className="flex gap-1.5 mt-3">
-                {task.status !== "TODO" && <button onClick={() => updateStatus(task.id, "TODO")} className="text-[10px] px-2 py-1 rounded bg-slate-500/20 text-slate-300">To Do</button>}
-                {task.status !== "IN_PROGRESS" && <button onClick={() => updateStatus(task.id, "IN_PROGRESS")} className="text-[10px] px-2 py-1 rounded bg-aira-cyan/20 text-aira-cyan">In Progress</button>}
-                {task.status !== "DONE" && <button onClick={() => updateStatus(task.id, "DONE")} className="text-[10px] px-2 py-1 rounded bg-aira-green/20 text-aira-green">Done</button>}
-            </div>
+                <div className="flex gap-1.5 mt-3">
+                    {task.status !== "TODO" && <button onClick={() => updateStatus(task.id, "TODO")} className="text-[10px] px-2 py-1 rounded bg-slate-500/20 text-slate-300">To Do</button>}
+                    {task.status !== "IN_PROGRESS" && <button onClick={() => updateStatus(task.id, "IN_PROGRESS")} className="text-[10px] px-2 py-1 rounded bg-aira-cyan/20 text-aira-cyan">In Progress</button>}
+                    {task.status !== "DONE" && <button onClick={() => updateStatus(task.id, "DONE")} className="text-[10px] px-2 py-1 rounded bg-aira-green/20 text-aira-green">Done</button>}
+                </div>
 
-            <div className="mt-3">
-                {taskTeamRole === "ADMIN" && (
-                    <button onClick={() => openTaskUpdateModal(task)} className="text-[10px] px-2 py-1 rounded border border-aira-cyan/40 text-aira-cyan hover:bg-aira-cyan/10">
-                        View Lead Updates
-                    </button>
-                )}
-                {taskTeamRole === "TEAM_LEAD" && (
-                     <button onClick={() => openTaskUpdateModal(task)} className="text-[10px] px-2 py-1 rounded border border-aira-magenta/40 text-aira-magenta hover:bg-aira-magenta/10">
-                         {task.assignedUser ? "View Member Updates" : "Update Admin"}
-                     </button>
-                )}
-                {taskTeamRole === "TEAM_MEMBER" && (
-                     <button onClick={() => openTaskUpdateModal(task)} className="text-[10px] px-2 py-1 rounded border border-aira-magenta/40 text-aira-magenta hover:bg-aira-magenta/10">
-                         Update Team Lead
-                     </button>
-                )}
+                <div className="mt-3">
+                    {taskTeamRole === "ADMIN" && (
+                        <button onClick={() => openTaskUpdateModal(task)} className="text-[10px] px-2 py-1 rounded border border-aira-cyan/40 text-aira-cyan hover:bg-aira-cyan/10">
+                            View Lead Updates
+                        </button>
+                    )}
+                    {taskTeamRole === "TEAM_LEAD" && (
+                        <button onClick={() => openTaskUpdateModal(task)} className="text-[10px] px-2 py-1 rounded border border-aira-magenta/40 text-aira-magenta hover:bg-aira-magenta/10">
+                            {task.assignedUser ? "View Member Updates" : "Update Admin"}
+                        </button>
+                    )}
+                    {taskTeamRole === "TEAM_MEMBER" && (
+                        <button onClick={() => openTaskUpdateModal(task)} className="text-[10px] px-2 py-1 rounded border border-aira-magenta/40 text-aira-magenta hover:bg-aira-magenta/10">
+                            Update Team Lead
+                        </button>
+                    )}
+                </div>
             </div>
-        </div>
         );
     };
 
@@ -312,10 +312,12 @@ export default function TasksPage() {
                 <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
                     {(() => {
                         const taskTeamRole = isAdmin ? "ADMIN" : (user?.teams?.find((t: any) => t.id === selectedTask?.teamId)?.memberRole || role);
-                        return ((taskTeamRole === "TEAM_MEMBER") || (taskTeamRole === "TEAM_LEAD" && !selectedTask?.assignedUser)) && (
+                        const canPostUpdate = taskTeamRole === "TEAM_MEMBER" || taskTeamRole === "TEAM_LEAD";
+                        const updateLabel = taskTeamRole === "TEAM_MEMBER" ? "Message to Team Lead" : "Message to Admin";
+                        return canPostUpdate && (
                             <div>
                                 <label className="block text-xs text-slate-400 mb-1">
-                                    {taskTeamRole === "TEAM_MEMBER" ? "Message to Team Lead" : "Message to Admin"}
+                                    {updateLabel}
                                 </label>
                                 <textarea
                                     rows={3}
