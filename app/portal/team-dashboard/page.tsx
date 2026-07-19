@@ -172,7 +172,7 @@ export default function TeamDashboardPage() {
             toast.success("Member added!");
             setIsAddMemberOpen(false);
             setMemberForm({ name: "", email: "", role: "TEAM_MEMBER", password: "" });
-            
+
             // Always show credentials — either custom or generated
             setNewMemberCredentials({ email: data.generatedLoginId, password: data.generatedPassword });
 
@@ -215,7 +215,7 @@ export default function TeamDashboardPage() {
             toast.success("Report successfully sent!");
             setIsReportOpen(false);
             setReportMessage("");
-            
+
             if (user.role === "TEAM_LEAD") {
                 const reportsRes = await fetch(`/api/reports?teamId=${teamData.id}`);
                 const reports = reportsRes.ok ? await reportsRes.json() : [];
@@ -238,11 +238,11 @@ export default function TeamDashboardPage() {
                 body: JSON.stringify({ ...taskForm, teamId: teamData.id }),
             });
             if (!res.ok) throw new Error("Failed to assign requirement");
-            
+
             toast.success("Requirement assigned!");
             setIsAddTaskOpen(false);
             setTaskForm({ title: "", description: "", assignedTo: "", dueDate: "" });
-            
+
             const tasksRes = await fetch(`/api/tasks?teamId=${teamData.id}`);
             const tasks = tasksRes.ok ? await tasksRes.json() : [];
             setTeamTasks(Array.isArray(tasks) ? tasks : []);
@@ -263,7 +263,7 @@ export default function TeamDashboardPage() {
             </div>
         );
     }
-    
+
     if (!teamData) {
         return (
             <div className="flex items-center justify-center min-h-[70vh]">
@@ -348,100 +348,124 @@ export default function TeamDashboardPage() {
             {/* Tasks Section */}
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                    <h2 className="font-orbitron font-bold text-xl text-white">Team Tasks & Requirements</h2>
-                    {user?.role === "TEAM_LEAD" && (
+                    <h2 className="font-orbitron font-bold text-xl text-white">
+                        {teamRole === "TEAM_MEMBER" ? "My Assigned Tasks" : "Team Tasks & Requirements"}
+                    </h2>
+                    {teamRole === "TEAM_LEAD" && (
                         <button
                             onClick={() => setIsAddTaskOpen(true)}
                             className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg bg-aira-cyan text-aira-bg font-semibold hover:bg-white transition-colors"
                         >
-                            <Plus size={14} /> Assign Requirement
+                            <Plus size={14} /> ✏️ Assign Task to Member
                         </button>
                     )}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* To Do */}
-                    <div className="glass rounded-xl border border-white/5 p-4">
-                        <h3 className="text-sm font-semibold text-aira-cyan mb-3 flex items-center gap-2">
-                            <AlertCircle size={14} /> To Do ({taskStats.todo})
-                        </h3>
-                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                {/* For TEAM_MEMBER: only show tasks assigned to them */}
+                {teamRole === "TEAM_MEMBER" && (
+                    <div className="glass rounded-xl border border-aira-cyan/20 p-4">
+                        <p className="text-xs text-slate-400 mb-3">Tasks assigned directly to you — post updates to your Team Lead using the button on each card.</p>
+                        <div className="space-y-3">
+                            {teamTasks.filter(t => t.isAssignedToMe || t.assignedUser?.id === user?.id).length === 0 && (
+                                <p className="text-sm text-slate-500 text-center py-6">No tasks assigned to you yet. Check with your Team Lead.</p>
+                            )}
                             {teamTasks
-                                .filter((t) => t.status === "TODO")
+                                .filter(t => t.isAssignedToMe || t.assignedUser?.id === user?.id)
                                 .map((task) => (
-                                    <motion.div
-                                        key={task.id}
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
+                                    <motion.div key={task.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                                        className="p-4 rounded-xl bg-slate-900/60 border border-white/10 hover:border-aira-cyan/30 transition"
+                                    >
+                                        <div className="flex justify-between items-start gap-2 mb-2">
+                                            <p className="font-semibold text-sm text-white flex-1">{task.title}</p>
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${task.status === "DONE" ? "text-aira-green border-aira-green/30 bg-aira-green/10" :
+                                                    task.status === "IN_PROGRESS" ? "text-aira-cyan border-aira-cyan/30 bg-aira-cyan/10" :
+                                                        "text-slate-400 border-white/10 bg-white/5"
+                                                }`}>{task.status.replace("_", " ")}</span>
+                                        </div>
+                                        {task.description && <p className="text-xs text-slate-400 mb-3">{task.description}</p>}
+                                        {task.dueDate && <p className="text-[11px] text-aira-magenta mb-2">Due: {new Date(task.dueDate).toLocaleDateString()}</p>}
+                                        <div className="flex gap-2">
+                                            {task.status !== "IN_PROGRESS" && task.status !== "DONE" && (
+                                                <button onClick={() => updateTaskStatus(task.id, "IN_PROGRESS")} className="text-xs px-3 py-1.5 rounded-lg bg-aira-cyan/20 text-aira-cyan hover:bg-aira-cyan/30 transition">▶ Start</button>
+                                            )}
+                                            {task.status === "IN_PROGRESS" && (
+                                                <button onClick={() => updateTaskStatus(task.id, "DONE")} className="text-xs px-3 py-1.5 rounded-lg bg-aira-green/20 text-aira-green hover:bg-aira-green/30 transition">✓ Mark Done</button>
+                                            )}
+                                            <button
+                                                onClick={() => openTaskUpdateModal(task)}
+                                                className="text-xs px-3 py-1.5 rounded-lg border border-aira-magenta/40 text-aira-magenta hover:bg-aira-magenta/10 flex items-center gap-1 transition"
+                                            >
+                                                <MessageSquare size={12} /> Send Update to Lead
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* For TEAM_LEAD: full board view with member updates */}
+                {teamRole === "TEAM_LEAD" && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {/* To Do */}
+                        <div className="glass rounded-xl border border-white/5 p-4">
+                            <h3 className="text-sm font-semibold text-aira-cyan mb-3 flex items-center gap-2">
+                                <AlertCircle size={14} /> To Do ({taskStats.todo})
+                            </h3>
+                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                                {teamTasks.filter((t) => t.status === "TODO").map((task) => (
+                                    <motion.div key={task.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                                         className="p-3 rounded-lg bg-slate-900/50 border border-white/5 hover:border-aira-cyan/30 group cursor-pointer transition"
                                     >
-                                        <div className="flex justify-between items-start gap-2 mb-2">
+                                        <div className="flex justify-between items-start gap-2 mb-1">
                                             <p className="font-medium text-sm text-white flex-1">{task.title}</p>
-                                            {(user?.role === "TEAM_LEAD" || task.isAssignedToMe) && (
-                                                <button
-                                                    onClick={() => updateTaskStatus(task.id, "IN_PROGRESS")}
-                                                    className="text-xs px-2 py-1 rounded bg-aira-cyan/20 text-aira-cyan hover:bg-aira-cyan/30 opacity-0 group-hover:opacity-100 transition"
-                                                >
-                                                    Start
-                                                </button>
-                                            )}
+                                            <button onClick={() => updateTaskStatus(task.id, "IN_PROGRESS")}
+                                                className="text-xs px-2 py-1 rounded bg-aira-cyan/20 text-aira-cyan hover:bg-aira-cyan/30 opacity-0 group-hover:opacity-100 transition"
+                                            >Start</button>
                                         </div>
-                                        <p className="text-xs text-slate-400 mb-2">{task.description}</p>
-                                        <button
-                                            onClick={() => {
-                                                setSelectedTask(task);
-                                                setIsUpdateOpen(true);
-                                            }}
-                                            className="text-xs text-aira-cyan hover:underline flex items-center gap-1"
-                                        >
-                                            <MessageSquare size={12} /> Add Update
+                                        {task.assignedUser
+                                            ? <p className="text-[10px] text-aira-purple mb-1">👤 {task.assignedUser.name}</p>
+                                            : <p className="text-[10px] text-slate-500 mb-1">Unassigned</p>}
+                                        {task.description && <p className="text-xs text-slate-400 mb-2">{task.description}</p>}
+                                        <button onClick={() => openTaskUpdateModal(task)}
+                                            className="text-xs text-aira-cyan hover:underline flex items-center gap-1">
+                                            <MessageSquare size={12} /> {task.assignedUser ? "View Member Updates" : "Update Admin"}
                                         </button>
                                     </motion.div>
                                 ))}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* In Progress */}
-                    <div className="glass rounded-xl border border-white/5 p-4">
-                        <h3 className="text-sm font-semibold text-aira-purple mb-3 flex items-center gap-2">
-                            <Clock3 size={14} /> In Progress ({taskStats.inProgress})
-                        </h3>
-                        <div className="space-y-2 max-h-96 overflow-y-auto">
-                            {teamTasks
-                                .filter((t) => t.status === "IN_PROGRESS")
-                                .map((task) => (
-                                    <motion.div
-                                        key={task.id}
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
+                        {/* In Progress */}
+                        <div className="glass rounded-xl border border-white/5 p-4">
+                            <h3 className="text-sm font-semibold text-aira-purple mb-3 flex items-center gap-2">
+                                <Clock3 size={14} /> In Progress ({taskStats.inProgress})
+                            </h3>
+                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                                {teamTasks.filter((t) => t.status === "IN_PROGRESS").map((task) => (
+                                    <motion.div key={task.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                                         className="p-3 rounded-lg bg-slate-900/50 border border-white/5 hover:border-aira-purple/30 group cursor-pointer transition"
                                     >
-                                        <div className="flex justify-between items-start gap-2 mb-2">
+                                        <div className="flex justify-between items-start gap-2 mb-1">
                                             <p className="font-medium text-sm text-white flex-1">{task.title}</p>
-                                            {(user?.role === "TEAM_LEAD" || task.isAssignedToMe) && (
-                                                <button
-                                                    onClick={() => updateTaskStatus(task.id, "DONE")}
-                                                    className="text-xs px-2 py-1 rounded bg-aira-cyan/20 text-aira-cyan hover:bg-aira-cyan/30 opacity-0 group-hover:opacity-100 transition"
-                                                >
-                                                    Complete
-                                                </button>
-                                            )}
+                                            <button onClick={() => updateTaskStatus(task.id, "DONE")}
+                                                className="text-xs px-2 py-1 rounded bg-aira-green/20 text-aira-green hover:bg-aira-green/30 opacity-0 group-hover:opacity-100 transition"
+                                            >Done</button>
                                         </div>
-                                        <p className="text-xs text-slate-400 mb-2">{task.description}</p>
-                                        {task.assignedUser && (
-                                            <p className="text-[10px] text-slate-500 mb-2">Assigned to: <span className="text-aira-purple">{task.assignedUser.name}</span></p>
-                                        )}
-                                        <button
-                                            onClick={() => openTaskUpdateModal(task)}
-                                            className="text-xs text-aira-cyan hover:underline flex items-center gap-1"
-                                        >
-                                            <MessageSquare size={12} /> {user?.role === "TEAM_LEAD" ? (task.assignedTo ? "View Member Updates" : "Update Admin") : "Update Team Lead"}
+                                        {task.assignedUser
+                                            ? <p className="text-[10px] text-aira-purple mb-1">👤 {task.assignedUser.name}</p>
+                                            : <p className="text-[10px] text-slate-500 mb-1">Unassigned</p>}
+                                        {task.description && <p className="text-xs text-slate-400 mb-2">{task.description}</p>}
+                                        <button onClick={() => openTaskUpdateModal(task)}
+                                            className="text-xs text-aira-cyan hover:underline flex items-center gap-1">
+                                            <MessageSquare size={12} /> {task.assignedUser ? "View Member Updates" : "Update Admin"}
                                         </button>
                                     </motion.div>
                                 ))}
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Completed */}
                 <div className="glass rounded-xl border border-white/5 p-4">
@@ -560,10 +584,10 @@ export default function TeamDashboardPage() {
                 }
             >
                 <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
-                    {((teamRole === "TEAM_MEMBER") || (teamRole === "TEAM_LEAD" && !selectedTask?.assignedTo)) && (
+                    {(teamRole === "TEAM_MEMBER" || teamRole === "TEAM_LEAD") && (
                         <div>
                             <label className="block text-xs text-slate-400 mb-2">
-                                {teamRole === "TEAM_MEMBER" ? "Message to Team Lead" : "Message to Admin"}
+                                {teamRole === "TEAM_MEMBER" ? "📨 Message to Team Lead" : "📨 Message to Admin"}
                             </label>
                             <textarea
                                 value={updateMessage}
@@ -574,7 +598,7 @@ export default function TeamDashboardPage() {
                             />
                         </div>
                     )}
-                    
+
                     <div className="space-y-2">
                         <p className="text-xs text-slate-400">Recent updates</p>
                         {taskUpdates.map((u) => (
@@ -737,7 +761,7 @@ export default function TeamDashboardPage() {
                             <div className="text-white font-mono bg-black/40 p-2 rounded selectable bg-slate-800 break-all mb-3 select-all">
                                 {newMemberCredentials.email}
                             </div>
-                            
+
                             <label className="text-xs text-slate-400 mb-1 block">Generated Password</label>
                             <div className="text-aira-cyan font-mono font-bold bg-black/40 p-2 rounded selectable bg-slate-800 select-all">
                                 {newMemberCredentials.password}

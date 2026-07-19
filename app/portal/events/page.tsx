@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Calendar, MapPin, Users } from "lucide-react";
 
 export default function PortalEventsPage() {
+    const { data: session } = useSession();
+    const user = session?.user as any;
+    const myTeamIds: string[] = (user?.teams || []).map((t: any) => t.id);
+
     const [events, setEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -14,8 +19,15 @@ export default function PortalEventsPage() {
             .finally(() => setLoading(false));
     }, []);
 
-    const upcoming = events.filter((e) => e.isUpcoming);
-    const past = events.filter((e) => !e.isUpcoming);
+    // Filter to events assigned to the user's teams (or show all if no team assigned)
+    const myEvents = myTeamIds.length > 0
+        ? events.filter(e =>
+            e.EventAssignment?.some((a: any) => myTeamIds.includes(a.Team?.id || a.teamId))
+        )
+        : events;
+
+    const upcoming = myEvents.filter((e) => e.isUpcoming);
+    const past = myEvents.filter((e) => !e.isUpcoming);
 
     const EventCard = ({ event }: { event: any }) => {
         const primaryImage = event.EventImage?.find((img: any) => img.isPrimary) || event.EventImage?.[0];
@@ -63,17 +75,24 @@ export default function PortalEventsPage() {
         <div className="space-y-6 min-h-screen">
             <div className="glass p-6 rounded-2xl border border-white/5">
                 <h1 className="font-orbitron font-bold text-2xl text-white">My Events</h1>
-                <p className="text-slate-400 text-sm">Events assigned to your teams</p>
+                <p className="text-slate-400 text-sm mt-1">
+                    {myTeamIds.length > 0 ? "Events assigned to your team" : "All upcoming events"}
+                </p>
             </div>
 
             {loading ? (
                 <div className="h-48 flex items-center justify-center">
                     <div className="netflix-loader">{Array.from({ length: 10 }).map((_, i) => <span key={i} />)}</div>
                 </div>
-            ) : events.length === 0 ? (
+            ) : myEvents.length === 0 ? (
                 <div className="glass rounded-2xl p-12 text-center border border-white/5">
                     <Calendar className="mx-auto mb-4 text-slate-600" size={48} />
-                    <p className="text-slate-400">No events found for your teams.</p>
+                    <p className="text-slate-300 font-medium mb-1">No events for your team yet</p>
+                    <p className="text-slate-500 text-sm">
+                        {myTeamIds.length > 0
+                            ? "Your team hasn't been assigned to any events. Check back later."
+                            : "You're not in a team yet. Ask your admin to add you."}
+                    </p>
                 </div>
             ) : (
                 <>
