@@ -1,21 +1,20 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { CertificateTemplate } from "@/components/admin/CertificateTemplate";
-import { Award, Download, Users, Plus, Trash2, Calendar } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Award, Download } from "lucide-react";
 import toast from "react-hot-toast";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { format } from "date-fns";
 import { compressImage } from "@/lib/image-compressor";
+import { defaultDesign, type CertificateDesign } from "@/lib/certificate-types";
+import { CertificateEditor } from "@/components/admin/CertificateEditor";
+import { CertificateTemplate } from "@/components/admin/CertificateTemplate";
 
 export default function CertificatesPage() {
-    const [title, setTitle] = useState("Certificate of Excellence");
-    const [eventStr, setEventStr] = useState("Proudly presented at AiRA Lab 2026");
-    const [description, setDescription] = useState("has successfully demonstrated exceptional dedication, skill, and commitment to excellence in the core tenets of AI research and application.");
-    const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-
+    const [design, setDesign] = useState<CertificateDesign>(defaultDesign());
     const [logoUrl, setLogoUrl] = useState("");
     const [signatureUrl, setSignatureUrl] = useState("");
     const [collegeLogoUrl, setCollegeLogoUrl] = useState("");
@@ -26,293 +25,185 @@ export default function CertificatesPage() {
     const [namesStr, setNamesStr] = useState("John Doe\nJane Smith");
     const [isGenerating, setIsGenerating] = useState(false);
 
-    // An invisible container far off screen intended specifically for pristine high-res rendering
     const hiddenPrintRef = useRef<HTMLDivElement>(null);
-    const [printName, setPrintName] = useState(""); // Currently rendering name
+    const [printName, setPrintName] = useState("");
 
-    // Load events so admin can easily pull registered users
     useEffect(() => {
         fetch("/api/events")
-            .then(res => res.json())
-            .then(data => setEvents(Array.isArray(data) ? data : []))
+            .then(r => r.json())
+            .then(d => setEvents(Array.isArray(d) ? d : []))
             .catch(() => { });
     }, []);
 
-    const namesList = namesStr
-        .split(/[\n,]+/)
-        .map(n => n.trim())
-        .filter(n => n.length > 0);
+    const namesList = namesStr.split(/[\n,]+/).map(n => n.trim()).filter(Boolean);
+
+    const formattedDate = (() => { try { return format(new Date(), "MMMM d, yyyy"); } catch { return ""; } })();
+    const printFormattedDate = (() => { try { return format(new Date(), "MMMM d, yyyy"); } catch { return ""; } })();
 
     const loadNamesFromEvent = async () => {
         if (!selectedEventId) return toast.error("Please select an event");
-        const toastId = toast.loading("Loading attendees...");
+        const id = toast.loading("Loading attendees...");
         try {
-            const res = await fetch(`/api/events/${selectedEventId}`);
-            if (!res.ok) throw new Error("Failed to load event");
-            const data = await res.json();
-
-            // Depends on how attendees are stored. Let's assume registrations or we just pull from data.assignments.
-            // Wait, standard users/members? Let's just fetch ALL users as a fallback if event has no explicit attendees hook
-            const resUsers = await fetch("/api/users");
-            const allUsers = await resUsers.json();
-            const names = allUsers.map((u: any) => u.name).join("\n");
-
-            setNamesStr(names);
-            toast.success("Loaded names!", { id: toastId });
-        } catch (error) {
-            toast.error("Could not load attendees. You can paste them manually.", { id: toastId });
+            const res = await fetch("/api/users");
+            const users = await res.json();
+            setNamesStr(users.map((u: any) => u.name).join("\n"));
+            toast.success("Names loaded!", { id });
+        } catch {
+            toast.error("Could not load names. Paste manually.", { id });
         }
     };
 
     const handleImageUpload = async (file: File, type: "logoUrl" | "signatureUrl" | "collegeLogoUrl") => {
         setUploadingImage(true);
-        const toastId = toast.loading("Uploading image...");
+        const id = toast.loading("Uploading...");
         try {
             const compressed = await compressImage(file);
             const body = new FormData();
             body.append("file", compressed);
             body.append("type", "certificate_" + type);
-
-            const res = await fetch("/api/upload", {
-                method: "POST",
-                body,
-            });
-
+            const res = await fetch("/api/upload", { method: "POST", body });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.error || "Upload failed");
-
             if (type === "logoUrl") setLogoUrl(data.url);
             if (type === "signatureUrl") setSignatureUrl(data.url);
             if (type === "collegeLogoUrl") setCollegeLogoUrl(data.url);
-
-            toast.success("Image uploaded successfully!", { id: toastId });
-        } catch (error: any) {
-            toast.error(error?.message || "Image upload failed", { id: toastId });
+            toast.success("Uploaded!", { id });
+        } catch (e: any) {
+            toast.error(e?.message || "Upload failed", { id });
         } finally {
             setUploadingImage(false);
         }
     };
 
-    const generateSingleCertificate = async (nameToPrint: string): Promise<Blob> => {
+    const generateSinglePDF = async (name: string): Promise<Blob> => {
         return new Promise<Blob>((resolve, reject) => {
-            setPrintName(nameToPrint);
-            // Wait for react to render the specific name in the hidden DOM
+            setPrintName(name);
             setTimeout(async () => {
                 if (!hiddenPrintRef.current) return reject("No ref");
                 try {
                     const canvas = await html2canvas(hiddenPrintRef.current, {
-                        scale: 2, // High resolution (2244 x 1588)
-                        useCORS: true,
-                        backgroundColor: "#050505",
-                        logging: false
+                        scale: 2, useCORS: true, backgroundColor: "#FDFCF8", logging: false,
                     });
-
-                    // Option to return PDF or Image blob
-                    // Image blob is often easier to share directly. Let's do PDF directly via jsPDF.
                     const imgData = canvas.toDataURL("image/jpeg", 0.95);
-                    const pdf = new jsPDF({
-                        orientation: "landscape",
-                        unit: "px",
-                        format: [1122, 794]
-                    });
+                    const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [1122, 794] });
                     pdf.addImage(imgData, "JPEG", 0, 0, 1122, 794);
-                    const blob = pdf.output("blob");
-                    resolve(blob);
-                } catch (e) {
-                    reject(e);
-                }
-            }, 300); // 300ms buffer for re-render
+                    resolve(pdf.output("blob"));
+                } catch (e) { reject(e); }
+            }, 250);
         });
     };
 
     const handleGenerateAll = async () => {
-        if (namesList.length === 0) return toast.error("No names provided");
+        if (!namesList.length) return toast.error("No names provided");
         setIsGenerating(true);
-        const toastId = toast.loading(`Generating 0 / ${namesList.length} certificates...`);
-
+        const id = toast.loading(`Generating 0 / ${namesList.length}…`);
         try {
             const zip = new JSZip();
             for (let i = 0; i < namesList.length; i++) {
-                const name = namesList[i];
-                toast.loading(`Generating ${i + 1} / ${namesList.length}: ${name}`, { id: toastId });
-                const blob = await generateSingleCertificate(name);
-                zip.file(`Certificate_${name.replace(/[^z0-9]/gi, '_')}.pdf`, blob);
+                const n = namesList[i];
+                toast.loading(`Generating ${i + 1} / ${namesList.length}: ${n}`, { id });
+                zip.file(`Certificate_${n.replace(/[^a-z0-9]/gi, "_")}.pdf`, await generateSinglePDF(n));
             }
-
-            toast.loading("Zipping files...", { id: toastId });
-            const content = await zip.generateAsync({ type: "blob" });
-            saveAs(content, `AiRA_Certificates_${eventStr.substring(0, 15).replace(/\s/g, '_')}.zip`);
-
-            toast.success("Certificates Downloaded successfully!", { id: toastId });
-        } catch (error: any) {
-            toast.error("Generation failed: " + error.message, { id: toastId });
+            toast.loading("Zipping…", { id });
+            saveAs(await zip.generateAsync({ type: "blob" }), `AiRA_Certificates.zip`);
+            toast.success("Downloaded!", { id });
+        } catch (e: any) {
+            toast.error("Failed: " + e?.message, { id });
         } finally {
             setIsGenerating(false);
-            setPrintName(""); // reset
+            setPrintName("");
         }
     };
 
-    const handleGeneratePreview = async () => {
-        if (namesList.length === 0) return;
+    const handlePreview = async () => {
+        if (!namesList.length) return;
         setIsGenerating(true);
-        const toastId = toast.loading("Generating preview PDF...");
+        const id = toast.loading("Generating preview…");
         try {
-            const blob = await generateSingleCertificate(namesList[0]);
-            saveAs(blob, `Preview_${namesList[0]}.pdf`);
-            toast.success("Preview downloaded", { id: toastId });
-        } catch (error) {
-            toast.error("Preview failed", { id: toastId });
-        } finally {
-            setIsGenerating(false);
-        }
+            saveAs(await generateSinglePDF(namesList[0]), `Preview_${namesList[0]}.pdf`);
+            toast.success("Preview ready!", { id });
+        } catch { toast.error("Failed", { id }); }
+        finally { setIsGenerating(false); }
     };
 
     return (
-        <div className="space-y-6">
-            <div className="glass p-6 rounded-2xl border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-4">
+
+            {/* Top bar */}
+            <div className="glass p-5 rounded-2xl border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="font-orbitron font-bold text-2xl text-white flex items-center gap-2">
-                        <Award size={24} className="text-aira-cyan" /> Certificate Engine
+                        <Award size={22} className="text-aira-cyan" /> Certificate Designer
                     </h1>
-                    <p className="text-slate-400 text-sm mt-1">Design and strictly generate bulk signed certificates in PDF format.</p>
+                    <p className="text-slate-400 text-sm mt-0.5">Design, personalise, and bulk-generate certificates. Drag any element to reposition it.</p>
                 </div>
-                <div className="flex gap-3">
-                    <button onClick={handleGeneratePreview} disabled={isGenerating || namesList.length === 0} className="px-4 py-2 border border-aira-cyan/30 text-aira-cyan rounded-lg hover:bg-aira-cyan/10 transition-colors disabled:opacity-50">
-                        Test Download 1st Name
+                <div className="flex gap-3 flex-wrap">
+                    <button onClick={handlePreview} disabled={isGenerating || !namesList.length} className="px-4 py-2 border border-aira-cyan/30 text-aira-cyan rounded-lg hover:bg-aira-cyan/10 transition-colors disabled:opacity-50 text-sm">
+                        Preview PDF
                     </button>
-                    <button onClick={handleGenerateAll} disabled={isGenerating || namesList.length === 0} className="px-4 py-2 bg-gradient-to-r from-aira-cyan to-aira-purple text-white rounded-lg font-bold shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:scale-100 flex items-center gap-2">
-                        {isGenerating ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Download size={16} />}
+                    <button onClick={handleGenerateAll} disabled={isGenerating || !namesList.length} className="px-5 py-2 bg-gradient-to-r from-aira-cyan to-aira-purple text-white rounded-lg font-bold shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:scale-100 flex items-center gap-2 text-sm">
+                        {isGenerating ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Download size={15} />}
                         Generate All ({namesList.length})
                     </button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                {/* Configuration Panel */}
-                <div className="lg:col-span-1 space-y-4">
-                    <div className="glass p-5 rounded-2xl border border-white/5 space-y-4">
-                        <h3 className="font-semibold text-white flex items-center gap-2 border-b border-white/10 pb-3 mb-2">
-                            <Plus size={16} className="text-aira-cyan" /> Details
-                        </h3>
-                        <div>
-                            <label className="text-xs text-slate-400 mb-1 block">Main Title</label>
-                            <input value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-aira-cyan/50" />
-                        </div>
-                        <div>
-                            <label className="text-xs text-slate-400 mb-1 block">Sub-Title / Event Label</label>
-                            <input value={eventStr} onChange={e => setEventStr(e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-aira-cyan/50" />
-                        </div>
-                        <div>
-                            <label className="text-xs text-slate-400 mb-1 block">Description</label>
-                            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full resize-none bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-aira-cyan/50 text-sm" />
-                        </div>
-                        <div>
-                            <label className="text-xs text-slate-400 mb-1 block">Sign Date</label>
-                            <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ colorScheme: "dark" }} className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-aira-cyan/50" />
-                        </div>
-
-                        {/* Image Uploads */}
-                        <div className="pt-2 border-t border-white/5 space-y-4">
-                            <div>
-                                <label className="text-xs text-slate-400 mb-1 flex justify-between">
-                                    Official Logo {logoUrl && <span className="text-aira-green">Uploaded ✓</span>}
-                                </label>
-                                <label className={`flex items-center justify-center w-full px-3 py-1.5 rounded-lg border border-dashed transition cursor-pointer text-xs ${logoUrl ? "border-aira-green text-aira-green bg-aira-green/5" : "border-white/20 text-slate-300 hover:border-aira-cyan hover:text-aira-cyan"}`}>
-                                    {uploadingImage ? "Uploading..." : logoUrl ? "Change Official Logo" : "Upload Official Logo"}
-                                    <input type="file" accept="image/*" className="hidden" disabled={uploadingImage} onChange={(e) => {
-                                        if (e.target.files?.[0]) handleImageUpload(e.target.files[0], "logoUrl");
-                                    }} />
-                                </label>
-                            </div>
-
-                            <div>
-                                <label className="text-xs text-slate-400 mb-1 flex justify-between">
-                                    College / Partner Logo {collegeLogoUrl && <span className="text-aira-green">Uploaded ✓</span>}
-                                </label>
-                                <label className={`flex items-center justify-center w-full px-3 py-1.5 rounded-lg border border-dashed transition cursor-pointer text-xs ${collegeLogoUrl ? "border-aira-green text-aira-green bg-aira-green/5" : "border-white/20 text-slate-300 hover:border-aira-cyan hover:text-aira-cyan"}`}>
-                                    {uploadingImage ? "Uploading..." : collegeLogoUrl ? "Change College Logo" : "Upload College Logo"}
-                                    <input type="file" accept="image/*" className="hidden" disabled={uploadingImage} onChange={(e) => {
-                                        if (e.target.files?.[0]) handleImageUpload(e.target.files[0], "collegeLogoUrl");
-                                    }} />
-                                </label>
-                            </div>
-
-                            <div>
-                                <label className="text-xs text-slate-400 mb-1 flex justify-between">
-                                    Director Signature {signatureUrl && <span className="text-aira-green">Uploaded ✓</span>}
-                                </label>
-                                <label className={`flex items-center justify-center w-full px-3 py-1.5 rounded-lg border border-dashed transition cursor-pointer text-xs ${signatureUrl ? "border-aira-green text-aira-green bg-aira-green/5" : "border-white/20 text-slate-300 hover:border-aira-cyan hover:text-aira-cyan"}`}>
-                                    {uploadingImage ? "Uploading..." : signatureUrl ? "Change Signature" : "Upload Digital Signature"}
-                                    <input type="file" accept="image/*" className="hidden" disabled={uploadingImage} onChange={(e) => {
-                                        if (e.target.files?.[0]) handleImageUpload(e.target.files[0], "signatureUrl");
-                                    }} />
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="glass p-5 rounded-2xl border border-white/5 space-y-4">
-                        <h3 className="font-semibold text-white flex items-center gap-2 border-b border-white/10 pb-3 mb-2">
-                            <Users size={16} className="text-aira-purple" /> Names List
-                        </h3>
-                        {/* Auto load helper */}
-                        {events.length > 0 && (
-                            <div className="flex gap-2">
-                                <select value={selectedEventId} onChange={e => setSelectedEventId(e.target.value)} className="flex-1 bg-slate-900 border border-white/10 rounded-lg px-2 text-xs text-slate-300">
-                                    <option value="">Select an Event...</option>
-                                    {events.map(ev => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
-                                </select>
-                                <button onClick={loadNamesFromEvent} className="bg-aira-purple/20 text-aira-purple text-xs px-3 py-2 rounded-lg font-bold hover:bg-aira-purple/30">Load</button>
-                            </div>
-                        )}
-                        <div>
-                            <label className="text-xs text-slate-400 mb-1 block">Or paste names (comma or next-line separated)</label>
-                            <textarea
-                                value={namesStr}
-                                onChange={e => setNamesStr(e.target.value)}
-                                rows={8}
-                                className="w-full resize-none bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-aira-purple/50 text-sm leading-relaxed"
-                                placeholder="John Doe&#10;Jane Smith"
-                            />
-                        </div>
-                        <p className="text-[10px] text-slate-500 text-right">{namesList.length} total names detected</p>
-                    </div>
+            {/* Branding uploads + Names — compact row */}
+            <div className="glass p-5 rounded-2xl border border-white/5 flex flex-wrap gap-6 items-start">
+                {/* Uploads */}
+                <div className="flex flex-col gap-2 min-w-[200px]">
+                    <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-1">Branding Assets</p>
+                    {([
+                        ["Official Logo", "logoUrl", logoUrl],
+                        ["College Logo", "collegeLogoUrl", collegeLogoUrl],
+                        ["Director Signature", "signatureUrl", signatureUrl],
+                    ] as const).map(([label, key, url]) => (
+                        <label key={key} className={`flex items-center justify-between px-3 py-2 rounded-lg border border-dashed cursor-pointer text-xs transition-colors ${url ? "border-aira-green text-aira-green bg-aira-green/5" : "border-white/20 text-slate-300 hover:border-aira-cyan hover:text-aira-cyan"}`}>
+                            <span>{url ? `✓ ${label}` : `Upload ${label}`}</span>
+                            <input type="file" accept="image/*" className="hidden" disabled={uploadingImage} onChange={e => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], key); }} />
+                        </label>
+                    ))}
                 </div>
 
-                {/* Live Preview Panel */}
-                <div className="lg:col-span-2 glass rounded-2xl border border-white/5 p-4 md:p-8 flex flex-col items-center justify-center relative overflow-hidden min-h-[600px]">
-                    <h3 className="absolute top-4 left-4 font-semibold text-sm text-slate-400">Live Customization Preview</h3>
-                    <p className="absolute top-4 right-4 text-[10px] text-aira-magenta bg-aira-magenta/10 px-2 py-1 rounded">Scaled for web view</p>
-
-                    {/* The scaled visual preview — wrapper reserves exact post-scale dimensions so nothing clips */}
-                    <div style={{ width: Math.round(1122 * 0.52), height: Math.round(794 * 0.52), overflow: "visible", flexShrink: 0 }} className="mt-10 shadow-2xl border-4 border-white/10 rounded-sm">
-                        <div style={{ transform: "scale(0.52)", transformOrigin: "top left" }}>
-                            <CertificateTemplate
-                                name={namesList[0] || "[Preview Name]"}
-                                title={title}
-                                description={description}
-                                date={date}
-                                eventStr={eventStr}
-                                logoUrl={logoUrl}
-                                signatureUrl={signatureUrl}
-                                collegeLogoUrl={collegeLogoUrl}
-                            />
+                {/* Names */}
+                <div className="flex-1 min-w-[240px] flex flex-col gap-2">
+                    <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-1">Recipient Names</p>
+                    {events.length > 0 && (
+                        <div className="flex gap-2">
+                            <select value={selectedEventId} onChange={e => setSelectedEventId(e.target.value)} className="flex-1 bg-slate-900 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-300">
+                                <option value="">Select an Event…</option>
+                                {events.map(ev => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
+                            </select>
+                            <button onClick={loadNamesFromEvent} className="bg-aira-purple/20 text-aira-purple text-xs px-3 rounded-lg hover:bg-aira-purple/30 font-bold">Load</button>
                         </div>
-                    </div>
+                    )}
+                    <textarea value={namesStr} onChange={e => setNamesStr(e.target.value)} rows={4}
+                        className="w-full resize-none bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-aira-purple/50 leading-relaxed"
+                        placeholder="One name per line, or comma-separated" />
+                    <p className="text-[10px] text-slate-500 text-right">{namesList.length} names</p>
                 </div>
-
             </div>
 
-            {/* HIDDEN PRINT CANVAS. This stays absolutely out of viewport with exact pixel sizing for crisp HTML2Canvas rendering. */}
+            {/* MAIN VISUAL EDITOR */}
+            <div className="glass rounded-2xl border border-white/5 p-5">
+                <CertificateEditor
+                    design={design}
+                    onChange={setDesign}
+                    logoUrl={logoUrl}
+                    signatureUrl={signatureUrl}
+                    collegeLogoUrl={collegeLogoUrl}
+                    recipientName={namesList[0] || "Preview Name"}
+                    formattedDate={formattedDate}
+                />
+            </div>
+
+            {/* HIDDEN PRINT CANVAS — off-screen, full resolution */}
             <div style={{ position: "fixed", top: "-9999px", left: "-9999px" }}>
                 <CertificateTemplate
                     ref={hiddenPrintRef}
-                    name={printName}
-                    title={title}
-                    description={description}
-                    date={date}
-                    eventStr={eventStr}
+                    design={design}
+                    recipientName={printName}
+                    formattedDate={printFormattedDate}
                     logoUrl={logoUrl}
                     signatureUrl={signatureUrl}
                     collegeLogoUrl={collegeLogoUrl}
