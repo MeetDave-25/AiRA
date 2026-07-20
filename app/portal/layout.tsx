@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { LogOut, Home, LayoutDashboard, Calendar, Users, CheckSquare, Award, Settings, FileText } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { NotificationBell } from "@/components/ui/NotificationBell";
 
 export default function PortalLayout({
     children,
@@ -103,6 +104,9 @@ export default function PortalLayout({
                             <p className="text-sm font-medium text-white line-clamp-1">{session.user?.name}</p>
                             <p className="text-xs text-aira-cyan font-orbitron">{role.replace("_", " ")}</p>
                         </div>
+                        <div className="ml-auto">
+                            <NotificationBell />
+                        </div>
                     </div>
                     <button
                         onClick={() => signOut({ callbackUrl: "/" })}
@@ -119,7 +123,10 @@ export default function PortalLayout({
                 {/* Mobile header */}
                 <header className="md:hidden flex items-center justify-between p-4 border-b border-aira-border/50 glass">
                     <Link href="/" className="font-orbitron font-bold gradient-text-cyan">AL Portal</Link>
-                    <button onClick={() => signOut({ callbackUrl: "/" })} className="text-aira-magenta p-2"><LogOut size={18} /></button>
+                    <div className="flex items-center gap-2">
+                        <NotificationBell />
+                        <button onClick={() => signOut({ callbackUrl: "/" })} className="text-aira-magenta p-2"><LogOut size={18} /></button>
+                    </div>
                 </header>
 
                 {/* Page content */}

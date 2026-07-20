@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import SessionProvider from "@/components/providers/SessionProvider";
-
+import { NotificationProvider } from "@/components/providers/NotificationProvider";
 export const metadata: Metadata = {
     title: "AiRA Lab — Innovation & Research Laboratory",
     description: "AiRA Lab is a premier college innovation lab fostering creativity, technology, and excellence through events, research, and collaborative projects.",
@@ -23,17 +23,19 @@ export default function RootLayout({
         <html lang="en" className="dark">
             <body className="bg-aira-bg text-slate-100 font-grotesk antialiased">
                 <SessionProvider>
-                    {children}
-                    <Toaster
-                        position="top-right"
-                        toastOptions={{
-                            style: {
-                                background: "#0d1526",
-                                color: "#e2e8f0",
-                                border: "1px solid rgba(0, 212, 255, 0.3)",
-                            },
-                        }}
-                    />
+                    <NotificationProvider>
+                        {children}
+                        <Toaster
+                            position="top-right"
+                            toastOptions={{
+                                style: {
+                                    background: "#0d1526",
+                                    color: "#e2e8f0",
+                                    border: "1px solid rgba(0, 212, 255, 0.3)",
+                                },
+                            }}
+                        />
+                    </NotificationProvider>
                 </SessionProvider>
             </body>
         </html>

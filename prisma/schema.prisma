@@ -23,6 +23,7 @@ model User {
   updatedAt    DateTime  @updatedAt
   memberships  TeamMembership[]
   taskUpdates  TaskUpdate[]
+  notifications Notification[]
   reports      Report[]
 }
 
@@ -161,6 +162,19 @@ model Application {
   status    String            @default("PENDING") // Enum polyfill
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  link      String?  
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  @@index([userId, createdAt])
 }
 
 model LabSetting {

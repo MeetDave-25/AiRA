@@ -125,5 +125,21 @@ export async function POST(req: NextRequest) {
         .single();
 
     if (error) return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
+
+    // TRIGGER NOTIFICATION
+    if (assignedTo && assignedTo !== auth.session.user.id) {
+        try {
+            await db.from("Notification").insert({
+                id: uuidv4(),
+                userId: assignedTo,
+                title: `New Task: ${title}`,
+                message: `You have been assigned to a new task.`,
+                link: `/portal/tasks/${data.id}`,
+            });
+        } catch (err) {
+            console.error("Failed to notify:", err);
+        }
+    }
+
     return NextResponse.json(data, { status: 201 });
 }
