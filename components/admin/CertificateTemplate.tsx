@@ -68,17 +68,17 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
                 {/* ----------------------------------------------------- */}
 
 
-                <div className="relative z-20 flex-1 flex flex-col pt-16 px-20 pb-16">
+                <div className="relative z-20 flex-1 flex flex-col pt-12 px-20 pb-12 h-full">
 
                     {/* Header: Left Logo, Center Title, Right Logo */}
-                    <div className="w-full flex items-center justify-between mb-10 px-6 h-28 mt-4">
+                    <div className="w-full flex items-center justify-between mb-4 px-6 h-24 mt-2">
 
                         {/* Partner / College Logo (Left) */}
                         <div className="w-48 h-full flex items-center justify-start opacity-90 drop-shadow-md">
                             {collegeLogoUrl ? (
                                 <img src={collegeLogoUrl} crossOrigin="anonymous" alt="Partner Logo" className="max-h-full object-contain max-w-full rounded-md" />
                             ) : (
-                                <div className="w-full h-full rounded border-2 border-dashed border-white/50 flex flex-col items-center justify-center text-white/50 text-[10px] text-center p-2 opacity-80">
+                                <div className="w-full h-full rounded border-2 border-dashed border-[#0A2540]/30 flex flex-col items-center justify-center text-[#0A2540]/50 text-[10px] text-center p-2 opacity-80">
                                     <Sparkles size={16} className="mb-1" />
                                     <span>College Logo</span>
                                 </div>
@@ -87,10 +87,10 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
 
                         {/* Center: AiRA Lab Classic Text Form */}
                         <div className="flex-1 flex flex-col items-center justify-center">
-                            <span className="font-serif font-black text-[55px] tracking-[0.15em] text-[#0A2540] drop-shadow-md">
+                            <span className="font-serif font-black text-[50px] tracking-[0.15em] text-[#0A2540] drop-shadow-sm">
                                 AiRA<span className="text-[#3B82F6]"> Lab</span>
                             </span>
-                            <p className="text-[10px] text-[#0A2540] tracking-[0.4em] uppercase mt-2 font-bold opacity-80">Innovation & Research Laboratory</p>
+                            <p className="text-[9px] text-[#0A2540] tracking-[0.4em] uppercase mt-1 font-bold opacity-80">Innovation & Research Laboratory</p>
                         </div>
 
                         {/* Official AiRA Logo Image (Right) */}
@@ -98,7 +98,7 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
                             {logoUrl ? (
                                 <img src={logoUrl} crossOrigin="anonymous" alt="Official Logo" className="max-h-full object-contain max-w-full rounded-md" />
                             ) : (
-                                <div className="w-[120px] h-full rounded bg-gradient-to-br from-[#0A2540]/10 to-transparent border border-[#0A2540]/20 flex flex-col items-center justify-center font-bold text-lg text-[#0A2540] opacity-80 text-center shadow-inner">
+                                <div className="w-[120px] h-full rounded bg-gradient-to-br from-[#0A2540]/5 to-transparent border border-[#0A2540]/10 flex flex-col items-center justify-center font-bold text-lg text-[#0A2540] opacity-80 text-center shadow-sm">
                                     AiRA<br /><span className="text-sm font-normal">Logo</span>
                                 </div>
                             )}
@@ -106,32 +106,32 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
                     </div>
 
                     {/* Main Content Area */}
-                    <div className="flex-1 flex flex-col items-center justify-start text-center pt-8">
-                        <h1 className="text-6xl font-black text-[#D4AF37] uppercase tracking-[0.1em] mb-4 drop-shadow-sm" style={{ fontFamily: "Georgia, serif" }}>
+                    <div className="flex-1 flex flex-col items-center justify-start text-center pt-2">
+                        <h1 className="text-[52px] font-black text-[#D4AF37] uppercase tracking-[0.1em] mb-2 drop-shadow-sm" style={{ fontFamily: "Georgia, serif" }}>
                             {title || "Certificate of Excellence"}
                         </h1>
 
-                        <p className="text-xl text-[#0A2540] tracking-[0.25em] uppercase mb-12 font-bold opacity-90 flex items-center gap-3">
+                        <p className="text-lg text-[#0A2540] tracking-[0.25em] uppercase mb-8 font-bold opacity-90 flex items-center gap-3">
                             <span className="w-12 h-px bg-[#0A2540]" />
                             {eventStr || "Proudly presented at AiRA Lab"}
                             <span className="w-12 h-px bg-[#0A2540]" />
                         </p>
 
-                        <p className="text-2xl text-slate-600 mb-6 font-medium italic" style={{ fontFamily: "'Times New Roman', Times, serif" }}>This certifies that</p>
+                        <p className="text-xl text-slate-600 mb-4 font-medium italic" style={{ fontFamily: "'Times New Roman', Times, serif" }}>This certifies that</p>
 
-                        <h2 className="text-[85px] font-bold text-[#0A2540] mb-6 capitalize leading-none drop-shadow-md" style={{ fontFamily: "Georgia, serif" }}>
+                        <h2 className="text-[75px] font-bold text-[#0A2540] mb-4 capitalize leading-none drop-shadow-sm" style={{ fontFamily: "Georgia, serif" }}>
                             {name || "John Doe"}
                         </h2>
 
-                        <div className="w-[150px] h-[3px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent mx-auto mb-8 opacity-80" />
+                        <div className="w-[120px] h-[3px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent mx-auto mb-6 opacity-80" />
 
-                        <p className="text-2xl text-[#1e293b] max-w-4xl leading-relaxed font-light mx-auto" style={{ fontFamily: "Georgia, serif" }}>
+                        <p className="text-xl text-[#1e293b] max-w-4xl leading-relaxed font-light mx-auto" style={{ fontFamily: "Georgia, serif" }}>
                             {description || "has successfully demonstrated exceptional dedication, skill, and commitment to excellence in the core tenets of AI research and application."}
                         </p>
                     </div>
 
-                    {/* Signatures & Date Area - Safe Flexbox Row at bottom */}
-                    <div className="flex justify-between items-end w-full px-16 mt-12 pb-4">
+                    {/* Signatures & Date Area - Safe Flexbox Row anchored to bottom */}
+                    <div className="flex justify-between items-end w-full px-16 mt-auto pb-6">
                         <div className="text-center w-72">
                             <div className="text-2xl font-bold text-[#0A2540] mb-3" style={{ fontFamily: "Georgia, serif" }}>{date ? format(new Date(date), "MMMM do, yyyy") : format(new Date(), "MMMM do, yyyy")}</div>
                             <div className="w-full h-px bg-[#0A2540]/50 mb-3" />
