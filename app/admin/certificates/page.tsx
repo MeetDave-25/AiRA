@@ -285,18 +285,20 @@ export default function CertificatesPage() {
                     <h3 className="absolute top-4 left-4 font-semibold text-sm text-slate-400">Live Customization Preview</h3>
                     <p className="absolute top-4 right-4 text-[10px] text-aira-magenta bg-aira-magenta/10 px-2 py-1 rounded">Scaled for web view</p>
 
-                    {/* The scaled visual preview */}
-                    <div className="origin-center lg:origin-left border-8 border-[#0A0A0A] shadow-2xl overflow-hidden mt-8" style={{ transform: "scale(0.55)" }}>
-                        <CertificateTemplate
-                            name={namesList[0] || "[Preview Name]"}
-                            title={title}
-                            description={description}
-                            date={date}
-                            eventStr={eventStr}
-                            logoUrl={logoUrl}
-                            signatureUrl={signatureUrl}
-                            collegeLogoUrl={collegeLogoUrl}
-                        />
+                    {/* The scaled visual preview — wrapper reserves exact post-scale dimensions so nothing clips */}
+                    <div style={{ width: Math.round(1122 * 0.52), height: Math.round(794 * 0.52), overflow: "visible", flexShrink: 0 }} className="mt-10 shadow-2xl border-4 border-white/10 rounded-sm">
+                        <div style={{ transform: "scale(0.52)", transformOrigin: "top left" }}>
+                            <CertificateTemplate
+                                name={namesList[0] || "[Preview Name]"}
+                                title={title}
+                                description={description}
+                                date={date}
+                                eventStr={eventStr}
+                                logoUrl={logoUrl}
+                                signatureUrl={signatureUrl}
+                                collegeLogoUrl={collegeLogoUrl}
+                            />
+                        </div>
                     </div>
                 </div>
 
