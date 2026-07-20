@@ -404,7 +404,7 @@ export function CertificateEditor({
             <div className="flex-1 flex items-start justify-center pt-2 overflow-auto">
                 <div
                     style={{ width: Math.round(CANVAS_W * SCALE), height: Math.round(CANVAS_H * SCALE), flexShrink: 0, position: "relative" }}
-                    onClick={() => { setSelectedId(null); setEditingId(null); }}
+                    onClick={(e) => { if (e.target === e.currentTarget) { setSelectedId(null); setEditingId(null); } }}
                 >
                     {/* Actual canvas at full resolution, scaled down */}
                     <div
@@ -454,9 +454,12 @@ export function CertificateEditor({
                                 }}
                                 onMouseDown={e => {
                                     e.stopPropagation();
+                                    draggingRef.current = { id: el.id, startX: e.clientX, startY: e.clientY, elX: el.x, elY: el.y };
+                                }}
+                                onClick={e => {
+                                    e.stopPropagation();
                                     setSelectedId(el.id);
                                     setActiveTab("element");
-                                    draggingRef.current = { id: el.id, startX: e.clientX, startY: e.clientY, elX: el.x, elY: el.y };
                                 }}
                             >
                                 <ElementView

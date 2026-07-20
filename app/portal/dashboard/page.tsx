@@ -2,13 +2,20 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Award, Calendar, CheckSquare, Clock3, Users } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
 export default function DashboardPage() {
     const { data: session } = useSession();
+    const router = useRouter();
     const role = (session?.user as any)?.role || "TEAM_MEMBER";
+
+    // Content managers get their own hub
+    useEffect(() => {
+        if (role === "CONTENT_MANAGER") router.push("/content-manager");
+    }, [role, router]);
 
     const [tasks, setTasks] = useState<any[]>([]);
     const [events, setEvents] = useState<any[]>([]);
