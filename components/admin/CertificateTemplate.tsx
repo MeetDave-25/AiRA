@@ -43,12 +43,12 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
 
                 {/* Bottom Right Corner Geometric Overlays */}
                 <div
-                    className="absolute bottom-0 right-0 w-[550px] h-[550px] bg-[#0A2540] opacity-95 z-0 shadow-2xl"
+                    className="absolute bottom-0 right-0 w-[200px] h-[200px] bg-[#0A2540] opacity-95 z-0 shadow-2xl"
                     style={{ clipPath: "polygon(100% 100%, 0 100%, 100% 0)" }}
                 />
                 <div
-                    className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-[#D4AF37] to-[#AA7C11] opacity-60 z-0"
-                    style={{ clipPath: "polygon(100% 100%, 0 100%, 100% 0)", transform: "translate(40px, 40px)" }}
+                    className="absolute bottom-0 right-0 w-[250px] h-[250px] bg-gradient-to-br from-[#D4AF37] to-[#AA7C11] opacity-60 z-0"
+                    style={{ clipPath: "polygon(100% 100%, 0 100%, 100% 0)", transform: "translate(20px, 20px)" }}
                 />
 
                 {/* Geometric Stripe Accent Lines */}
@@ -154,13 +154,13 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
                                 {signatureUrl ? (
                                     <img src={signatureUrl} crossOrigin="anonymous" alt="Signature" className="h-[120%] object-contain mb-2 max-w-[250px]" />
                                 ) : (
-                                    <span className="text-[50px] text-white -rotate-6 mb-2 drop-shadow-md" style={{ fontFamily: "'Brush Script MT', 'Great Vibes', cursive", fontStyle: "italic" }}>AiRA Director</span>
+                                    <span className="text-[50px] text-[#0A2540] -rotate-6 mb-2 drop-shadow-sm opacity-90" style={{ fontFamily: "'Brush Script MT', 'Great Vibes', cursive", fontStyle: "italic" }}>AiRA Director</span>
                                 )}
                             </div>
-                            <div className="w-full h-px bg-white/50 mb-3 z-10 relative shadow-md" />
-                            <div className="text-sm text-white tracking-[0.15em] uppercase font-bold z-10 relative drop-shadow-md">AiRA Lab Director</div>
+                            <div className="w-full h-px bg-[#0A2540]/50 mb-3 z-10 relative" />
+                            <div className="text-sm text-[#0A2540] tracking-[0.15em] uppercase font-bold z-10 relative opacity-90">AiRA Lab Director</div>
 
-                            {/* A subtle shadow block behind signature if they upload a transparent one because the corner is dark blue */}
+                            {/* Removed subtle shadow block because text is now dark */}
                             <div className="absolute inset-0 bg-transparent" />
                         </div>
                     </div>
