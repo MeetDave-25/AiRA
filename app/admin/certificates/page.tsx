@@ -228,6 +228,18 @@ export default function CertificatesPage() {
 
                             <div>
                                 <label className="text-xs text-slate-400 mb-1 flex justify-between">
+                                    College / Partner Logo {collegeLogoUrl && <span className="text-aira-green">Uploaded ✓</span>}
+                                </label>
+                                <label className={`flex items-center justify-center w-full px-3 py-1.5 rounded-lg border border-dashed transition cursor-pointer text-xs ${collegeLogoUrl ? "border-aira-green text-aira-green bg-aira-green/5" : "border-white/20 text-slate-300 hover:border-aira-cyan hover:text-aira-cyan"}`}>
+                                    {uploadingImage ? "Uploading..." : collegeLogoUrl ? "Change College Logo" : "Upload College Logo"}
+                                    <input type="file" accept="image/*" className="hidden" disabled={uploadingImage} onChange={(e) => {
+                                        if (e.target.files?.[0]) handleImageUpload(e.target.files[0], "collegeLogoUrl");
+                                    }} />
+                                </label>
+                            </div>
+
+                            <div>
+                                <label className="text-xs text-slate-400 mb-1 flex justify-between">
                                     Director Signature {signatureUrl && <span className="text-aira-green">Uploaded ✓</span>}
                                 </label>
                                 <label className={`flex items-center justify-center w-full px-3 py-1.5 rounded-lg border border-dashed transition cursor-pointer text-xs ${signatureUrl ? "border-aira-green text-aira-green bg-aira-green/5" : "border-white/20 text-slate-300 hover:border-aira-cyan hover:text-aira-cyan"}`}>
