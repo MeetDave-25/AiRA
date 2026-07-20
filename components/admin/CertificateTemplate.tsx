@@ -55,32 +55,32 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
                     background: "linear-gradient(160deg, #FDFCF8 60%, #EFF3FA 100%)"
                 }} />
 
-                {/* Top-left navy triangle accent — strictly 260×260 */}
+                {/* Top-left navy triangle accent — 160×160 */}
                 <div style={{
                     position: "absolute", top: 0, left: 0,
-                    width: 260, height: 260, zIndex: 1,
+                    width: 160, height: 160, zIndex: 1,
                     background: "#0A2540",
                     clipPath: "polygon(0 0, 100% 0, 0 100%)"
                 }} />
                 {/* Gold edge on top-left triangle */}
                 <div style={{
                     position: "absolute", top: 0, left: 0,
-                    width: 290, height: 290, zIndex: 1,
+                    width: 180, height: 180, zIndex: 1,
                     background: "#C9A84C",
                     clipPath: "polygon(0 0, 22% 0, 0 22%)"
                 }} />
 
-                {/* Bottom-right navy triangle — strictly 260×260 */}
+                {/* Bottom-right navy triangle — 160×160 */}
                 <div style={{
                     position: "absolute", bottom: 0, right: 0,
-                    width: 260, height: 260, zIndex: 1,
+                    width: 160, height: 160, zIndex: 1,
                     background: "#0A2540",
                     clipPath: "polygon(100% 100%, 0 100%, 100% 0)"
                 }} />
                 {/* Gold edge on bottom-right */}
                 <div style={{
                     position: "absolute", bottom: 0, right: 0,
-                    width: 290, height: 290, zIndex: 1,
+                    width: 180, height: 180, zIndex: 1,
                     background: "#C9A84C",
                     clipPath: "polygon(100% 100%, 78% 100%, 100% 78%)"
                 }} />
