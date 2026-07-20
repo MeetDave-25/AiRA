@@ -2,7 +2,7 @@
 
 import React, { forwardRef } from "react";
 import { format } from "date-fns";
-import { Award, Cpu, Globe2, ShieldCheck, Sparkles } from "lucide-react";
+import { Award } from "lucide-react";
 
 export interface CertificateTemplateProps {
     name: string;
@@ -15,155 +15,269 @@ export interface CertificateTemplateProps {
     collegeLogoUrl?: string;
 }
 
+/**
+ * PIXEL BUDGET (total height = 794px):
+ *  - Outer border inset: 24px top/bottom  -> 748px usable
+ *  - Header row (logos + lab name): 100px
+ *  - Separator bar: 8px
+ *  - Title block: 120px
+ *  - Sub-event row: 36px
+ *  - "This certifies that": 30px
+ *  - Name: 96px
+ *  - Gold divider: 12px
+ *  - Description: 80px
+ *  - Spacer (flex-1)
+ *  - Footer row: 100px
+ *  Total text blocks ≈ 582px, fits easily in 748px.
+ */
 export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplateProps>(
     ({ name, title, eventStr, description, date, logoUrl, signatureUrl, collegeLogoUrl }, ref) => {
+        const formattedDate = (() => { try { return format(new Date(date), "MMMM d, yyyy"); } catch { return date; } })();
+
         return (
             <div
                 ref={ref}
-                className="relative flex flex-col font-serif"
                 style={{
                     width: "1122px",
                     height: "794px",
-                    boxSizing: "border-box",
+                    position: "relative",
                     overflow: "hidden",
-                    background: "linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)", // Canva-like rich off-white base
+                    boxSizing: "border-box",
+                    background: "#FDFCF8",
+                    fontFamily: "Georgia, 'Times New Roman', serif",
                 }}
             >
-                {/* ---------- CANVA-STYLE DECORATIVE ELEMENTS ---------- */}
+                {/* ===== BACKGROUND DECORATIONS (all strictly bounded, z-index 0-1) ===== */}
 
-                {/* Top Left Corner Geometric Overlays */}
-                <div
-                    className="absolute top-0 left-0 w-[400px] h-[400px] bg-[#0A2540] opacity-90 z-0 shadow-2xl"
-                    style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }}
-                />
-                <div
-                    className="absolute top-0 left-0 w-[450px] h-[450px] bg-gradient-to-br from-[#D4AF37] to-[#AA7C11] opacity-70 z-0"
-                    style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)", transform: "translate(-30px, -30px)" }}
-                />
+                {/* Main ivory background with subtle texture tone */}
+                <div style={{
+                    position: "absolute", inset: 0, zIndex: 0,
+                    background: "linear-gradient(160deg, #FDFCF8 60%, #EFF3FA 100%)"
+                }} />
 
-                {/* Bottom Right Corner Geometric Overlays */}
-                <div
-                    className="absolute bottom-0 right-0 w-[200px] h-[200px] bg-[#0A2540] opacity-95 z-0 shadow-2xl"
-                    style={{ clipPath: "polygon(100% 100%, 0 100%, 100% 0)" }}
-                />
-                <div
-                    className="absolute bottom-0 right-0 w-[250px] h-[250px] bg-gradient-to-br from-[#D4AF37] to-[#AA7C11] opacity-60 z-0"
-                    style={{ clipPath: "polygon(100% 100%, 0 100%, 100% 0)", transform: "translate(20px, 20px)" }}
-                />
+                {/* Top-left navy triangle accent — strictly 260×260 */}
+                <div style={{
+                    position: "absolute", top: 0, left: 0,
+                    width: 260, height: 260, zIndex: 1,
+                    background: "#0A2540",
+                    clipPath: "polygon(0 0, 100% 0, 0 100%)"
+                }} />
+                {/* Gold edge on top-left triangle */}
+                <div style={{
+                    position: "absolute", top: 0, left: 0,
+                    width: 290, height: 290, zIndex: 1,
+                    background: "#C9A84C",
+                    clipPath: "polygon(0 0, 22% 0, 0 22%)"
+                }} />
 
-                {/* Geometric Stripe Accent Lines */}
-                <div className="absolute top-[80px] -right-[150px] w-[400px] h-3 bg-[#D4AF37] opacity-40 rotate-45 z-[1]" />
-                <div className="absolute top-[120px] -right-[150px] w-[500px] h-1 bg-[#D4AF37] opacity-60 rotate-45 z-[1]" />
-                <div className="absolute bottom-[100px] -left-[100px] w-[350px] h-4 bg-[#D4AF37] opacity-50 rotate-45 z-[1]" />
+                {/* Bottom-right navy triangle — strictly 260×260 */}
+                <div style={{
+                    position: "absolute", bottom: 0, right: 0,
+                    width: 260, height: 260, zIndex: 1,
+                    background: "#0A2540",
+                    clipPath: "polygon(100% 100%, 0 100%, 100% 0)"
+                }} />
+                {/* Gold edge on bottom-right */}
+                <div style={{
+                    position: "absolute", bottom: 0, right: 0,
+                    width: 290, height: 290, zIndex: 1,
+                    background: "#C9A84C",
+                    clipPath: "polygon(100% 100%, 78% 100%, 100% 78%)"
+                }} />
 
-                {/* Ornate Gold Frame (Double Border) */}
-                <div className="absolute top-[35px] left-[35px] right-[35px] bottom-[35px] border-4 border-[#D4AF37] opacity-80 z-10 pointer-events-none" />
-                <div className="absolute top-[45px] left-[45px] right-[45px] bottom-[45px] border border-[#0A2540]/30 z-10 pointer-events-none" />
+                {/* Outer gold frame */}
+                <div style={{
+                    position: "absolute", top: 16, left: 16, right: 16, bottom: 16,
+                    border: "3px solid #C9A84C", zIndex: 2, pointerEvents: "none"
+                }} />
+                {/* Inner thin frame */}
+                <div style={{
+                    position: "absolute", top: 26, left: 26, right: 26, bottom: 26,
+                    border: "1px solid rgba(10,37,64,0.18)", zIndex: 2, pointerEvents: "none"
+                }} />
 
-                {/* Faint Abstract Watermark Logo in Center */}
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-0 opacity-[0.03]">
-                    <Globe2 size={600} color="#0A2540" strokeWidth={1} />
+                {/* Faint globe watermark — centered, very light */}
+                <div style={{
+                    position: "absolute", top: "50%", left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    zIndex: 1, opacity: 0.035, pointerEvents: "none",
+                    lineHeight: 0
+                }}>
+                    <svg width="500" height="500" viewBox="0 0 24 24" fill="none" stroke="#0A2540" strokeWidth="0.5">
+                        <circle cx="12" cy="12" r="10" />
+                        <ellipse cx="12" cy="12" rx="4" ry="10" />
+                        <line x1="2" y1="12" x2="22" y2="12" />
+                        <line x1="12" y1="2" x2="12" y2="22" />
+                        <path d="M4.93 4.93 C 7 8 7 16 4.93 19.07" />
+                        <path d="M19.07 4.93 C 17 8 17 16 19.07 19.07" />
+                    </svg>
                 </div>
 
-                {/* ----------------------------------------------------- */}
+                {/* ===== MAIN CONTENT LAYOUT (z-index 10, strict pixel heights) ===== */}
+                <div style={{
+                    position: "absolute",
+                    top: 36, left: 44, right: 44, bottom: 36,
+                    zIndex: 10,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                }}>
 
-
-                <div className="relative z-20 flex-1 flex flex-col pt-12 px-20 pb-12 h-full">
-
-                    {/* Header: Left Logo, Center Title, Right Logo */}
-                    <div className="w-full flex items-center justify-between mb-4 px-6 h-24 mt-2">
-
-                        {/* Partner / College Logo (Left) */}
-                        <div className="w-48 h-full flex items-center justify-start opacity-90 drop-shadow-md">
+                    {/* === HEADER ROW: 100px === */}
+                    <div style={{
+                        width: "100%",
+                        height: 100,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        flexShrink: 0,
+                    }}>
+                        {/* Left: College Logo */}
+                        <div style={{ width: 160, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start" }}>
                             {collegeLogoUrl ? (
-                                <img src={collegeLogoUrl} crossOrigin="anonymous" alt="Partner Logo" className="max-h-full object-contain max-w-full rounded-md" />
+                                <img src={collegeLogoUrl} crossOrigin="anonymous" alt="Partner Logo" style={{ maxHeight: "90%", maxWidth: "100%", objectFit: "contain" }} />
                             ) : (
-                                <div className="w-full h-full rounded border-2 border-dashed border-[#0A2540]/30 flex flex-col items-center justify-center text-[#0A2540]/50 text-[10px] text-center p-2 opacity-80">
-                                    <Sparkles size={16} className="mb-1" />
-                                    <span>College Logo</span>
-                                </div>
+                                <div style={{
+                                    width: 120, height: 64, borderRadius: 8,
+                                    border: "2px dashed rgba(10,37,64,0.2)",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    color: "rgba(10,37,64,0.3)", fontSize: 10, textAlign: "center", padding: 8
+                                }}>College / Partner Logo</div>
                             )}
                         </div>
 
-                        {/* Center: AiRA Lab Classic Text Form */}
-                        <div className="flex-1 flex flex-col items-center justify-center">
-                            <span className="font-serif font-black text-[50px] tracking-[0.15em] text-[#0A2540] drop-shadow-sm">
-                                AiRA<span className="text-[#3B82F6]"> Lab</span>
-                            </span>
-                            <p className="text-[9px] text-[#0A2540] tracking-[0.4em] uppercase mt-1 font-bold opacity-80">Innovation & Research Laboratory</p>
-                        </div>
-
-                        {/* Official AiRA Logo Image (Right) */}
-                        <div className="w-48 h-full flex items-center justify-end opacity-90 drop-shadow-md">
-                            {logoUrl ? (
-                                <img src={logoUrl} crossOrigin="anonymous" alt="Official Logo" className="max-h-full object-contain max-w-full rounded-md" />
-                            ) : (
-                                <div className="w-[120px] h-full rounded bg-gradient-to-br from-[#0A2540]/5 to-transparent border border-[#0A2540]/10 flex flex-col items-center justify-center font-bold text-lg text-[#0A2540] opacity-80 text-center shadow-sm">
-                                    AiRA<br /><span className="text-sm font-normal">Logo</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Main Content Area */}
-                    <div className="flex-1 flex flex-col items-center justify-start text-center pt-2">
-                        <h1 className="text-[52px] font-black text-[#D4AF37] uppercase tracking-[0.1em] mb-2 drop-shadow-sm" style={{ fontFamily: "Georgia, serif" }}>
-                            {title || "Certificate of Excellence"}
-                        </h1>
-
-                        <p className="text-lg text-[#0A2540] tracking-[0.25em] uppercase mb-8 font-bold opacity-90 flex items-center gap-3">
-                            <span className="w-12 h-px bg-[#0A2540]" />
-                            {eventStr || "Proudly presented at AiRA Lab"}
-                            <span className="w-12 h-px bg-[#0A2540]" />
-                        </p>
-
-                        <p className="text-xl text-slate-600 mb-4 font-medium italic" style={{ fontFamily: "'Times New Roman', Times, serif" }}>This certifies that</p>
-
-                        <h2 className="text-[75px] font-bold text-[#0A2540] mb-4 capitalize leading-none drop-shadow-sm" style={{ fontFamily: "Georgia, serif" }}>
-                            {name || "John Doe"}
-                        </h2>
-
-                        <div className="w-[120px] h-[3px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent mx-auto mb-6 opacity-80" />
-
-                        <p className="text-xl text-[#1e293b] max-w-4xl leading-relaxed font-light mx-auto" style={{ fontFamily: "Georgia, serif" }}>
-                            {description || "has successfully demonstrated exceptional dedication, skill, and commitment to excellence in the core tenets of AI research and application."}
-                        </p>
-                    </div>
-
-                    {/* Signatures & Date Area - Safe Flexbox Row anchored to bottom */}
-                    <div className="flex justify-between items-end w-full px-16 mt-auto pb-6">
-                        <div className="text-center w-72">
-                            <div className="text-2xl font-bold text-[#0A2540] mb-3" style={{ fontFamily: "Georgia, serif" }}>{date ? format(new Date(date), "MMMM do, yyyy") : format(new Date(), "MMMM do, yyyy")}</div>
-                            <div className="w-full h-px bg-[#0A2540]/50 mb-3" />
-                            <div className="text-sm text-[#0A2540] tracking-[0.15em] uppercase font-bold opacity-90">Date of Issuance</div>
-                        </div>
-
-                        {/* Center Seal Plaque */}
-                        <div className="w-40 h-40 absolute left-1/2 bottom-8 transform -translate-x-1/2 flex items-center justify-center">
-                            <div className="relative flex items-center justify-center">
-                                {/* Golden Outer Starburst / Circle */}
-                                <div className="absolute w-36 h-36 border-[8px] border-double border-[#D4AF37] rounded-full opacity-90 animate-spin-slow rotate-45" />
-                                <div className="absolute w-32 h-32 bg-[#0A2540] rounded-full drop-shadow-2xl" />
-                                <Award size={64} className="text-[#D4AF37] z-10" strokeWidth={1.5} />
-                                <span className="absolute bottom-5 text-[#D4AF37] text-[9px] font-bold tracking-widest uppercase z-10">Trusted</span>
+                        {/* Center: AiRA Lab Name */}
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                            <div style={{ fontSize: 46, fontWeight: 900, color: "#0A2540", letterSpacing: "0.12em", lineHeight: 1.1 }}>
+                                AiRA<span style={{ color: "#1E5FA8" }}> Lab</span>
+                            </div>
+                            <div style={{ fontSize: 10, color: "#0A2540", letterSpacing: "0.35em", textTransform: "uppercase", marginTop: 6, opacity: 0.7 }}>
+                                Innovation &amp; Research Laboratory
                             </div>
                         </div>
 
-                        <div className="text-center w-72 relative">
-                            <div className="h-24 flex items-end justify-center mb-1 w-full relative z-10">
+                        {/* Right: Official AiRA Logo */}
+                        <div style={{ width: 160, height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+                            {logoUrl ? (
+                                <img src={logoUrl} crossOrigin="anonymous" alt="Official Logo" style={{ maxHeight: "90%", maxWidth: "100%", objectFit: "contain" }} />
+                            ) : (
+                                <div style={{
+                                    width: 120, height: 64, borderRadius: 8,
+                                    border: "2px dashed rgba(10,37,64,0.2)",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    color: "rgba(10,37,64,0.4)", fontSize: 12, fontWeight: "bold"
+                                }}>AiRA Logo</div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* === GOLD SEPARATOR: 4px === */}
+                    <div style={{ width: "100%", height: 2, background: "linear-gradient(to right, transparent, #C9A84C, transparent)", margin: "4px 0 12px 0", flexShrink: 0 }} />
+
+                    {/* === TITLE: fixed height 110px === */}
+                    <div style={{ height: 110, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <div style={{
+                            fontSize: 52, fontWeight: 900, color: "#C9A84C",
+                            textTransform: "uppercase", letterSpacing: "0.12em",
+                            textAlign: "center", lineHeight: 1.15,
+                            textShadow: "1px 1px 2px rgba(0,0,0,0.08)"
+                        }}>
+                            {title || "Certificate of Excellence"}
+                        </div>
+                    </div>
+
+                    {/* === EVENT SUBTITLE: 36px === */}
+                    <div style={{ height: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 16, flexShrink: 0 }}>
+                        <div style={{ width: 60, height: 1, background: "#0A2540" }} />
+                        <div style={{ fontSize: 13, color: "#0A2540", letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 700 }}>
+                            {eventStr || "Proudly Presented at AiRA Lab"}
+                        </div>
+                        <div style={{ width: 60, height: 1, background: "#0A2540" }} />
+                    </div>
+
+                    {/* === "This certifies that": 36px === */}
+                    <div style={{ height: 36, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <div style={{ fontSize: 18, color: "#64748b", fontStyle: "italic" }}>This certifies that</div>
+                    </div>
+
+                    {/* === NAME: 92px === */}
+                    <div style={{ height: 92, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <div style={{
+                            fontSize: 72, fontWeight: 700, color: "#0A2540",
+                            letterSpacing: "0.02em", lineHeight: 1,
+                            textShadow: "1px 1px 3px rgba(0,0,0,0.1)"
+                        }}>
+                            {name || "John Doe"}
+                        </div>
+                    </div>
+
+                    {/* === GOLD DIVIDER: 16px === */}
+                    <div style={{ height: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <div style={{ width: 140, height: 3, background: "linear-gradient(to right, transparent, #C9A84C, transparent)" }} />
+                    </div>
+
+                    {/* === DESCRIPTION: 72px, overflow ellipsis === */}
+                    <div style={{
+                        height: 72, display: "flex", alignItems: "flex-start", justifyContent: "center",
+                        padding: "4px 32px 0 32px", textAlign: "center", flexShrink: 0, overflow: "hidden"
+                    }}>
+                        <div style={{ fontSize: 17, color: "#334155", lineHeight: 1.65, fontWeight: 300 }}>
+                            {description || "has successfully demonstrated exceptional dedication, skill, and commitment to excellence in the core tenets of AI research and application."}
+                        </div>
+                    </div>
+
+                    {/* === SPACER: flexes to fill remaining height === */}
+                    <div style={{ flex: 1, minHeight: 0 }} />
+
+                    {/* === FOOTER ROW: 96px, signature + date + seal === */}
+                    <div style={{
+                        width: "100%",
+                        height: 96,
+                        display: "flex",
+                        alignItems: "flex-end",
+                        justifyContent: "space-between",
+                        flexShrink: 0,
+                        paddingBottom: 8,
+                    }}>
+                        {/* Date - left */}
+                        <div style={{ width: 240, textAlign: "center" }}>
+                            <div style={{ fontSize: 18, fontWeight: 700, color: "#0A2540", marginBottom: 8 }}>{formattedDate}</div>
+                            <div style={{ height: 1, background: "rgba(10,37,64,0.4)", marginBottom: 6 }} />
+                            <div style={{ fontSize: 10, color: "#0A2540", letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 700 }}>Date of Issuance</div>
+                        </div>
+
+                        {/* Center Seal */}
+                        <div style={{ width: 96, height: 96, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <div style={{
+                                width: 90, height: 90, borderRadius: "50%",
+                                border: "5px double #C9A84C",
+                                background: "#0A2540",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                boxShadow: "0 4px 16px rgba(10,37,64,0.35)"
+                            }}>
+                                <Award size={44} color="#C9A84C" strokeWidth={1.5} />
+                            </div>
+                        </div>
+
+                        {/* Director Signature - right */}
+                        <div style={{ width: 240, textAlign: "center" }}>
+                            <div style={{ height: 52, display: "flex", alignItems: "flex-end", justifyContent: "center", marginBottom: 8 }}>
                                 {signatureUrl ? (
-                                    <img src={signatureUrl} crossOrigin="anonymous" alt="Signature" className="h-[120%] object-contain mb-2 max-w-[250px]" />
+                                    <img src={signatureUrl} crossOrigin="anonymous" alt="Signature" style={{ maxHeight: "100%", objectFit: "contain", maxWidth: 200 }} />
                                 ) : (
-                                    <span className="text-[50px] text-[#0A2540] -rotate-6 mb-2 drop-shadow-sm opacity-90" style={{ fontFamily: "'Brush Script MT', 'Great Vibes', cursive", fontStyle: "italic" }}>AiRA Director</span>
+                                    <div style={{
+                                        fontSize: 38, color: "#0A2540", opacity: 0.85,
+                                        transform: "rotate(-4deg)",
+                                        fontFamily: "'Brush Script MT', cursive",
+                                        fontStyle: "italic"
+                                    }}>AiRA Director</div>
                                 )}
                             </div>
-                            <div className="w-full h-px bg-[#0A2540]/50 mb-3 z-10 relative" />
-                            <div className="text-sm text-[#0A2540] tracking-[0.15em] uppercase font-bold z-10 relative opacity-90">AiRA Lab Director</div>
-
-                            {/* Removed subtle shadow block because text is now dark */}
-                            <div className="absolute inset-0 bg-transparent" />
+                            <div style={{ height: 1, background: "rgba(10,37,64,0.4)", marginBottom: 6 }} />
+                            <div style={{ fontSize: 10, color: "#0A2540", letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 700 }}>AiRA Lab Director</div>
                         </div>
                     </div>
+
                 </div>
             </div>
         );
