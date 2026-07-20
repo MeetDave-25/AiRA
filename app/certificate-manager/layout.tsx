@@ -4,9 +4,9 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-const ALLOWED = ["ADMIN", "CONTENT_MANAGER"];
+const ALLOWED = ["ADMIN", "CERTIFICATE_MANAGER"];
 
-export default function ContentManagerLayout({ children }: { children: React.ReactNode }) {
+export default function CertificateManagerLayout({ children }: { children: React.ReactNode }) {
     const { data: session, status } = useSession();
     const router = useRouter();
     const role = (session?.user as any)?.role;

@@ -12,9 +12,10 @@ export default function DashboardPage() {
     const router = useRouter();
     const role = (session?.user as any)?.role || "TEAM_MEMBER";
 
-    // Content managers get their own hub
+    // Specialist roles get their own hub
     useEffect(() => {
         if (role === "CONTENT_MANAGER") router.push("/content-manager");
+        if (role === "CERTIFICATE_MANAGER") router.push("/certificate-manager");
     }, [role, router]);
 
     const [tasks, setTasks] = useState<any[]>([]);

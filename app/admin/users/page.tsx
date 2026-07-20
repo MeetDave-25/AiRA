@@ -8,11 +8,12 @@ import AnimatedModal from "@/components/ui/AnimatedModal";
 import { compressImage } from "@/lib/image-compressor";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-const ROLES = ["TEAM_MEMBER", "TEAM_LEAD", "CONTENT_MANAGER", "ADMIN"];
+const ROLES = ["TEAM_MEMBER", "TEAM_LEAD", "CONTENT_MANAGER", "CERTIFICATE_MANAGER", "ADMIN"];
 const roleColor: Record<string, string> = {
     ADMIN: "text-aira-magenta border-aira-magenta/30 bg-aira-magenta/10",
     TEAM_LEAD: "text-aira-gold border-aira-gold/30 bg-aira-gold/10",
     CONTENT_MANAGER: "text-emerald-400 border-emerald-400/30 bg-emerald-400/10",
+    CERTIFICATE_MANAGER: "text-orange-400 border-orange-400/30 bg-orange-400/10",
     TEAM_MEMBER: "text-aira-cyan border-aira-cyan/30 bg-aira-cyan/10",
 };
 type SysUser = { id: string; name: string; email: string; role: string; createdAt: string };
