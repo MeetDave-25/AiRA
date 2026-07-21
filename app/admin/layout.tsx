@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import AdminNavbar from "@/components/admin/AdminNavbar";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { data: session, status } = useSession();
@@ -31,5 +32,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return null;
     }
 
-    return <>{children}</>;
+    return (
+        <>
+            <AdminNavbar />
+            <div className="pt-20">
+                {children}
+            </div>
+        </>
+    );
 }
