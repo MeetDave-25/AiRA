@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { CheckCircle2, ListTodo, Loader2, Plus } from "lucide-react";
+import { CheckCircle2, ListTodo, Loader2, Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import AnimatedModal from "@/components/ui/AnimatedModal";
 
@@ -82,6 +82,18 @@ export default function TasksPage() {
             toast.success("Task updated");
         } catch (error: any) {
             toast.error(error?.message || "Could not update task");
+        }
+    };
+
+    const deleteTask = async (taskId: string) => {
+        if (!window.confirm("Delete this task? This cannot be undone.")) return;
+        try {
+            const res = await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Failed to delete task");
+            setTasks((prev) => prev.filter((t) => t.id !== taskId));
+            toast.success("Task deleted");
+        } catch (error: any) {
+            toast.error(error?.message || "Could not delete task");
         }
     };
 
@@ -176,10 +188,19 @@ export default function TasksPage() {
                     )}
                 </div>
 
-                <div className="flex gap-1.5 mt-3">
+                <div className="flex gap-1.5 mt-3 flex-wrap">
                     {task.status !== "TODO" && <button onClick={() => updateStatus(task.id, "TODO")} className="text-[10px] px-2 py-1 rounded bg-slate-500/20 text-slate-300">To Do</button>}
                     {task.status !== "IN_PROGRESS" && <button onClick={() => updateStatus(task.id, "IN_PROGRESS")} className="text-[10px] px-2 py-1 rounded bg-aira-cyan/20 text-aira-cyan">In Progress</button>}
                     {task.status !== "DONE" && <button onClick={() => updateStatus(task.id, "DONE")} className="text-[10px] px-2 py-1 rounded bg-aira-green/20 text-aira-green">Done</button>}
+                    {isAdmin && (
+                        <button
+                            onClick={() => deleteTask(task.id)}
+                            className="ml-auto text-[10px] px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/40 transition-colors flex items-center gap-1"
+                            title="Delete task"
+                        >
+                            <Trash2 size={10} /> Delete
+                        </button>
+                    )}
                 </div>
 
                 <div className="mt-3">

@@ -33,11 +33,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
 
     return (
-        <>
+        <div className="min-h-screen bg-aira-bg flex">
+            {/* Sidebar */}
             <AdminNavbar />
-            <div className="pt-20">
-                {children}
-            </div>
-        </>
+
+            {/* Main content — offset by sidebar width */}
+            <main className="flex-1 ml-64 min-h-screen overflow-y-auto">
+                <div className="p-6 md:p-8 max-w-7xl mx-auto">
+                    {children}
+                </div>
+            </main>
+        </div>
     );
 }
