@@ -9,18 +9,19 @@ import {
     UsersRound,
     CalendarDays,
     FileText,
-    Award,
     Settings,
     ClipboardList,
     LogOut,
     ShieldCheck,
     Trophy,
+    CheckSquare,
 } from "lucide-react";
 
 const adminLinks = [
     { label: "Analytics", href: "/admin", icon: BarChart3 },
     { label: "People", href: "/admin/team-members", icon: Users },
     { label: "Teams", href: "/admin/teams", icon: UsersRound },
+    { label: "Tasks", href: "/admin/tasks", icon: CheckSquare },
     { label: "Events", href: "/admin/events", icon: CalendarDays },
     { label: "Applications", href: "/admin/applications", icon: FileText },
     { label: "Certificates", href: "/admin/certificates", icon: ClipboardList },
