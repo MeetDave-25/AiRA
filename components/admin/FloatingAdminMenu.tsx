@@ -35,7 +35,7 @@ const adminLinks = [
     { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
-const FloatingAdminMenu = () => {
+export default function FloatingAdminMenu() {
     const [isOpen, setIsOpen] = useState(false);
     const pathname = usePathname();
 
@@ -125,5 +125,4 @@ const FloatingAdminMenu = () => {
             </aside>
         </>
     );
-
-export default FloatingAdminMenu;
+}
