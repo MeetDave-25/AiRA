@@ -42,10 +42,10 @@ const FloatingAdminMenu = () => {
     return (
         <>
             {/* FAB */}
-            <div className="fixed bottom-8 right-8 z-50">
+            <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 z-50">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="w-16 h-16 bg-gradient-to-br from-aira-cyan to-aira-purple rounded-full flex items-center justify-center text-white shadow-lg transform transition-transform hover:scale-110"
+                    className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-aira-cyan to-aira-purple rounded-full flex items-center justify-center text-white shadow-lg transform transition-transform hover:scale-110"
                 >
                     {isOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
@@ -61,7 +61,7 @@ const FloatingAdminMenu = () => {
 
             {/* Menu Content */}
             <aside
-                className={`w-72 min-h-screen border-r border-white/10 bg-aira-surface flex flex-col fixed left-0 top-0 bottom-0 z-40 transform transition-transform ${
+                className={`w-full max-w-xs sm:w-72 min-h-screen border-r border-white/10 bg-aira-surface flex flex-col fixed left-0 top-0 bottom-0 z-40 transform transition-transform ${
                     isOpen ? "translate-x-0" : "-translate-x-full"
                 }`}
             >
@@ -125,6 +125,5 @@ const FloatingAdminMenu = () => {
             </aside>
         </>
     );
-};
 
 export default FloatingAdminMenu;
