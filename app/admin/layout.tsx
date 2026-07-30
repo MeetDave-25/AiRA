@@ -3,7 +3,8 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import AdminNavbar from "@/components/admin/AdminNavbar";
+import FloatingAdminMenu from "@/components/admin/FloatingAdminMenu";
+import BackButton from "@/components/ui/BackButton";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { data: session, status } = useSession();
@@ -34,12 +35,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     return (
         <div className="min-h-screen bg-aira-bg flex">
-            {/* Sidebar */}
-            <AdminNavbar />
+            <FloatingAdminMenu />
 
-            {/* Main content — offset by sidebar width */}
-            <main className="flex-1 ml-64 min-h-screen overflow-y-auto">
+            {/* Main content */}
+            <main className="flex-1 min-h-screen overflow-y-auto">
                 <div className="p-6 md:p-8 max-w-7xl mx-auto">
+                    <BackButton />
                     {children}
                 </div>
             </main>
