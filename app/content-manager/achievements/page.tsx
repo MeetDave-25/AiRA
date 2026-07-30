@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Image, Plus, Trash2, ExternalLink, Upload } from "lucide-react";
 import toast from "react-hot-toast";
-import { compressImage } from "@/lib/image-compressor";
+import { uploadDirectFile } from "@/lib/upload-client";
 
 interface Achievement {
     id: string;
@@ -38,14 +38,8 @@ export default function ContentManagerAchievementsPage() {
         setUploading(true);
         const id = toast.loading("Uploading image…");
         try {
-            const compressed = await compressImage(file);
-            const body = new FormData();
-            body.append("file", compressed);
-            body.append("type", "achievements");
-            const res = await fetch("/api/upload", { method: "POST", body });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error || "Upload failed");
-            setForm(f => ({ ...f, imageUrl: data.url }));
+            const uploaded = await uploadDirectFile(file, { bucket: "uploads", folder: "achievements" });
+            setForm(f => ({ ...f, imageUrl: uploaded.url }));
             toast.success("Image uploaded!", { id });
         } catch (e: any) { toast.error(e?.message || "Upload failed", { id }); }
         finally { setUploading(false); }

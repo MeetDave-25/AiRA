@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Search, Calendar, MapPin, Users } from "lucide-react";
+import { Search, Calendar, MapPin, Users, Film } from "lucide-react";
+import { isVideoMedia } from "@/lib/media";
 
 // Netflix intro animation
 function NetflixLoader({ onDone }: { onDone: () => void }) {
@@ -61,12 +62,21 @@ function EventCard({ event }: { event: any }) {
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="netflix-card relative rounded-xl overflow-hidden aspect-[2/3] bg-aira-card group"
             >
-                <img
-                    src={primaryImage?.url || "https://placehold.co/400x600/0d1526/00D4FF?text=AiRA+Lab"}
-                    alt={event.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/400x600/0d1526/00D4FF?text=AiRA+Lab"; }}
-                />
+                {isVideoMedia(primaryImage) ? (
+                    <video
+                        src={primaryImage.url}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        muted
+                        playsInline
+                    />
+                ) : (
+                    <img
+                        src={primaryImage?.url || "https://placehold.co/400x600/0d1526/00D4FF?text=AiRA+Lab"}
+                        alt={event.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/400x600/0d1526/00D4FF?text=AiRA+Lab"; }}
+                    />
+                )}
 
                 {/* Overlay - always visible at bottom */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
@@ -79,6 +89,11 @@ function EventCard({ event }: { event: any }) {
                         <span className="badge-completed">Done</span>
                     )}
                 </div>
+                {isVideoMedia(primaryImage) && (
+                    <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-[10px] text-white">
+                        <Film size={10} /> Video
+                    </div>
+                )}
 
                 {/* Bottom info - always shown */}
                 <div className="absolute bottom-0 left-0 right-0 p-4">

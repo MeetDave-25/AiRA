@@ -1,7 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase";
+import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
 import { v4 as uuidv4 } from "uuid";
+
+type DirectUploadPayload = {
+    url: string;
+    path?: string;
+    mediaType?: string;
+    caption?: string | null;
+};
+
+async function insertEventMedia(eventId: string, uploads: DirectUploadPayload[], isPrimary: boolean) {
+    if (!uploads.length) {
+        return NextResponse.json({ error: "No media provided" }, { status: 400 });
+    }
+
+    if (isPrimary) {
+        await db.from("EventImage").update({ isPrimary: false }).eq("eventId", eventId);
+    }
+
+    const rows = uploads.map((upload, index) => ({
+        id: uuidv4(),
+        eventId,
+        url: upload.url,
+        caption: upload.caption || null,
+        isPrimary: index === 0 && isPrimary,
+    }));
+
+    const { data, error } = await db.from("EventImage").insert(rows).select();
+
+    if (error) {
+        console.error("Event media insert error:", error);
+        throw new Error(error.message || "Failed to save media");
+    }
+
+    return NextResponse.json(data || [], { status: 201 });
+}
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
     const auth = await requireAdmin();
@@ -26,9 +61,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
-    const supabase = createSupabaseAdmin();
-
     try {
+        const contentType = req.headers.get("content-type") || "";
+
+        if (contentType.includes("application/json")) {
+            const body = await req.json();
+            const uploads = Array.isArray(body.files) ? body.files : [];
+            const isPrimary = body.isPrimary === true || body.isPrimary === "true";
+            return await insertEventMedia(params.id, uploads, isPrimary);
+        }
+
+        const supabase = createSupabaseAdmin();
         const formData = await req.formData();
         const files = formData.getAll("images") as File[];
         const isPrimary = formData.get("isPrimary") === "true";
@@ -37,22 +80,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             return NextResponse.json({ error: "No images provided" }, { status: 400 });
         }
 
-        const savedImages = [];
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+        const uploads: DirectUploadPayload[] = [];
+        for (const file of files) {
             const ext = file.name.split(".").pop();
             const filename = `${uuidv4()}.${ext}`;
-
             const bytes = await file.arrayBuffer();
             const buffer = Buffer.from(bytes);
 
-            // Upload to Supabase Storage using admin client directly
             const { error: storageError } = await supabase.storage
                 .from("events")
                 .upload(filename, buffer, {
                     cacheControl: "3600",
                     upsert: false,
-                    contentType: file.type
+                    contentType: file.type,
                 });
 
             if (storageError) {
@@ -61,24 +101,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             }
 
             const { data: publicUrlData } = supabase.storage.from("events").getPublicUrl(filename);
-            const publicUrl = publicUrlData.publicUrl;
-
-            const { data: image, error: dbError } = await supabase
-                .from("EventImage")
-                .insert({ id: uuidv4(), eventId: params.id, url: publicUrl, isPrimary: i === 0 && isPrimary })
-                .select()
-                .single();
-
-            if (dbError) {
-                console.error("EventImage insert error:", dbError);
-                throw new Error(dbError.message || "Failed to save image record");
-            }
-            if (image) savedImages.push(image);
+            uploads.push({
+                url: publicUrlData.publicUrl,
+                path: filename,
+                mediaType: file.type,
+            });
         }
 
-        return NextResponse.json(savedImages, { status: 201 });
+        return await insertEventMedia(params.id, uploads, isPrimary);
     } catch (error: any) {
-        console.error("Image upload error:", error);
-        return NextResponse.json({ error: error?.message || "Image upload failed" }, { status: 500 });
+        console.error("Media upload error:", error);
+        return NextResponse.json({ error: error?.message || "Media upload failed" }, { status: 500 });
     }
 }

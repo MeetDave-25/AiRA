@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, Zap, Users, Calendar, Trophy } from "lucide-react";
+import { isVideoMedia } from "@/lib/media";
 
 // Particle canvas component
 function ParticleCanvas() {
@@ -269,17 +270,27 @@ export default function HomePage() {
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         {events.map((event) => {
-                            const img = event.images?.[0]?.url || "/images/event-placeholder.jpg";
+                            const primaryMedia = event.images?.find((img: any) => img.isPrimary) || event.images?.[0];
+                            const img = primaryMedia?.url || "/images/event-placeholder.jpg";
                             const isUpcoming = new Date(event.date) > new Date();
                             return (
                                 <Link key={event.id} href={`/events/${event.id}`}>
                                     <div className="netflix-card relative rounded-xl overflow-hidden aspect-[2/3] bg-aira-card">
-                                        <img
-                                            src={img}
-                                            alt={event.title}
-                                            className="w-full h-full object-cover"
-                                            onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/400x600/0d1526/00D4FF?text=AiRA+Lab"; }}
-                                        />
+                                        {isVideoMedia(primaryMedia) ? (
+                                            <video
+                                                src={img}
+                                                className="w-full h-full object-cover"
+                                                muted
+                                                playsInline
+                                            />
+                                        ) : (
+                                            <img
+                                                src={img}
+                                                alt={event.title}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/400x600/0d1526/00D4FF?text=AiRA+Lab"; }}
+                                            />
+                                        )}
                                         <div className="netflix-overlay absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent p-4 flex flex-col justify-end">
                                             <div className="mb-2">
                                                 {isUpcoming ? (

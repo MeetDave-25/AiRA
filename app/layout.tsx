@@ -1,17 +1,34 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import SessionProvider from "@/components/providers/SessionProvider";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
+import PwaProvider from "@/components/providers/PwaProvider";
 export const metadata: Metadata = {
     title: "AiRA Lab — Innovation & Research Laboratory",
     description: "AiRA Lab is a premier college innovation lab fostering creativity, technology, and excellence through events, research, and collaborative projects.",
     keywords: "AiRA Lab, college innovation lab, events, research, technology",
+    manifest: "/manifest.webmanifest",
+    applicationName: "AiRA Lab",
+    icons: {
+        icon: "/icon.svg",
+        apple: "/apple-icon.svg",
+    },
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: "default",
+        title: "AiRA Lab",
+    },
     openGraph: {
         title: "AiRA Lab",
         description: "Where Innovation Meets Excellence",
         type: "website",
     },
+};
+
+export const viewport: Viewport = {
+    themeColor: "#020817",
+    colorScheme: "dark",
 };
 
 export default function RootLayout({
@@ -24,6 +41,7 @@ export default function RootLayout({
             <body className="bg-aira-bg text-slate-100 font-grotesk antialiased">
                 <SessionProvider>
                     <NotificationProvider>
+                        <PwaProvider />
                         {children}
                         <Toaster
                             position="top-right"

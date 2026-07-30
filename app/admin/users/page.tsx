@@ -5,7 +5,7 @@ import { Plus, Edit2, Trash2, Shield, Key, Copy, Eye, EyeOff, Crown, UploadCloud
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import AnimatedModal from "@/components/ui/AnimatedModal";
-import { compressImage } from "@/lib/image-compressor";
+import { uploadDirectFile } from "@/lib/upload-client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 const ROLES = ["TEAM_MEMBER", "TEAM_LEAD", "CONTENT_MANAGER", "CERTIFICATE_MANAGER", "ADMIN"];
@@ -133,12 +133,8 @@ export default function AdminUsersPage() {
         setUploadingPhoto(true);
         toast.loading("Uploading photo...", { id: "photo-upload" });
         try {
-            const compressed = await compressImage(file);
-            const body = new FormData(); body.append("file", compressed); body.append("type", "team-members");
-            const res = await fetch("/api/upload", { method: "POST", body });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error || "Upload failed");
-            setProfileForm((prev) => ({ ...prev, photo: data.url || prev.photo }));
+            const uploaded = await uploadDirectFile(file, { bucket: "uploads", folder: "team-members" });
+            setProfileForm((prev) => ({ ...prev, photo: uploaded.url || prev.photo }));
             toast.success("Photo uploaded", { id: "photo-upload" });
         } catch (e: any) { toast.error(e?.message || "Upload failed", { id: "photo-upload" }); }
         finally { setUploadingPhoto(false); }

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title>AiRA Lab</title>
+  <desc>AiRA Lab application icon</desc>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="24%" r="88%">
+      <stop offset="0%" stop-color="#0ea5e9" />
+      <stop offset="55%" stop-color="#020817" />
+      <stop offset="100%" stop-color="#020617" />
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)" />
+  <rect x="36" y="36" width="440" height="440" rx="72" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="3" />
+  <text x="256" y="252" text-anchor="middle" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="140" font-weight="800">AiRA</text>
+  <text x="278" y="320" text-anchor="middle" fill="#7dd3fc" font-family="Arial, Helvetica, sans-serif" font-size="40" letter-spacing="14">LAB</text>
+</svg>

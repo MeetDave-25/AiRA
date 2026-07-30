@@ -8,10 +8,10 @@ import jsPDF from "jspdf";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { format } from "date-fns";
-import { compressImage } from "@/lib/image-compressor";
 import { defaultDesign, type CertificateDesign } from "@/lib/certificate-types";
 import { CertificateEditor } from "@/components/admin/CertificateEditor";
 import { CertificateTemplate } from "@/components/admin/CertificateTemplate";
+import { uploadDirectFile } from "@/lib/upload-client";
 
 export default function CertificatesPage() {
     const [design, setDesign] = useState<CertificateDesign>(defaultDesign());
@@ -57,16 +57,10 @@ export default function CertificatesPage() {
         setUploadingImage(true);
         const id = toast.loading("Uploading...");
         try {
-            const compressed = await compressImage(file);
-            const body = new FormData();
-            body.append("file", compressed);
-            body.append("type", "certificate_" + type);
-            const res = await fetch("/api/upload", { method: "POST", body });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error || "Upload failed");
-            if (type === "logoUrl") setLogoUrl(data.url);
-            if (type === "signatureUrl") setSignatureUrl(data.url);
-            if (type === "collegeLogoUrl") setCollegeLogoUrl(data.url);
+            const uploaded = await uploadDirectFile(file, { bucket: "uploads", folder: `certificate-${type}` });
+            if (type === "logoUrl") setLogoUrl(uploaded.url);
+            if (type === "signatureUrl") setSignatureUrl(uploaded.url);
+            if (type === "collegeLogoUrl") setCollegeLogoUrl(uploaded.url);
             toast.success("Uploaded!", { id });
         } catch (e: any) {
             toast.error(e?.message || "Upload failed", { id });

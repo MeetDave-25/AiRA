@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Users, User, Target, FileText, Star, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, Users, User, Target, FileText, Star, ArrowLeft, ChevronLeft, ChevronRight, Film } from "lucide-react";
 import Link from "next/link";
+import { isVideoMedia } from "@/lib/media";
 import { formatDate } from "@/lib/utils";
 
 function ImageCarousel({
@@ -15,23 +16,39 @@ function ImageCarousel({
     current: number;
     onCurrentChange: (next: number) => void;
 }) {
+    const currentMedia = images[current];
+
 
     if (!images.length) return (
         <div className="w-full h-80 rounded-2xl bg-aira-card flex items-center justify-center">
-            <span className="text-slate-500">No images</span>
+            <span className="text-slate-500">No media</span>
         </div>
     );
 
     return (
         <div className="relative rounded-2xl overflow-hidden">
             <div className="relative aspect-video">
-                <img
-                    src={images[current].url}
-                    alt={images[current].caption || "Event"}
-                    className="w-full h-full object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/800x450/0d1526/00D4FF?text=AiRA+Lab+Event"; }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                {isVideoMedia(currentMedia) ? (
+                    <video
+                        src={currentMedia.url}
+                        controls
+                        playsInline
+                        className="w-full h-full object-cover"
+                    />
+                ) : (
+                    <img
+                        src={currentMedia.url}
+                        alt={currentMedia.caption || "Event"}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/800x450/0d1526/00D4FF?text=AiRA+Lab+Event"; }}
+                    />
+                )}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                {isVideoMedia(currentMedia) && (
+                    <div className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-black/70 px-3 py-1 text-xs text-white">
+                        <Film size={12} /> Video
+                    </div>
+                )}
             </div>
 
             {images.length > 1 && (
@@ -147,7 +164,7 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                         />
                     </motion.div>
 
-                    {/* Image thumbnails */}
+                    {/* Media thumbnails */}
                     {event.images?.length > 1 && (
                         <div className="grid grid-cols-5 gap-2">
                             {event.images.map((img: any, i: number) => (
@@ -157,7 +174,16 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                                     className={`aspect-square rounded-lg overflow-hidden border transition ${i === currentImageIndex ? "border-aira-cyan" : "border-white/10 hover:border-aira-cyan/40"
                                         }`}
                                 >
-                                    <img src={img.url} alt={`Event ${i + 1}`} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/100x100/0d1526/00D4FF?text=AL"; }} />
+                                    {isVideoMedia(img) ? (
+                                        <div className="relative h-full w-full bg-slate-950">
+                                            <video src={img.url} className="w-full h-full object-cover" muted playsInline />
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                                <Film size={18} className="text-white" />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <img src={img.url} alt={`Event ${i + 1}`} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/100x100/0d1526/00D4FF?text=AL"; }} />
+                                    )}
                                 </button>
                             ))}
                         </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Save, UploadCloud } from "lucide-react";
 import toast from "react-hot-toast";
-import { compressImage } from "@/lib/image-compressor";
+import { uploadDirectFile } from "@/lib/upload-client";
 
 export default function SettingsPage() {
     const [settings, setSettings] = useState<Record<string, string>>({});
@@ -34,20 +34,8 @@ export default function SettingsPage() {
     const handleImageUpload = async (file: File) => {
         setUploadingImage(true);
         try {
-            const compressed = await compressImage(file);
-            const body = new FormData();
-            body.append("file", compressed);
-            body.append("type", "settings");
-
-            const res = await fetch("/api/upload", {
-                method: "POST",
-                body,
-            });
-
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error || "Upload failed");
-
-            setSettings((prev) => ({ ...prev, lab_main_image: data.url || prev.lab_main_image }));
+            const uploaded = await uploadDirectFile(file, { bucket: "uploads", folder: "settings" });
+            setSettings((prev) => ({ ...prev, lab_main_image: uploaded.url || prev.lab_main_image }));
             toast.success("Image uploaded");
         } catch (error: any) {
             toast.error(error?.message || "Image upload failed");

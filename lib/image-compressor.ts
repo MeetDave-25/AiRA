@@ -1,8 +1,12 @@
-// Client-side image compression utility using HTML Canvas
-// This ensures images gracefully bypass Vercel's strict 4.5MB Serverless Function payload limit.
+// Client-side image compression utility using HTML Canvas.
+// Large uploads are sent directly to Supabase Storage, but shrinking oversized images still improves UX.
 
 export const compressImage = async (file: File, maxWidth = 1920, maxHeight = 1080, quality = 0.85): Promise<File> => {
     return new Promise((resolve, reject) => {
+        if (!file.type.startsWith("image/") || file.type === "image/gif" || file.type === "image/svg+xml") {
+            return resolve(file);
+        }
+
         // Return original if it's exceptionally small anyway (< 500KB)
         if (file.size < 500 * 1024) {
             return resolve(file);

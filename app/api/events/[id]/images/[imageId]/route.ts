@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
+import { createSupabaseAdmin } from "@/lib/supabase";
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string; imageId: string } }) {
     const auth = await requireAdmin();
@@ -33,12 +34,22 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     if (auth.error) return auth.error;
 
     try {
+        const storage = createSupabaseAdmin().storage.from("events");
         const { data: image, error: fetchErr } = await db
             .from("EventImage").select("*").eq("id", params.imageId).single();
 
         if (fetchErr || !image) return NextResponse.json({ error: "Image not found" }, { status: 404 });
 
         await db.from("EventImage").delete().eq("id", params.imageId);
+
+        const storagePath =
+            typeof image.url === "string" && image.url.includes("/storage/v1/object/public/events/")
+                ? image.url.split("/storage/v1/object/public/events/")[1]
+                : null;
+
+        if (storagePath) {
+            await storage.remove([storagePath]);
+        }
 
         if (image.isPrimary) {
             const { data: fallback } = await db

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, Edit2, ImagePlus, Plus, Star, Trash2 } from "lucide-react";
+import { Calendar, Edit2, Film, ImagePlus, Plus, Star, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import AnimatedModal from "@/components/ui/AnimatedModal";
-import { compressImage } from "@/lib/image-compressor";
+import { isVideoMedia } from "@/lib/media";
+import { uploadDirectFiles } from "@/lib/upload-client";
 
 type EventForm = {
     title: string;
@@ -86,11 +87,14 @@ export default function AdminEventsPage() {
     const [existingImages, setExistingImages] = useState<any[]>([]);
     const [draggedImageId, setDraggedImageId] = useState<string | null>(null);
 
-    const selectedPreviews = useMemo(() => selectedFiles.map((f) => URL.createObjectURL(f)), [selectedFiles]);
+    const selectedPreviews = useMemo(
+        () => selectedFiles.map((file) => ({ url: URL.createObjectURL(file), mediaType: file.type })),
+        [selectedFiles]
+    );
 
     useEffect(() => {
         return () => {
-            selectedPreviews.forEach((url) => URL.revokeObjectURL(url));
+            selectedPreviews.forEach(({ url }) => URL.revokeObjectURL(url));
         };
     }, [selectedPreviews]);
 
@@ -124,24 +128,25 @@ export default function AdminEventsPage() {
     const uploadImages = async (eventId: string, files: File[], isPrimary: boolean) => {
         if (!files.length) return;
 
-        toast.loading("Compressing images...", { id: "upload" });
-        const compressedFiles = await Promise.all(
-            files.map((file) => compressImage(file))
-        );
+        toast.loading("Uploading media...", { id: "upload" });
+        const uploadedFiles = await uploadDirectFiles(files, {
+            bucket: "events",
+            folder: `events/${eventId}`,
+            concurrency: 2,
+        });
 
-        const formData = new FormData();
-        compressedFiles.forEach((file) => formData.append("images", file));
-        formData.append("isPrimary", String(isPrimary));
-
-        toast.loading("Uploading images...", { id: "upload" });
         const res = await fetch(`/api/events/${eventId}/images`, {
             method: "POST",
-            body: formData,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                isPrimary,
+                files: uploadedFiles,
+            }),
         });
 
         if (!res.ok) {
             const data = await res.json().catch(() => ({}));
-            throw new Error(data.error || "Failed to upload images");
+            throw new Error(data.error || "Failed to upload media");
         }
         toast.dismiss("upload");
     };
@@ -414,20 +419,29 @@ export default function AdminEventsPage() {
             </div>
 
             <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3 space-y-2">
-                <label className="block text-xs text-slate-400">Add event images (multiple)</label>
+                <label className="block text-xs text-slate-400">Add event media (images or videos)</label>
                 <input
                     type="file"
                     multiple
-                    accept="image/*"
+                    accept="image/*,video/*"
                     onChange={(e) => setSelectedFiles(Array.from(e.target.files || []))}
                     className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-aira-cyan/20 file:px-3 file:py-2 file:text-aira-cyan"
                 />
                 {selectedPreviews.length > 0 && (
                     <div className="grid grid-cols-3 md:grid-cols-4 gap-2 pt-1">
-                        {selectedPreviews.map((src, idx) => (
-                            <div key={src} className="relative overflow-hidden rounded-lg border border-white/10 aspect-square">
-                                <img src={src} alt={`Selected ${idx + 1}`} className="h-full w-full object-cover" />
+                        {selectedPreviews.map(({ url, mediaType }, idx) => (
+                            <div key={url} className="relative overflow-hidden rounded-lg border border-white/10 aspect-square">
+                                {mediaType.startsWith("video/") ? (
+                                    <video src={url} className="h-full w-full object-cover" muted playsInline />
+                                ) : (
+                                    <img src={url} alt={`Selected ${idx + 1}`} className="h-full w-full object-cover" />
+                                )}
                                 {idx === 0 && <span className="absolute left-1 top-1 text-[10px] px-1.5 py-0.5 rounded bg-aira-cyan/80 text-aira-bg font-semibold">Primary</span>}
+                                {mediaType.startsWith("video/") && (
+                                    <span className="absolute right-1 top-1 inline-flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
+                                        <Film size={10} /> Video
+                                    </span>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -436,8 +450,8 @@ export default function AdminEventsPage() {
 
             {editingEvent && existingImages.length > 0 && (
                 <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
-                    <p className="text-xs text-slate-400 mb-2">Existing images</p>
-                    <p className="text-[11px] text-slate-500 mb-2">Drag cards to reorder gallery display</p>
+                    <p className="text-xs text-slate-400 mb-2">Existing media</p>
+                    <p className="text-[11px] text-slate-500 mb-2">Drag cards to reorder the public gallery</p>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                         {existingImages.map((img) => (
                             <div
@@ -448,7 +462,11 @@ export default function AdminEventsPage() {
                                 onDrop={() => handleDropReorder(img.id)}
                                 className={`relative rounded-lg border overflow-hidden cursor-move ${draggedImageId === img.id ? "border-aira-cyan/60" : "border-white/10"}`}
                             >
-                                <img src={img.url} alt="Event" className="w-full h-24 object-cover" />
+                                {isVideoMedia(img) ? (
+                                    <video src={img.url} className="w-full h-24 object-cover" muted playsInline />
+                                ) : (
+                                    <img src={img.url} alt="Event" className="w-full h-24 object-cover" />
+                                )}
                                 <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-black/60 p-1.5">
                                     <button onClick={() => setPrimaryImage(img.id)} className="text-[10px] px-1.5 py-1 rounded bg-aira-cyan/30 text-aira-cyan hover:bg-aira-cyan/40 inline-flex items-center gap-1">
                                         <Star size={10} /> {img.isPrimary ? "Primary" : "Set"}
@@ -457,6 +475,11 @@ export default function AdminEventsPage() {
                                         <Trash2 size={10} /> Remove
                                     </button>
                                 </div>
+                                {isVideoMedia(img) && (
+                                    <div className="absolute left-1 top-1 inline-flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
+                                        <Film size={10} /> Video
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
