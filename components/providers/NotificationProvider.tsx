@@ -3,7 +3,22 @@
 import { createContext, useContext, useEffect, useState, useRef, ReactNode, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { createClient } from "@supabase/supabase-js";
-import { Bell, ExternalLink, X, Smartphone, Sparkles, Volume2, ShieldCheck, Check } from "lucide-react";
+import { 
+    Bell, 
+    ExternalLink, 
+    X, 
+    Smartphone, 
+    Sparkles, 
+    Volume2, 
+    ShieldCheck, 
+    Check, 
+    Zap, 
+    Radio, 
+    CheckCircle2,
+    Lock,
+    Settings,
+    Flame
+} from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -57,12 +72,32 @@ const NotificationContext = createContext<NotificationContextType>({
 
 export const useNotifications = () => useContext(NotificationContext);
 
-// Crystal-clear acoustic bell chime synthesizer (Apple / Glass Bell resonance)
+// ══ SHARED AUDIO CONTEXT & UNLOCK SYSTEM ══
+let sharedAudioCtx: AudioContext | null = null;
+
+function getAudioContext(): AudioContext | null {
+    if (typeof window === "undefined") return null;
+    try {
+        if (!sharedAudioCtx) {
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioCtx) {
+                sharedAudioCtx = new AudioCtx();
+            }
+        }
+        if (sharedAudioCtx && sharedAudioCtx.state === "suspended") {
+            sharedAudioCtx.resume().catch(() => {});
+        }
+        return sharedAudioCtx;
+    } catch {
+        return null;
+    }
+}
+
+// Crystal-clear acoustic bell chime (Apple / Glass Bell resonance)
 function playBellChime() {
     try {
-        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
+        const ctx = getAudioContext();
+        if (!ctx) return;
         const now = ctx.currentTime;
 
         // Strike 1 (High Crystal Ting - C6)
@@ -70,7 +105,7 @@ function playBellChime() {
         const gain1 = ctx.createGain();
         osc1.type = "sine";
         osc1.frequency.setValueAtTime(1046.5, now);
-        gain1.gain.setValueAtTime(0.22, now);
+        gain1.gain.setValueAtTime(0.25, now);
         gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
         osc1.connect(gain1);
         gain1.connect(ctx.destination);
@@ -82,7 +117,7 @@ function playBellChime() {
         const gain2 = ctx.createGain();
         osc2.type = "sine";
         osc2.frequency.setValueAtTime(1318.5, now + 0.08);
-        gain2.gain.setValueAtTime(0.25, now + 0.08);
+        gain2.gain.setValueAtTime(0.28, now + 0.08);
         gain2.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
         osc2.connect(gain2);
         gain2.connect(ctx.destination);
@@ -94,7 +129,7 @@ function playBellChime() {
         const gain3 = ctx.createGain();
         osc3.type = "triangle";
         osc3.frequency.setValueAtTime(1567.98, now + 0.12);
-        gain3.gain.setValueAtTime(0.18, now + 0.12);
+        gain3.gain.setValueAtTime(0.2, now + 0.12);
         gain3.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
         osc3.connect(gain3);
         gain3.connect(ctx.destination);
@@ -106,22 +141,20 @@ function playBellChime() {
         const gain4 = ctx.createGain();
         osc4.type = "sine";
         osc4.frequency.setValueAtTime(2637.0, now + 0.12);
-        gain4.gain.setValueAtTime(0.08, now + 0.12);
+        gain4.gain.setValueAtTime(0.1, now + 0.12);
         gain4.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
         osc4.connect(gain4);
         gain4.connect(ctx.destination);
         osc4.start(now + 0.12);
         osc4.stop(now + 0.8);
-    } catch {
-        // Audio restricted by browser
-    }
+    } catch {}
 }
 
 // Haptic feedback trigger for mobile
 function triggerMobileHaptic() {
     try {
         if (typeof window !== "undefined" && "vibrate" in navigator) {
-            navigator.vibrate([100, 50, 100, 50, 100]);
+            navigator.vibrate([100, 50, 100, 50, 120]);
         }
     } catch {}
 }
@@ -129,25 +162,43 @@ function triggerMobileHaptic() {
 export function NotificationProvider({ children }: { children: ReactNode }) {
     const { data: session } = useSession();
     const userId = (session?.user as any)?.id;
+    const userEmail = session?.user?.email;
+
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadBadge, setUnreadBadge] = useState(false);
     const [activeBanner, setActiveBanner] = useState<Notification | null>(null);
     const [pushPermission, setPushPermission] = useState<NotificationPermission | "default">("default");
     const [showPushPrompt, setShowPushPrompt] = useState(false);
     const [showBlockedGuide, setShowBlockedGuide] = useState(false);
+    const [promptStyle, setPromptStyle] = useState<"standard" | "compact">("standard");
     const bannerTimerRef = useRef<NodeJS.Timeout | null>(null);
     const seenIdsRef = useRef<Set<string>>(new Set());
 
-    // Prompt user on visit if notifications are not yet enabled (just like mobile games / Instagram)
+    // Unlock WebAudio on first user touch/click anywhere on page
+    useEffect(() => {
+        const unlock = () => {
+            getAudioContext();
+            window.removeEventListener("click", unlock);
+            window.removeEventListener("touchstart", unlock);
+        };
+        window.addEventListener("click", unlock, { passive: true });
+        window.addEventListener("touchstart", unlock, { passive: true });
+        return () => {
+            window.removeEventListener("click", unlock);
+            window.removeEventListener("touchstart", unlock);
+        };
+    }, []);
+
+    // Check permission & auto-show prompt on visit (Instagram / Snapchat style bottom prompt)
     useEffect(() => {
         if (typeof window !== "undefined" && "Notification" in window) {
             setPushPermission(Notification.permission);
-            if (Notification.permission !== "granted") {
-                const sessionDismissed = sessionStorage.getItem("aira_notif_prompt_session_dismissed");
+            if (Notification.permission === "default") {
+                const sessionDismissed = sessionStorage.getItem("aira_notif_prompt_dismissed_v2");
                 if (!sessionDismissed) {
                     const timer = setTimeout(() => {
                         setShowPushPrompt(true);
-                    }, 2200);
+                    }, 1800);
                     return () => clearTimeout(timer);
                 }
             }
@@ -167,89 +218,49 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    // Request native device push permission (for Outside-App Lock Screen Push)
-    const requestPushPermission = async (): Promise<boolean> => {
-        if (typeof window !== "undefined" && "Notification" in window) {
-            try {
-                if (Notification.permission === "denied") {
-                    setShowPushPrompt(false);
-                    setShowBlockedGuide(true);
-                    return false;
-                }
-
-                const permission = await Notification.requestPermission();
-                setPushPermission(permission);
-                setShowPushPrompt(false);
-
-                if (permission === "granted") {
-                    playBellChime();
-                    toast.success("🔔 Instant notifications enabled!");
-                    triggerNativeOutsideNotification({
-                        title: "🔔 AiRA Lab Alerts Enabled!",
-                        message: "You will now receive instant lock screen notifications like Instagram & Snapchat.",
-                        link: "/portal/dashboard",
-                    });
-                    return true;
-                } else if (permission === "denied") {
-                    setShowBlockedGuide(true);
-                    return false;
-                }
-                return false;
-            } catch {
-                return false;
-            }
-        }
-        return false;
-    };
-
-    const handleSessionOnly = () => {
-        playBellChime();
-        setShowPushPrompt(false);
-        sessionStorage.setItem("aira_notif_prompt_session_dismissed", "true");
-        toast("🔊 In-app sound & live drop alerts active for this visit!", { icon: "🔔" });
-    };
-
-    const handleDecline = () => {
-        setShowPushPrompt(false);
-        sessionStorage.setItem("aira_notif_prompt_session_dismissed", "true");
-    };
-
     // Helper: Trigger Native OS-Level Notification (Shows outside app, on lock screen, status bar)
-    const triggerNativeOutsideNotification = (notif: { title: string; message: string; link?: string | null }) => {
+    const triggerNativeOutsideNotification = useCallback((notif: { title: string; message: string; link?: string | null }) => {
         if (typeof window === "undefined" || !("Notification" in window) || Notification.permission !== "granted") {
             return;
         }
 
-        try {
-            // If service worker is active, trigger system-level notification via service worker
-            if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.ready.then((registration) => {
-                    registration.showNotification(notif.title, {
-                        body: notif.message,
-                        icon: "/icon.svg",
-                        badge: "/icon.svg",
-                        vibrate: [200, 100, 200, 100, 200],
-                        tag: `aira-push-${Date.now()}`,
-                        renotify: true,
-                        data: {
-                            url: notif.link || "/",
-                        },
-                    } as any);
-                }).catch(() => {
-                    // Fallback to standard Notification API
-                    new Notification(notif.title, {
-                        body: notif.message,
-                        icon: "/icon.svg",
-                    });
+        const title = notif.title || "AiRA Lab";
+        const options: NotificationOptions = {
+            body: notif.message,
+            icon: "/icon.svg",
+            badge: "/icon.svg",
+            tag: `aira-push-${Date.now()}`,
+            renotify: true,
+            data: {
+                url: notif.link || "/",
+            },
+        } as any;
+
+        // Primary: Service Worker showNotification (Works on Mobile Android Chrome, PWA & Desktop)
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.ready
+                .then((registration) => {
+                    return registration.showNotification(title, options);
+                })
+                .catch(() => {
+                    // Fallback to desktop Notification constructor
+                    try {
+                        new Notification(title, {
+                            body: notif.message,
+                            icon: "/icon.svg",
+                        });
+                    } catch {}
                 });
-            } else {
-                new Notification(notif.title, {
+        } else {
+            // Fallback for browsers without serviceWorker
+            try {
+                new Notification(title, {
                     body: notif.message,
                     icon: "/icon.svg",
                 });
-            }
-        } catch {}
-    };
+            } catch {}
+        }
+    }, []);
 
     const showInstagramStyleBanner = useCallback((notif: Notification) => {
         // 1. Play crystal bell chime
@@ -268,18 +279,71 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         bannerTimerRef.current = setTimeout(() => {
             setActiveBanner(null);
         }, 7000);
-    }, []);
+    }, [triggerNativeOutsideNotification]);
+
+    // Request native device push permission
+    const requestPushPermission = async (): Promise<boolean> => {
+        if (typeof window !== "undefined" && "Notification" in window) {
+            try {
+                if (Notification.permission === "denied") {
+                    setShowPushPrompt(false);
+                    setShowBlockedGuide(true);
+                    return false;
+                }
+
+                const permission = await Notification.requestPermission();
+                setPushPermission(permission);
+                setShowPushPrompt(false);
+
+                if (permission === "granted") {
+                    playBellChime();
+                    triggerMobileHaptic();
+                    toast.success("🔔 AiRA Lab notifications activated!");
+                    
+                    // Trigger a celebratory welcome notification
+                    setTimeout(() => {
+                        triggerNativeOutsideNotification({
+                            title: "🎉 Welcome to AiRA Lab Alerts!",
+                            message: "You're all set to receive instant updates, live broadcasts, and announcements.",
+                            link: "/",
+                        });
+                    }, 400);
+
+                    return true;
+                } else if (permission === "denied") {
+                    setShowBlockedGuide(true);
+                    return false;
+                }
+                return false;
+            } catch {
+                return false;
+            }
+        }
+        return false;
+    };
+
+    const handleSessionOnly = () => {
+        playBellChime();
+        setShowPushPrompt(false);
+        sessionStorage.setItem("aira_notif_prompt_dismissed_v2", "true");
+        toast("🔊 In-app sound & live alert alerts active for this session!", { icon: "🔔" });
+    };
+
+    const handleDecline = () => {
+        setShowPushPrompt(false);
+        sessionStorage.setItem("aira_notif_prompt_dismissed_v2", "true");
+    };
 
     const dismissBanner = () => {
         if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
         setActiveBanner(null);
     };
 
-    // Delayed outside test helper so user can lock screen or switch apps to test with custom message!
+    // Delayed outside test helper so user can lock screen or switch apps with custom messages!
     const triggerDelayedOutsideTest = (customData?: { title?: string; message?: string; link?: string }, seconds: number = 4) => {
         const finalTitle = customData?.title?.trim() || "🚀 AiRA Lab: Lock Screen Alert!";
         const finalMessage = customData?.message?.trim() || "This notification appeared outside the app just like Instagram & Snapchat!";
-        const finalLink = customData?.link?.trim() || "/portal/dashboard";
+        const finalLink = customData?.link?.trim() || "/";
 
         const deliverAlert = () => {
             triggerNativeOutsideNotification({
@@ -293,7 +357,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         if (typeof window !== "undefined" && "Notification" in window && Notification.permission !== "granted") {
             requestPushPermission().then((granted) => {
                 if (granted) {
-                    toast.success(`Lock your phone or switch apps! Your custom notification will pop in ${seconds}s 🔔`);
+                    toast.success(`Lock your phone or switch apps! Your custom alert will pop in ${seconds}s 🔔`);
                     setTimeout(deliverAlert, seconds * 1000);
                 } else {
                     toast.error("Please allow notification permission to receive lock screen alerts.");
@@ -332,37 +396,40 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         } catch {}
     }, [session, showInstagramStyleBanner]);
 
-    // Initial load & Polling fallback every 12s
+    // Initial load & Polling fallback every 10s
     useEffect(() => {
         if (session?.user?.email) {
             fetchNotifications(true);
 
             const interval = setInterval(() => {
                 fetchNotifications(false);
-            }, 12000);
+            }, 10000);
 
             return () => clearInterval(interval);
         }
     }, [session, fetchNotifications]);
 
-    // Realtime Supabase Subscription
+    // Realtime Supabase Broadcast & User Subscriptions
     useEffect(() => {
-        if (!userId || userId.startsWith("local-bypass-")) return;
-
-        const channel = supabase
-            .channel(`realtime_notifications_${userId}`)
+        // Global Broadcast Channel for all visitors (even non-logged-in)
+        const globalChannel = supabase
+            .channel("aira_global_broadcasts")
             .on(
-                "postgres_changes",
-                {
-                    event: "INSERT",
-                    schema: "public",
-                    table: "Notification",
-                    filter: `userId=eq.${userId}`,
-                },
+                "broadcast",
+                { event: "notification" },
                 (payload: any) => {
-                    const newNotif = payload.new as Notification;
-                    if (newNotif && !seenIdsRef.current.has(newNotif.id)) {
-                        seenIdsRef.current.add(newNotif.id);
+                    const data = payload?.payload;
+                    if (data && data.title && !seenIdsRef.current.has(data.id || data.title)) {
+                        seenIdsRef.current.add(data.id || data.title);
+                        const newNotif: Notification = {
+                            id: data.id || `broadcast-${Date.now()}`,
+                            userId: "global",
+                            title: data.title,
+                            message: data.message || "",
+                            link: data.link || null,
+                            read: false,
+                            createdAt: new Date().toISOString(),
+                        };
                         setNotifications((prev) => [newNotif, ...prev]);
                         setUnreadBadge(true);
                         showInstagramStyleBanner(newNotif);
@@ -371,8 +438,35 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             )
             .subscribe();
 
+        // Specific user database channel if logged in
+        let userChannel: any = null;
+        if (userId && !userId.startsWith("local-bypass-")) {
+            userChannel = supabase
+                .channel(`realtime_notifications_${userId}`)
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "INSERT",
+                        schema: "public",
+                        table: "Notification",
+                        filter: `userId=eq.${userId}`,
+                    },
+                    (payload: any) => {
+                        const newNotif = payload.new as Notification;
+                        if (newNotif && !seenIdsRef.current.has(newNotif.id)) {
+                            seenIdsRef.current.add(newNotif.id);
+                            setNotifications((prev) => [newNotif, ...prev]);
+                            setUnreadBadge(true);
+                            showInstagramStyleBanner(newNotif);
+                        }
+                    }
+                )
+                .subscribe();
+        }
+
         return () => {
-            supabase.removeChannel(channel);
+            supabase.removeChannel(globalChannel);
+            if (userChannel) supabase.removeChannel(userChannel);
         };
     }, [userId, showInstagramStyleBanner]);
 
@@ -438,72 +532,88 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         >
             {children}
 
-            {/* ══ OUTSIDE-APP LOCK SCREEN PUSH PERMISSION CARD (Game & Instagram Style) ══ */}
+            {/* ══ PREMIUM INSTAGRAM / SNAPCHAT STYLE PERMISSION PROMPT MODAL ══ */}
             <AnimatePresence>
                 {showPushPrompt && (
                     <motion.div
-                        initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                        initial={{ opacity: 0, y: 60, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 40, scale: 0.95 }}
-                        transition={{ type: "spring", stiffness: 360, damping: 28 }}
-                        className="fixed bottom-4 inset-x-3 sm:bottom-6 sm:right-6 sm:inset-x-auto sm:w-96 z-[99995] pointer-events-auto mx-auto max-w-md"
+                        transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                        className="fixed bottom-4 inset-x-3 sm:bottom-6 sm:right-6 sm:inset-x-auto sm:w-[410px] z-[99995] pointer-events-auto mx-auto max-w-md"
                     >
-                        <div className="relative bg-slate-950/95 backdrop-blur-2xl border border-aira-cyan/40 rounded-3xl p-4 sm:p-5 shadow-2xl shadow-black/90 ring-1 ring-white/15 overflow-hidden">
-                            {/* Glowing background highlights */}
-                            <div className="absolute -top-12 -right-12 w-32 h-32 bg-aira-cyan/20 blur-2xl rounded-full pointer-events-none" />
-                            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-aira-purple/20 blur-2xl rounded-full pointer-events-none" />
+                        <div className="relative bg-slate-950/95 backdrop-blur-2xl border border-aira-cyan/40 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-black/90 ring-1 ring-white/20 overflow-hidden">
+                            {/* Ambient Glows */}
+                            <div className="absolute -top-14 -right-14 w-40 h-40 bg-aira-cyan/25 blur-3xl rounded-full pointer-events-none" />
+                            <div className="absolute -bottom-14 -left-14 w-40 h-40 bg-aira-purple/25 blur-3xl rounded-full pointer-events-none" />
 
-                            {/* Header */}
-                            <div className="flex items-start justify-between gap-3 relative z-10 mb-2.5">
+                            {/* Header / Brand */}
+                            <div className="flex items-start justify-between gap-3 relative z-10 mb-3.5">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-aira-cyan/20 to-aira-purple/30 border border-aira-cyan/40 flex items-center justify-center text-aira-cyan shadow-md shrink-0">
-                                        <Bell size={20} className="animate-pulse" />
+                                    <div className="relative">
+                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-aira-cyan via-blue-600 to-aira-purple p-0.5 shadow-lg shadow-aira-cyan/30 flex items-center justify-center">
+                                            <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
+                                                <Bell size={22} className="text-aira-cyan animate-bounce" />
+                                            </div>
+                                        </div>
+                                        <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-slate-950 flex items-center justify-center">
+                                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
+                                        </span>
                                     </div>
                                     <div>
-                                        <h3 className="font-orbitron font-bold text-sm text-white flex items-center gap-1.5">
-                                            Enable Notifications
-                                            <span className="w-2 h-2 rounded-full bg-aira-cyan animate-ping" />
-                                        </h3>
-                                        <p className="text-[11px] text-slate-400 font-sans">Lock screen & real-time updates</p>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-orbitron font-bold text-sm text-white">AiRA Labs</span>
+                                            <span className="px-2 py-0.5 rounded-full bg-aira-cyan/20 border border-aira-cyan/40 text-aira-cyan text-[10px] font-bold">
+                                                LIVE ALERTS
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-400 font-sans mt-0.5">Premier Innovation & Robotics Hub</p>
                                     </div>
                                 </div>
 
                                 <button
                                     onClick={handleDecline}
                                     className="w-7 h-7 rounded-full glass border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-white/30 transition-all shrink-0"
-                                    aria-label="Close notification prompt"
+                                    aria-label="Close"
                                 >
                                     <X size={14} />
                                 </button>
                             </div>
 
-                            {/* Body Message */}
-                            <p className="text-xs text-slate-300 font-sans leading-relaxed relative z-10 mb-3.5">
-                                Would you like to receive instant notifications for live event broadcasts, leadership announcements, and tasks (like Instagram & Snapchat)?
-                            </p>
+                            {/* Value Proposition bullets */}
+                            <div className="space-y-2 mb-4 relative z-10 font-sans text-xs text-slate-300">
+                                <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/5 border border-white/5">
+                                    <Sparkles size={14} className="text-amber-400 shrink-0" />
+                                    <span>Instant broadcast drops, hackathons & lab events</span>
+                                </div>
+                                <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/5 border border-white/5">
+                                    <Smartphone size={14} className="text-aira-cyan shrink-0" />
+                                    <span>Lock screen notifications like Instagram & Snapchat</span>
+                                </div>
+                            </div>
 
-                            {/* 3-Action Options */}
+                            {/* Action Buttons */}
                             <div className="flex flex-col gap-2 relative z-10">
                                 <button
                                     onClick={requestPushPermission}
-                                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-aira-cyan via-blue-500 to-aira-purple text-white font-orbitron font-bold text-xs hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-aira-cyan/25 flex items-center justify-center gap-2"
+                                    className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-aira-cyan via-blue-500 to-aira-purple text-slate-950 font-orbitron font-bold text-xs sm:text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-aira-cyan/30 flex items-center justify-center gap-2"
                                 >
-                                    <Bell size={14} /> Always Allow
+                                    <Bell size={16} className="text-slate-950 fill-slate-950" /> Allow Notifications
                                 </button>
 
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-2 gap-2 mt-1">
                                     <button
                                         onClick={handleSessionOnly}
-                                        className="py-2 px-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white font-semibold text-[11px] transition-colors flex items-center justify-center gap-1.5"
+                                        className="py-2.5 px-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
                                     >
-                                        <Volume2 size={12} className="text-aira-cyan" /> While Using App
+                                        <Volume2 size={13} className="text-aira-cyan" /> While In App
                                     </button>
 
                                     <button
                                         onClick={handleDecline}
-                                        className="py-2 px-3 rounded-xl glass border border-white/10 text-slate-400 hover:text-white font-semibold text-[11px] transition-colors"
+                                        className="py-2.5 px-3 rounded-xl glass border border-white/10 text-slate-400 hover:text-white font-semibold text-xs transition-colors flex items-center justify-center"
                                     >
-                                        Don&apos;t Allow
+                                        Not Now
                                     </button>
                                 </div>
                             </div>
@@ -519,7 +629,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[99998] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+                        className="fixed inset-0 z-[99998] bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
                         onClick={() => setShowBlockedGuide(false)}
                     >
                         <motion.div
@@ -538,7 +648,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                                     </div>
                                     <div>
                                         <h3 className="font-orbitron font-bold text-sm text-white">Unblock in Browser</h3>
-                                        <p className="text-xs text-slate-400">Notifications are currently blocked</p>
+                                        <p className="text-xs text-slate-400">AiRA Lab Notifications</p>
                                     </div>
                                 </div>
                                 <button
@@ -549,15 +659,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                                 </button>
                             </div>
 
-                            <p className="text-xs text-slate-300 mb-4 leading-relaxed">
-                                Your browser is currently blocking notifications for this site. Follow these quick steps to enable them:
+                            <p className="text-xs text-slate-300 mb-4 leading-relaxed font-sans">
+                                Your browser is currently blocking notifications for AiRA Lab. Follow these quick steps to enable them:
                             </p>
 
-                            <div className="space-y-3 mb-6">
+                            <div className="space-y-2.5 mb-6">
                                 <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-900/60 border border-white/5">
                                     <span className="w-6 h-6 rounded-full bg-aira-cyan/20 text-aira-cyan font-bold text-xs flex items-center justify-center shrink-0">1</span>
                                     <p className="text-xs text-slate-300">
-                                        Click the <strong className="text-white">🔒 Lock / Settings icon</strong> next to the URL in your browser address bar.
+                                        Click the <strong className="text-white">🔒 Lock / Settings icon</strong> in your browser address bar.
                                     </p>
                                 </div>
 
@@ -571,7 +681,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                                 <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-900/60 border border-white/5">
                                     <span className="w-6 h-6 rounded-full bg-aira-cyan/20 text-aira-cyan font-bold text-xs flex items-center justify-center shrink-0">3</span>
                                     <p className="text-xs text-slate-300">
-                                        Refresh the page or tap the button below to confirm.
+                                        Refresh the page or click below to verify.
                                     </p>
                                 </div>
                             </div>
@@ -583,16 +693,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                                             if (Notification.permission === "granted") {
                                                 setPushPermission("granted");
                                                 setShowBlockedGuide(false);
-                                                toast.success("Notifications are now unblocked & active!");
+                                                toast.success("Notifications are active!");
                                                 playBellChime();
                                             } else {
                                                 window.location.reload();
                                             }
                                         }
                                     }}
-                                    className="flex-1 py-2.5 rounded-xl bg-aira-cyan text-aira-bg font-orbitron font-bold text-xs hover:scale-105 transition-transform text-center shadow-lg shadow-aira-cyan/20"
+                                    className="flex-1 py-2.5 rounded-xl bg-aira-cyan text-slate-950 font-orbitron font-bold text-xs hover:scale-105 transition-transform text-center shadow-lg shadow-aira-cyan/20"
                                 >
-                                    Check Status / Reload
+                                    Verify / Reload
                                 </button>
                                 <button
                                     onClick={() => setShowBlockedGuide(false)}
@@ -606,7 +716,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 )}
             </AnimatePresence>
 
-            {/* ══ INSTAGRAM / SNAPCHAT STYLE DYNAMIC DROP-DOWN PUSH BANNER ══ */}
+            {/* ══ INSTAGRAM / SNAPCHAT STYLE DYNAMIC DROP-DOWN PUSH BANNER (Top-Slide) ══ */}
             <div className="fixed top-4 inset-x-0 z-[99999] flex justify-center px-4 pointer-events-none">
                 <AnimatePresence>
                     {activeBanner && (
@@ -620,7 +730,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                             {/* App Header Tag */}
                             <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-white/10">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 rounded-md bg-gradient-to-br from-aira-cyan to-aira-purple flex items-center justify-center text-[10px] font-bold text-white shadow-sm shadow-aira-cyan/50">
+                                    <div className="w-5 h-5 rounded-md bg-gradient-to-br from-aira-cyan to-aira-purple flex items-center justify-center text-[10px] font-bold text-white shadow-sm shadow-aira-cyan/50 font-orbitron">
                                         AL
                                     </div>
                                     <span className="text-[11px] font-orbitron font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
@@ -657,7 +767,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                                             <Link
                                                 href={activeBanner.link}
                                                 onClick={dismissBanner}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aira-cyan text-aira-bg font-semibold text-xs hover:scale-105 transition-transform shadow-md shadow-aira-cyan/30"
+                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aira-cyan text-slate-950 font-semibold text-xs hover:scale-105 transition-transform shadow-md shadow-aira-cyan/30"
                                             >
                                                 Open Details <ExternalLink size={12} />
                                             </Link>

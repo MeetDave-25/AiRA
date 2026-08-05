@@ -133,6 +133,25 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        // Emit instant broadcast across Supabase Realtime channel
+        try {
+            const channel = db.channel("aira_global_broadcasts");
+            await channel.send({
+                type: "broadcast",
+                event: "notification",
+                payload: {
+                    id: uuidv4(),
+                    title: formattedTitle,
+                    message: message.trim(),
+                    link: link?.trim() || null,
+                    targetAudience,
+                    createdAt: now,
+                }
+            });
+        } catch (rtErr) {
+            console.warn("Supabase realtime broadcast send warning:", rtErr);
+        }
+
         return NextResponse.json({
             success: true,
             recipientCount: recipientUserIds.length,
