@@ -144,6 +144,34 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
-    await db.from("Application").delete().eq("id", params.id);
-    return NextResponse.json({ success: true });
+    try {
+        const { searchParams } = new URL(req.url);
+        const deleteAssociated = searchParams.get("deleteUser") === "true";
+
+        if (deleteAssociated) {
+            // Fetch application to get email and name
+            const { data: app } = await db
+                .from("Application")
+                .select("email, name")
+                .eq("id", params.id)
+                .maybeSingle();
+
+            if (app) {
+                if (app.email) {
+                    await db.from("User").delete().eq("email", app.email.trim().toLowerCase());
+                }
+                if (app.name) {
+                    await db.from("TeamMemberProfile").delete().ilike("name", app.name.trim());
+                }
+            }
+        }
+
+        const { error } = await db.from("Application").delete().eq("id", params.id);
+        if (error) throw error;
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error("Delete application error:", error);
+        return NextResponse.json({ error: "Failed to delete application" }, { status: 500 });
+    }
 }

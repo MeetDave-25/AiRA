@@ -20,7 +20,10 @@ import {
     Filter,
     CheckCircle2,
     XCircle,
-    ArrowUpRight
+    ArrowUpRight,
+    AlertTriangle,
+    CheckSquare,
+    Square
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -32,7 +35,15 @@ export default function ApplicationsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [filterStatus, setFilterStatus] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("ALL");
     const [isProcessing, setIsProcessing] = useState<string | null>(null);
-    const [deleteId, setDeleteId] = useState<string | null>(null);
+    
+    // Delete single application modal state
+    const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+    const [cascadeDeleteUser, setCascadeDeleteUser] = useState(false);
+
+    // Bulk selection state
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
     // Modal state for newly approved credentials
     const [approvedModalData, setApprovedModalData] = useState<{
@@ -97,19 +108,45 @@ export default function ApplicationsPage() {
         }
     };
 
-    const handleDelete = async () => {
-        if (!deleteId) return;
-        setIsProcessing(deleteId);
+    const handleDeleteSingle = async () => {
+        if (!deleteTarget) return;
+        setIsProcessing(deleteTarget.id);
         try {
-            const res = await fetch(`/api/applications/${deleteId}`, { method: "DELETE" });
+            const query = cascadeDeleteUser ? "?deleteUser=true" : "";
+            const res = await fetch(`/api/applications/${deleteTarget.id}${query}`, { method: "DELETE" });
             if (!res.ok) throw new Error("Failed to delete application");
-            toast.success("Application removed");
-            setDeleteId(null);
+            
+            toast.success(cascadeDeleteUser 
+                ? `Application and linked profile for ${deleteTarget.name} deleted` 
+                : `Application for ${deleteTarget.name} deleted`
+            );
+            
+            setDeleteTarget(null);
+            setCascadeDeleteUser(false);
+            setSelectedIds(prev => prev.filter(id => id !== deleteTarget.id));
             await fetchApps();
         } catch (error: any) {
             toast.error(error?.message || "Delete failed");
         } finally {
             setIsProcessing(null);
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.length === 0) return;
+        setIsBulkDeleting(true);
+        try {
+            for (const id of selectedIds) {
+                await fetch(`/api/applications/${id}`, { method: "DELETE" });
+            }
+            toast.success(`Successfully deleted ${selectedIds.length} application(s)`);
+            setSelectedIds([]);
+            setShowBulkDeleteModal(false);
+            await fetchApps();
+        } catch (error: any) {
+            toast.error("Failed to delete some applications");
+        } finally {
+            setIsBulkDeleting(false);
         }
     };
 
@@ -141,6 +178,20 @@ export default function ApplicationsPage() {
         };
     }, [apps]);
 
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => 
+            prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+        );
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === filteredApps.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(filteredApps.map(a => a.id));
+        }
+    };
+
     return (
         <div className="space-y-6 relative">
             <div className="absolute -top-10 -right-10 w-60 h-60 bg-aira-cyan/10 blur-3xl rounded-full pointer-events-none" />
@@ -151,7 +202,7 @@ export default function ApplicationsPage() {
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                     <div>
                         <h1 className="font-orbitron font-bold text-2xl md:text-3xl gradient-text-cyan text-glow-cyan">Join Applications</h1>
-                        <p className="text-slate-400 text-sm mt-1">Review applicant requests. Approving an applicant automatically registers their login account and public team profile in People.</p>
+                        <p className="text-slate-400 text-sm mt-1">Review, accept, or delete applicant submissions. Accepted applicants auto-register into People.</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <button
@@ -203,20 +254,50 @@ export default function ApplicationsPage() {
                     </button>
                 </div>
 
-                {/* Search input */}
-                <div className="mt-4 relative">
-                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search applicant by name, email, interest domain, or message..."
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/60 text-white placeholder-slate-500 text-sm outline-none focus:border-aira-cyan/50 transition-colors"
-                    />
-                    {searchQuery && (
-                        <button onClick={() => setSearchQuery("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">
-                            Clear
-                        </button>
+                {/* Search & Bulk Bar */}
+                <div className="mt-4 flex flex-col sm:flex-row gap-3 items-center">
+                    <div className="relative flex-1 w-full">
+                        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search by applicant name, email, domain, or message..."
+                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/60 text-white placeholder-slate-500 text-sm outline-none focus:border-aira-cyan/50 transition-colors"
+                        />
+                        {searchQuery && (
+                            <button onClick={() => setSearchQuery("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">
+                                Clear
+                            </button>
+                        )}
+                    </div>
+
+                    {filteredApps.length > 0 && (
+                        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                            <button
+                                onClick={toggleSelectAll}
+                                className="px-3 py-2 rounded-xl glass border border-white/10 text-slate-300 hover:text-white text-xs flex items-center gap-2 transition-colors"
+                            >
+                                {selectedIds.length === filteredApps.length ? (
+                                    <>
+                                        <CheckSquare size={14} className="text-aira-cyan" /> Deselect All
+                                    </>
+                                ) : (
+                                    <>
+                                        <Square size={14} className="text-slate-400" /> Select All ({filteredApps.length})
+                                    </>
+                                )}
+                            </button>
+
+                            {selectedIds.length > 0 && (
+                                <button
+                                    onClick={() => setShowBulkDeleteModal(true)}
+                                    className="px-3.5 py-2 rounded-xl bg-aira-magenta/20 border border-aira-magenta/40 text-aira-magenta hover:bg-aira-magenta/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                                >
+                                    <Trash2 size={14} /> Delete Selected ({selectedIds.length})
+                                </button>
+                            )}
+                        </div>
                     )}
                 </div>
             </motion.div>
@@ -246,6 +327,7 @@ export default function ApplicationsPage() {
                     const isApproved = status === "APPROVED";
                     const isRejected = status === "REJECTED";
                     const isPending = status === "PENDING";
+                    const isSelected = selectedIds.includes(app.id);
 
                     return (
                         <motion.div
@@ -253,69 +335,86 @@ export default function ApplicationsPage() {
                             initial={{ opacity: 0, y: 14 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.03 }}
-                            className={`glass rounded-2xl border p-6 transition-all ${
-                                isApproved 
-                                    ? "border-emerald-500/30 bg-emerald-950/10" 
-                                    : isRejected 
-                                        ? "border-aira-magenta/20 bg-aira-magenta/5 opacity-80" 
-                                        : "border-white/10 hover:border-aira-cyan/30"
+                            className={`glass rounded-2xl border p-5 sm:p-6 transition-all ${
+                                isSelected
+                                    ? "border-aira-cyan/60 bg-aira-cyan/5 ring-1 ring-aira-cyan/30"
+                                    : isApproved 
+                                        ? "border-emerald-500/30 bg-emerald-950/10" 
+                                        : isRejected 
+                                            ? "border-aira-magenta/20 bg-aira-magenta/5 opacity-80" 
+                                            : "border-white/10 hover:border-aira-cyan/30"
                             }`}
                         >
                             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                                <div className="space-y-3 flex-1 min-w-0">
-                                    <div className="flex flex-wrap items-center gap-3">
-                                        <h3 className="font-orbitron font-bold text-lg text-white truncate">{app.name}</h3>
-                                        
-                                        {/* Status Badge */}
-                                        {isApproved && (
-                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                                                <CheckCircle2 size={13} /> Accepted & Registered in People
-                                            </span>
+                                <div className="flex items-start gap-3 flex-1 min-w-0">
+                                    {/* Selection checkbox */}
+                                    <button
+                                        onClick={() => toggleSelect(app.id)}
+                                        className="mt-1 p-1 text-slate-400 hover:text-aira-cyan transition-colors"
+                                        title={isSelected ? "Deselect" : "Select"}
+                                    >
+                                        {isSelected ? (
+                                            <CheckSquare size={18} className="text-aira-cyan" />
+                                        ) : (
+                                            <Square size={18} className="text-slate-600 hover:text-slate-400" />
                                         )}
-                                        {isPending && (
-                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                                                <Clock size={13} /> Pending Review
-                                            </span>
-                                        )}
-                                        {isRejected && (
-                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-aira-magenta/20 text-aira-magenta border border-aira-magenta/40">
-                                                <XCircle size={13} /> Rejected
-                                            </span>
-                                        )}
+                                    </button>
 
-                                        {app.interest && (
-                                            <span className="px-2.5 py-0.5 rounded-lg text-xs font-medium border border-aira-cyan/30 bg-aira-cyan/10 text-aira-cyan">
-                                                {app.interest}
-                                            </span>
-                                        )}
-                                    </div>
+                                    <div className="space-y-3 flex-1 min-w-0">
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <h3 className="font-orbitron font-bold text-lg text-white truncate">{app.name}</h3>
+                                            
+                                            {/* Status Badge */}
+                                            {isApproved && (
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                                                    <CheckCircle2 size={13} /> Accepted & Registered in People
+                                                </span>
+                                            )}
+                                            {isPending && (
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                                    <Clock size={13} /> Pending Review
+                                                </span>
+                                            )}
+                                            {isRejected && (
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-aira-magenta/20 text-aira-magenta border border-aira-magenta/40">
+                                                    <XCircle size={13} /> Rejected
+                                                </span>
+                                            )}
 
-                                    {/* Contact Details */}
-                                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300">
-                                        <a href={`mailto:${app.email}`} className="flex items-center gap-1.5 hover:text-aira-cyan text-slate-300 hover:underline">
-                                            <Mail size={13} className="text-aira-cyan" /> {app.email}
-                                        </a>
-                                        {app.phone && (
-                                            <a href={`tel:${app.phone}`} className="flex items-center gap-1.5 hover:text-aira-cyan text-slate-300">
-                                                <Phone size={13} className="text-emerald-400" /> {app.phone}
-                                            </a>
-                                        )}
-                                        <span className="text-slate-500">
-                                            Applied {new Date(app.createdAt).toLocaleDateString()}
-                                        </span>
-                                    </div>
-
-                                    {/* Applicant Statement */}
-                                    {app.message && (
-                                        <div className="p-3.5 bg-slate-900/60 rounded-xl border border-white/5 text-xs text-slate-300 leading-relaxed font-sans">
-                                            <span className="text-slate-500 block text-[11px] mb-1 font-semibold uppercase tracking-wider">Statement / Why AiRA:</span>
-                                            "{app.message}"
+                                            {app.interest && (
+                                                <span className="px-2.5 py-0.5 rounded-lg text-xs font-medium border border-aira-cyan/30 bg-aira-cyan/10 text-aira-cyan">
+                                                    {app.interest}
+                                                </span>
+                                            )}
                                         </div>
-                                    )}
+
+                                        {/* Contact Details */}
+                                        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300">
+                                            <a href={`mailto:${app.email}`} className="flex items-center gap-1.5 hover:text-aira-cyan text-slate-300 hover:underline">
+                                                <Mail size={13} className="text-aira-cyan" /> {app.email}
+                                            </a>
+                                            {app.phone && (
+                                                <a href={`tel:${app.phone}`} className="flex items-center gap-1.5 hover:text-aira-cyan text-slate-300">
+                                                    <Phone size={13} className="text-emerald-400" /> {app.phone}
+                                                </a>
+                                            )}
+                                            <span className="text-slate-500">
+                                                Applied {new Date(app.createdAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+
+                                        {/* Applicant Statement */}
+                                        {app.message && (
+                                            <div className="p-3.5 bg-slate-900/60 rounded-xl border border-white/5 text-xs text-slate-300 leading-relaxed font-sans">
+                                                <span className="text-slate-500 block text-[11px] mb-1 font-semibold uppercase tracking-wider">Statement / Why AiRA:</span>
+                                                "{app.message}"
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="flex flex-wrap lg:flex-col items-stretch justify-end gap-2 lg:w-48 flex-shrink-0">
+                                <div className="flex flex-wrap lg:flex-col items-stretch justify-end gap-2 lg:w-48 flex-shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-white/5">
                                     {isPending && (
                                         <>
                                             <button
@@ -376,12 +475,16 @@ export default function ApplicationsPage() {
                                         </>
                                     )}
 
+                                    {/* Prominent Delete Button */}
                                     <button
-                                        onClick={() => setDeleteId(app.id)}
-                                        className="flex items-center justify-center gap-1 p-2 rounded-lg text-slate-500 hover:text-aira-magenta hover:bg-aira-magenta/10 text-xs transition-colors"
+                                        onClick={() => {
+                                            setDeleteTarget(app);
+                                            setCascadeDeleteUser(isApproved);
+                                        }}
+                                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs transition-colors font-medium mt-1"
                                         title="Delete Application"
                                     >
-                                        <Trash2 size={13} /> Remove
+                                        <Trash2 size={14} /> Delete Application
                                     </button>
                                 </div>
                             </div>
@@ -504,32 +607,102 @@ export default function ApplicationsPage() {
                 )}
             </AnimatedModal>
 
-            {/* ══ Delete Confirmation Modal ══ */}
+            {/* ══ Delete Single Application Modal ══ */}
             <AnimatedModal
-                open={!!deleteId}
-                onClose={() => setDeleteId(null)}
+                open={!!deleteTarget}
+                onClose={() => {
+                    setDeleteTarget(null);
+                    setCascadeDeleteUser(false);
+                }}
                 title="Delete Application"
                 subtitle="Are you sure you want to remove this application?"
                 footer={
                     <div className="flex justify-end gap-3">
                         <button
-                            onClick={() => setDeleteId(null)}
+                            onClick={() => {
+                                setDeleteTarget(null);
+                                setCascadeDeleteUser(false);
+                            }}
                             className="px-4 py-2 rounded-lg border border-white/15 text-slate-300 hover:bg-white/5 text-xs"
                         >
                             Cancel
                         </button>
                         <button
-                            onClick={handleDelete}
-                            className="px-4 py-2 rounded-lg bg-aira-magenta text-white font-semibold text-xs hover:scale-105 transition-transform"
+                            disabled={isProcessing === deleteTarget?.id}
+                            onClick={handleDeleteSingle}
+                            className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold text-xs hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-1.5"
                         >
-                            Delete
+                            <Trash2 size={14} />
+                            {isProcessing === deleteTarget?.id ? "Deleting..." : "Delete Application"}
                         </button>
                     </div>
                 }
             >
-                <p className="text-sm text-slate-300">
-                    This will permanently delete the application record. Any user accounts or profiles already created will remain in the system.
-                </p>
+                {deleteTarget && (
+                    <div className="space-y-4">
+                        <div className="p-3.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-slate-300 space-y-1">
+                            <p className="font-semibold text-white text-sm">{deleteTarget.name}</p>
+                            <p className="text-slate-400">{deleteTarget.email}</p>
+                            {deleteTarget.interest && (
+                                <p className="text-aira-cyan text-[11px]">Domain: {deleteTarget.interest}</p>
+                            )}
+                        </div>
+
+                        {deleteTarget.status === "APPROVED" && (
+                            <label className="flex items-start gap-2.5 p-3 rounded-xl border border-red-500/20 bg-red-950/20 text-xs text-slate-200 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={cascadeDeleteUser}
+                                    onChange={(e) => setCascadeDeleteUser(e.target.checked)}
+                                    className="mt-0.5 h-4 w-4 rounded accent-red-500"
+                                />
+                                <div>
+                                    <span className="font-semibold text-red-300 block">Also remove associated User Account & Public Profile</span>
+                                    <span className="text-[11px] text-slate-400">
+                                        Check this if you want to completely wipe the login account and team card created when this application was approved.
+                                    </span>
+                                </div>
+                            </label>
+                        )}
+
+                        <p className="text-xs text-slate-400">
+                            This action will permanently delete the application record from the database.
+                        </p>
+                    </div>
+                )}
+            </AnimatedModal>
+
+            {/* ══ Bulk Delete Modal ══ */}
+            <AnimatedModal
+                open={showBulkDeleteModal}
+                onClose={() => setShowBulkDeleteModal(false)}
+                title="Bulk Delete Applications"
+                subtitle={`You have selected ${selectedIds.length} application(s) for deletion.`}
+                footer={
+                    <div className="flex justify-end gap-3">
+                        <button
+                            onClick={() => setShowBulkDeleteModal(false)}
+                            className="px-4 py-2 rounded-lg border border-white/15 text-slate-300 hover:bg-white/5 text-xs"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            disabled={isBulkDeleting}
+                            onClick={handleBulkDelete}
+                            className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold text-xs hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                        >
+                            <Trash2 size={14} />
+                            {isBulkDeleting ? "Deleting..." : `Delete ${selectedIds.length} Applications`}
+                        </button>
+                    </div>
+                }
+            >
+                <div className="space-y-3">
+                    <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-200 flex items-start gap-2">
+                        <AlertTriangle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
+                        <span>Are you sure you want to permanently remove {selectedIds.length} application(s)? This action cannot be undone.</span>
+                    </div>
+                </div>
             </AnimatedModal>
         </div>
     );
