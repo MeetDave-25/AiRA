@@ -15,13 +15,14 @@ import {
     Rocket, 
     Zap, 
     Users, 
-    ArrowRight,
-    Target,
-    Award,
-    Mail,
-    Globe2,
-    Layers,
-    Quote
+    ArrowRight, 
+    Target, 
+    Award, 
+    Mail, 
+    Globe2, 
+    Layers, 
+    Quote,
+    RefreshCw
 } from "lucide-react";
 
 interface LeaderProfile {
@@ -36,57 +37,6 @@ interface LeaderProfile {
     sortOrder?: number;
     isPresident?: boolean;
 }
-
-// Fallback initial leaders if none seeded yet
-const DEFAULT_LEADERS: LeaderProfile[] = [
-    {
-        id: "founder-1",
-        name: "Meet Dave",
-        role: "Founder & Lead Architect",
-        bio: "Pioneering intelligent robotics architectures, generative AI integration, and autonomous control systems. Leading AiRA Lab's core vision and technological frontiers.",
-        photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80",
-        linkedin: "https://linkedin.com",
-        github: "https://github.com",
-        teamGroup: "Founders & Executive Board",
-        sortOrder: 1,
-        isPresident: true,
-    },
-    {
-        id: "lead-2",
-        name: "Aarav Sharma",
-        role: "Co-Founder & AI Research Director",
-        bio: "Specializing in deep reinforcement learning, neural scene representations, and edge AI deployment on embedded autonomous systems.",
-        photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80",
-        linkedin: "https://linkedin.com",
-        github: "https://github.com",
-        teamGroup: "Founders & Executive Board",
-        sortOrder: 2,
-        isPresident: true,
-    },
-    {
-        id: "lead-3",
-        name: "Dr. Rajesh Patel",
-        role: "Chief Faculty Mentor & Dean of Research",
-        bio: "Advising lab initiatives, peer-reviewed publications, and strategic industry collaborations across robotics and automation domains.",
-        photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&auto=format&fit=crop&q=80",
-        linkedin: "https://linkedin.com",
-        teamGroup: "Advisors & Mentors",
-        sortOrder: 3,
-        isPresident: false,
-    },
-    {
-        id: "lead-4",
-        name: "Priya Nair",
-        role: "Lead Systems & Hardware Engineer",
-        bio: "Directing PCB design, micro-actuation systems, sensor fusion arrays, and real-time embedded communication pipelines.",
-        photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&auto=format&fit=crop&q=80",
-        github: "https://github.com",
-        linkedin: "https://linkedin.com",
-        teamGroup: "Domain & Tech Leads",
-        sortOrder: 4,
-        isPresident: false,
-    }
-];
 
 function LeaderDetailModal({ leader, onClose }: { leader: LeaderProfile | null; onClose: () => void }) {
     if (!leader) return null;
@@ -196,8 +146,8 @@ export default function LeadershipPage() {
             fetch("/api/team-members").then(r => r.ok ? r.json() : []).catch(() => []),
             fetch("/api/settings").then(r => r.ok ? r.json() : {}).catch(() => ({}))
         ]).then(([membersData, settingsData]) => {
-            if (Array.isArray(membersData) && membersData.length > 0) {
-                // Filter only leaders/presidents/board/directors
+            if (Array.isArray(membersData)) {
+                // Filter only leaders/presidents/board/directors from the database
                 const dbLeaders = membersData.filter((m: any) => {
                     const grp = (m.teamGroup || "").toLowerCase();
                     return (
@@ -210,9 +160,9 @@ export default function LeadershipPage() {
                         grp.includes("lead")
                     );
                 });
-                setLeaders(dbLeaders.length > 0 ? dbLeaders : membersData);
+                setLeaders(dbLeaders);
             } else {
-                setLeaders(DEFAULT_LEADERS);
+                setLeaders([]);
             }
             setSettings(settingsData || {});
             setIsLoading(false);
@@ -285,8 +235,40 @@ export default function LeadershipPage() {
                 </div>
             </motion.div>
 
+            {/* Loading Indicator */}
+            {isLoading && (
+                <div className="text-center py-16 text-slate-400 text-sm flex items-center justify-center gap-2">
+                    <RefreshCw size={18} className="animate-spin text-aira-cyan" /> Loading leadership directory...
+                </div>
+            )}
+
+            {/* Empty State when 0 leaders exist in database */}
+            {!isLoading && leaders.length === 0 && (
+                <div className="glass p-12 rounded-3xl border border-white/10 text-center max-w-lg mx-auto space-y-4">
+                    <Crown size={44} className="mx-auto text-amber-400/50" />
+                    <h3 className="font-orbitron font-bold text-lg text-white">Leadership Profiles Coming Soon</h3>
+                    <p className="text-slate-400 text-xs leading-relaxed">
+                        Our executive board and leadership directory is currently being updated. Check back shortly or explore our active laboratory projects.
+                    </p>
+                    <div className="pt-2 flex justify-center gap-3">
+                        <Link 
+                            href="/about" 
+                            className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-xs font-semibold hover:bg-white/10 hover:text-white"
+                        >
+                            Explore About Us →
+                        </Link>
+                        <Link 
+                            href="/join" 
+                            className="px-4 py-2 rounded-xl bg-aira-cyan text-slate-950 font-orbitron font-bold text-xs hover:scale-105 transition-transform"
+                        >
+                            Join AiRA Lab
+                        </Link>
+                    </div>
+                </div>
+            )}
+
             {/* ══ FOUNDER & EXECUTIVE SPOTLIGHT CARDS ══ */}
-            {executiveSpotlight.length > 0 && (
+            {!isLoading && executiveSpotlight.length > 0 && (
                 <div className="space-y-8 relative z-10">
                     <div className="flex items-center gap-3">
                         <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-amber-400 to-orange-500" />
@@ -369,89 +351,93 @@ export default function LeadershipPage() {
             )}
 
             {/* ══ ALL LEADERS & DOMAIN LEADS SECTION ══ */}
-            <div className="space-y-6 relative z-10 pt-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-aira-cyan to-aira-purple" />
-                        <h2 className="font-orbitron font-bold text-xl sm:text-2xl text-white">
-                            Domain Leads & Team Directory
-                        </h2>
+            {!isLoading && filteredLeaders.length > 0 && (
+                <div className="space-y-6 relative z-10 pt-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-aira-cyan to-aira-purple" />
+                            <h2 className="font-orbitron font-bold text-xl sm:text-2xl text-white">
+                                Domain Leads & Team Directory
+                            </h2>
+                        </div>
+
+                        {/* Category Filter Tabs */}
+                        {categories.length > 2 && (
+                            <div className="flex flex-wrap gap-2">
+                                {categories.map((cat) => (
+                                    <button
+                                        key={cat}
+                                        onClick={() => setActiveTab(cat)}
+                                        className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                                            activeTab === cat
+                                                ? "bg-aira-cyan text-slate-950 font-bold shadow-md shadow-aira-cyan/30"
+                                                : "glass border border-white/10 text-slate-400 hover:text-white hover:border-white/20"
+                                        }`}
+                                    >
+                                        {cat === "ALL" ? "All Profiles" : cat}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
-                    {/* Category Filter Tabs */}
-                    <div className="flex flex-wrap gap-2">
-                        {categories.map((cat) => (
-                            <button
-                                key={cat}
-                                onClick={() => setActiveTab(cat)}
-                                className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                                    activeTab === cat
-                                        ? "bg-aira-cyan text-slate-950 font-bold shadow-md shadow-aira-cyan/30"
-                                        : "glass border border-white/10 text-slate-400 hover:text-white hover:border-white/20"
-                                }`}
+                    {/* Grid of All Leaders */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                        {filteredLeaders.map((leader, idx) => (
+                            <motion.div
+                                key={leader.id}
+                                initial={{ opacity: 0, y: 15 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.05 }}
+                                onClick={() => setSelectedLeader(leader)}
+                                className="group glass p-5 rounded-2xl border border-white/10 hover:border-aira-cyan/40 hover:shadow-xl hover:shadow-aira-cyan/10 transition-all cursor-pointer flex flex-col justify-between space-y-4"
                             >
-                                {cat === "ALL" ? "All Profiles" : cat}
-                            </button>
+                                <div className="space-y-3">
+                                    <div className="relative w-20 h-20 mx-auto rounded-2xl overflow-hidden border border-white/15 bg-slate-900 group-hover:scale-105 transition-transform">
+                                        <img
+                                            src={leader.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=0d1526&color=00D4FF&size=150`}
+                                            alt={leader.name}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => { 
+                                                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=0d1526&color=00D4FF&size=150`; 
+                                            }}
+                                        />
+                                        {leader.isPresident && (
+                                            <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center text-[10px]">
+                                                👑
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="text-center">
+                                        <h3 className="font-orbitron font-bold text-sm text-white group-hover:text-aira-cyan transition-colors truncate">
+                                            {leader.name}
+                                        </h3>
+                                        <p className="text-xs text-slate-400 truncate mt-0.5">{leader.role}</p>
+
+                                        {leader.teamGroup && (
+                                            <span className="inline-block px-2 py-0.5 mt-2 text-[10px] font-medium rounded-full bg-white/5 text-slate-300 border border-white/10">
+                                                {leader.teamGroup}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {leader.bio && (
+                                        <p className="text-[11px] text-slate-400 line-clamp-2 text-center font-sans leading-relaxed">
+                                            {leader.bio}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-500">
+                                    <span>View bio</span>
+                                    <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform text-aira-cyan" />
+                                </div>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
-
-                {/* Grid of All Leaders */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    {filteredLeaders.map((leader, idx) => (
-                        <motion.div
-                            key={leader.id}
-                            initial={{ opacity: 0, y: 15 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05 }}
-                            onClick={() => setSelectedLeader(leader)}
-                            className="group glass p-5 rounded-2xl border border-white/10 hover:border-aira-cyan/40 hover:shadow-xl hover:shadow-aira-cyan/10 transition-all cursor-pointer flex flex-col justify-between space-y-4"
-                        >
-                            <div className="space-y-3">
-                                <div className="relative w-20 h-20 mx-auto rounded-2xl overflow-hidden border border-white/15 bg-slate-900 group-hover:scale-105 transition-transform">
-                                    <img
-                                        src={leader.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=0d1526&color=00D4FF&size=150`}
-                                        alt={leader.name}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => { 
-                                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=0d1526&color=00D4FF&size=150`; 
-                                        }}
-                                    />
-                                    {leader.isPresident && (
-                                        <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center text-[10px]">
-                                            👑
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="text-center">
-                                    <h3 className="font-orbitron font-bold text-sm text-white group-hover:text-aira-cyan transition-colors truncate">
-                                        {leader.name}
-                                    </h3>
-                                    <p className="text-xs text-slate-400 truncate mt-0.5">{leader.role}</p>
-
-                                    {leader.teamGroup && (
-                                        <span className="inline-block px-2 py-0.5 mt-2 text-[10px] font-medium rounded-full bg-white/5 text-slate-300 border border-white/10">
-                                            {leader.teamGroup}
-                                        </span>
-                                    )}
-                                </div>
-
-                                {leader.bio && (
-                                    <p className="text-[11px] text-slate-400 line-clamp-2 text-center font-sans leading-relaxed">
-                                        {leader.bio}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-500">
-                                <span>View bio</span>
-                                <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform text-aira-cyan" />
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
-            </div>
+            )}
 
             {/* ══ CALL TO ACTION ══ */}
             <motion.div 
@@ -476,16 +462,19 @@ export default function LeadershipPage() {
                         </Link>
                         <Link
                             href="/about"
-                            className="px-6 py-3 rounded-2xl glass border border-white/20 text-white font-orbitron font-bold text-xs sm:text-sm hover:bg-white/10 transition-colors"
+                            className="px-6 py-3 rounded-2xl glass border border-white/10 text-slate-300 hover:text-white font-semibold text-xs sm:text-sm hover:scale-105 transition-transform flex items-center gap-2"
                         >
-                            Explore Our Mission
+                            Meet Lab Team Members →
                         </Link>
                     </div>
                 </div>
             </motion.div>
 
             {/* Detail Modal */}
-            <LeaderDetailModal leader={selectedLeader} onClose={() => setSelectedLeader(null)} />
+            <LeaderDetailModal 
+                leader={selectedLeader} 
+                onClose={() => setSelectedLeader(null)} 
+            />
         </div>
     );
 }

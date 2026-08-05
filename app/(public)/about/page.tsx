@@ -145,54 +145,6 @@ function OrbitCard({ member, onClick }: { member: any; onClick: () => void }) {
     );
 }
 
-const DEFAULT_PEOPLE = [
-    {
-        id: "member-1",
-        name: "Meet Dave",
-        role: "Founder & Lead Architect",
-        bio: "Pioneering intelligent robotics architectures and autonomous control systems.",
-        photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80",
-        teamGroup: "Core Team",
-        isPresident: true,
-    },
-    {
-        id: "member-2",
-        name: "Rohan Varma",
-        role: "Autonomous Navigation Researcher",
-        bio: "Developing SLAM algorithms, LiDAR point cloud segmentation, and path-planning modules.",
-        photo: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=600&auto=format&fit=crop&q=80",
-        teamGroup: "Robotics Division",
-        isPresident: false,
-    },
-    {
-        id: "member-3",
-        name: "Ananya Iyer",
-        role: "Full-Stack & Cloud Systems Engineer",
-        bio: "Architecting real-time telemetry pipelines and interactive web dashboards.",
-        photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&auto=format&fit=crop&q=80",
-        teamGroup: "AI & Software Division",
-        isPresident: false,
-    },
-    {
-        id: "member-4",
-        name: "Dev Patel",
-        role: "Computer Vision & Edge ML Engineer",
-        bio: "Optimizing YOLO models and TensorRT pipelines for low-power onboard drones.",
-        photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80",
-        teamGroup: "AI & Software Division",
-        isPresident: false,
-    },
-    {
-        id: "member-5",
-        name: "Sneha Reddy",
-        role: "Hardware & PCB Design Specialist",
-        bio: "Designing multi-layer power distribution boards and STM32 sensor interfaces.",
-        photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&auto=format&fit=crop&q=80",
-        teamGroup: "Hardware & Embedded Systems",
-        isPresident: false,
-    }
-];
-
 export default function AboutPage() {
     const [members, setMembers] = useState<any[]>([]);
     const [settings, setSettings] = useState<Record<string, string>>({});
@@ -204,14 +156,8 @@ export default function AboutPage() {
     useEffect(() => {
         fetch("/api/team-members")
             .then(r => r.ok ? r.json() : [])
-            .then(d => {
-                if (Array.isArray(d) && d.length > 0) {
-                    setMembers(d);
-                } else {
-                    setMembers(DEFAULT_PEOPLE);
-                }
-            })
-            .catch(() => setMembers(DEFAULT_PEOPLE));
+            .then(d => setMembers(Array.isArray(d) ? d : []))
+            .catch(() => setMembers([]));
 
         fetch("/api/settings")
             .then(r => r.ok ? r.json() : {})
