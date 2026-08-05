@@ -65,7 +65,7 @@ export default function LoginPage() {
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="admin@airalabs.com"
+                                    placeholder="your.email@example.com"
                                     className="w-full pl-11 pr-4 py-3 rounded-xl bg-aira-card border border-aira-border/50 text-white placeholder-slate-600 focus:outline-none focus:border-aira-cyan/50 transition-colors"
                                     required
                                 />
@@ -90,21 +90,33 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-semibold shadow-lg hover:shadow-aira-cyan/30 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:scale-100"
+                            className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-semibold shadow-lg hover:shadow-aira-cyan/30 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:scale-100 font-orbitron text-xs tracking-wider uppercase"
                         >
                             {loading ? (
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
                                 <>
-                                    Sign In <ArrowRight size={16} />
+                                    Sign In to Portal <ArrowRight size={16} />
                                 </>
                             )}
                         </button>
                     </form>
+
+                    <div className="mt-6 pt-5 border-t border-white/10 text-center">
+                        <p className="text-xs text-slate-400">
+                            Forgot your password or need portal help?{" "}
+                            <a
+                                href="mailto:info@aira-lab.in?subject=Password%20Reset%20%2F%20Portal%20Login%20Assistance"
+                                className="text-aira-cyan hover:underline font-semibold"
+                            >
+                                Contact info@aira-lab.in
+                            </a>
+                        </p>
+                    </div>
                 </div>
 
-                <div className="text-center mt-8">
-                    <a href="/" className="text-slate-500 text-sm hover:text-aira-cyan hover:underline transition-all">
+                <div className="text-center mt-6">
+                    <a href="/" className="text-slate-500 text-xs hover:text-aira-cyan hover:underline transition-all">
                         ← Return to public website
                     </a>
                 </div>

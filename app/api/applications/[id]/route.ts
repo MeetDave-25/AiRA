@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin-guard";
 import bcrypt from "bcryptjs";
 import { generatePassword } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
     const auth = await requireAdmin();
@@ -26,6 +27,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
         let userCredentials: { loginId?: string; password?: string; userCreated?: boolean; userId?: string; profileId?: string } = {};
 
+        let emailDispatchResult: any = null;
+
         // If approving, register them into User accounts and TeamMemberProfile if not already present
         if (status === "APPROVED" || status === "ACCEPTED") {
             const targetEmail = (app.email || "").trim().toLowerCase();
@@ -38,6 +41,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                     .select("id, email, name, role")
                     .eq("email", targetEmail)
                     .maybeSingle();
+
+                let activeUserId = existingUser?.id;
 
                 if (!existingUser) {
                     // Create new user account
@@ -59,6 +64,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                         .single();
 
                     if (!userError && createdUser) {
+                        activeUserId = createdUser.id;
                         userCredentials = {
                             userCreated: true,
                             loginId: targetEmail,
@@ -74,7 +80,39 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                     };
                 }
 
-                // 2. Check if TeamMemberProfile exists
+                // 2. Create in-app welcome notification
+                if (activeUserId) {
+                    try {
+                        await db.from("Notification").insert({
+                            id: uuidv4(),
+                            userId: activeUserId,
+                            title: "🎉 Welcome to AiRA Labs!",
+                            message: "Your membership application has been accepted! Access your team tasks and change your temporary password in Settings.",
+                            link: "/portal/settings",
+                            read: false,
+                            createdAt: new Date().toISOString(),
+                        });
+                    } catch {}
+                }
+
+                // 3. Dispatch official Welcome Email from info@aira-lab.in
+                try {
+                    const baseUrl = req.nextUrl.origin || "https://aira-lab.in";
+                    const portalUrl = `${baseUrl}/portal/login`;
+                    const roleLabel = assignedRole || app.interest || "Team Member";
+
+                    emailDispatchResult = await sendWelcomeEmail({
+                        to: targetEmail,
+                        name: applicantName,
+                        password: userCredentials.password,
+                        portalUrl,
+                        role: roleLabel,
+                    });
+                } catch (emailErr) {
+                    console.warn("Welcome email dispatch warning:", emailErr);
+                }
+
+                // 4. Check if TeamMemberProfile exists
                 const { data: existingProfiles } = await db
                     .from("TeamMemberProfile")
                     .select("id")
@@ -133,6 +171,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         return NextResponse.json({
             ...updatedApp,
             credentials: userCredentials,
+            emailDispatch: emailDispatchResult,
         });
     } catch (error) {
         console.error("Application approval error:", error);

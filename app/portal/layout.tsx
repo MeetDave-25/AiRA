@@ -74,7 +74,8 @@ export default function PortalLayout({
         { href: "/admin/applications", label: "Applications", icon: FileText, roles: ["ADMIN"] },
         { href: "/admin/achievements", label: "Achievements", icon: Award, roles: ["ADMIN", "CONTENT_MANAGER"] },
         { href: "/admin/certificates", label: "Certificates", icon: FileText, roles: ["ADMIN", "CERTIFICATE_MANAGER"] },
-        { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"] },
+        { href: "/admin/settings", label: "Lab Settings", icon: Settings, roles: ["ADMIN"] },
+        { href: "/portal/settings", label: "Settings & Security", icon: Settings, roles: ["ADMIN", "TEAM_LEAD", "TEAM_MEMBER", "CONTENT_MANAGER", "CERTIFICATE_MANAGER"] },
     ];
 
     const filteredNav = navItems.filter((item) => item.roles.includes(role));

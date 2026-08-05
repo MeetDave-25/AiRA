@@ -498,15 +498,15 @@ export default function ApplicationsPage() {
                 open={!!approvedModalData}
                 onClose={() => setApprovedModalData(null)}
                 title="Applicant Accepted & Registered 🎉"
-                subtitle="Login account and public team profile have been automatically created in People!"
+                subtitle="Login credentials provisioned and welcome dispatch initiated from info@aira-lab.in"
                 size="lg"
                 footer={
                     <div className="flex flex-wrap justify-between items-center w-full gap-3">
                         <Link
                             href="/admin/users"
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-aira-cyan text-aira-bg font-semibold text-xs hover:scale-105 transition-transform"
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-aira-cyan text-slate-950 font-semibold text-xs hover:scale-105 transition-transform"
                         >
-                            <UserCheck size={15} /> Go to User Accounts (Edit Role / Profile)
+                            <UserCheck size={15} /> Go to User Accounts (Manage Roles)
                         </Link>
                         <button
                             onClick={() => setApprovedModalData(null)}
@@ -521,25 +521,40 @@ export default function ApplicationsPage() {
                     <div className="space-y-4">
                         <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
                             <p className="text-sm font-semibold text-emerald-300 flex items-center gap-2">
-                                <CheckCircle2 size={16} /> {approvedModalData.applicant.name} is now registered!
+                                <CheckCircle2 size={16} /> {approvedModalData.applicant.name} is now an active member!
                             </p>
                             <p className="text-xs text-slate-300">
-                                This member now exists in the system <strong>User Accounts</strong> and has a public team card in <strong>Team Profiles</strong>.
+                                User account has been registered, in-app welcome notification sent, and member card created in <strong>People Profiles</strong>.
                             </p>
                         </div>
 
                         {approvedModalData.credentials?.userCreated && approvedModalData.credentials.password ? (
-                            <div className="rounded-2xl border border-aira-gold/40 bg-aira-gold/10 p-4 space-y-3">
+                            <div className="rounded-2xl border border-aira-gold/40 bg-aira-gold/10 p-4 sm:p-5 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs text-aira-gold font-bold flex items-center gap-1.5">
-                                        <Key size={14} /> Generated Login Credentials (Share with Member)
+                                        <Key size={14} /> Member Portal Credentials
                                     </span>
+                                    <span className="text-[11px] text-slate-400 font-mono">From: info@aira-lab.in</span>
                                 </div>
 
-                                <div className="space-y-2">
+                                <div className="space-y-2.5">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs text-slate-400 w-20">Login ID:</span>
-                                        <code className="flex-1 rounded-lg bg-slate-900/80 px-3 py-1.5 text-xs text-slate-200 border border-white/10 font-mono">
+                                        <span className="text-xs text-slate-400 w-24">Portal URL:</span>
+                                        <code className="flex-1 rounded-lg bg-slate-900/80 px-3 py-1.5 text-xs text-aira-cyan border border-white/10 font-mono truncate">
+                                            {typeof window !== "undefined" ? `${window.location.origin}/portal/login` : "https://aira-lab.in/portal/login"}
+                                        </code>
+                                        <button
+                                            onClick={() => copyText(typeof window !== "undefined" ? `${window.location.origin}/portal/login` : "https://aira-lab.in/portal/login", "Portal URL")}
+                                            className="p-1.5 rounded-lg border border-aira-gold/40 text-aira-gold hover:bg-aira-gold/10"
+                                            title="Copy Portal URL"
+                                        >
+                                            <Copy size={13} />
+                                        </button>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-slate-400 w-24">Login ID:</span>
+                                        <code className="flex-1 rounded-lg bg-slate-900/80 px-3 py-1.5 text-xs text-slate-200 border border-white/10 font-mono truncate">
                                             {approvedModalData.credentials.loginId}
                                         </code>
                                         <button
@@ -552,8 +567,8 @@ export default function ApplicationsPage() {
                                     </div>
 
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs text-slate-400 w-20">Password:</span>
-                                        <code className="flex-1 rounded-lg bg-slate-900/80 px-3 py-1.5 text-xs text-slate-200 border border-white/10 font-mono">
+                                        <span className="text-xs text-slate-400 w-24">Temp Password:</span>
+                                        <code className="flex-1 rounded-lg bg-slate-900/80 px-3 py-1.5 text-xs text-amber-300 border border-white/10 font-mono font-bold">
                                             {approvedModalData.credentials.password}
                                         </code>
                                         <button
@@ -566,19 +581,42 @@ export default function ApplicationsPage() {
                                     </div>
                                 </div>
 
-                                <button
-                                    onClick={() => copyText(
-                                        `Welcome to AiRA Labs!\n\nYour Portal Login Credentials:\nPortal URL: ${window.location.origin}/portal/login\nLogin ID: ${approvedModalData.credentials?.loginId}\nPassword: ${approvedModalData.credentials?.password}\n\nPlease log in and change your password.`,
-                                        "Welcome credentials message"
-                                    )}
-                                    className="w-full py-2 px-3 rounded-xl border border-aira-gold/40 text-aira-gold hover:bg-aira-gold/15 text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
-                                >
-                                    <Copy size={14} /> Copy Full Welcome & Credentials Message
-                                </button>
+                                {/* Action Buttons */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                                    <a
+                                        href={`mailto:${encodeURIComponent(approvedModalData.applicant.email)}?subject=${encodeURIComponent(`🎉 Welcome to AiRA Labs! Your Portal Login Credentials`)}&body=${encodeURIComponent(
+                                            `Welcome to AiRA Labs! 🎉\n\nDear ${approvedModalData.applicant.name},\n\nYour application has been accepted!\n\nPortal URL: ${typeof window !== "undefined" ? window.location.origin : "https://aira-lab.in"}/portal/login\nLogin ID: ${approvedModalData.credentials.loginId}\nPassword: ${approvedModalData.credentials.password}\n\nPlease log in and update your password in Settings.\n\nBest regards,\nAiRA Labs Team\ninfo@aira-lab.in`
+                                        )}`}
+                                        className="py-2.5 px-3 rounded-xl bg-blue-600/30 hover:bg-blue-600/40 border border-blue-500/40 text-blue-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                                    >
+                                        <Mail size={14} /> Send via Email Client
+                                    </a>
+
+                                    <a
+                                        href={`https://wa.me/?text=${encodeURIComponent(
+                                            `🎉 Welcome to AiRA Labs, ${approvedModalData.applicant.name}!\n\nYour application has been accepted!\n\nPortal URL: ${typeof window !== "undefined" ? window.location.origin : "https://aira-lab.in"}/portal/login\nLogin ID: ${approvedModalData.credentials.loginId}\nPassword: ${approvedModalData.credentials.password}\n\nPlease log in and update your password in Settings.`
+                                        )}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="py-2.5 px-3 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/40 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                                    >
+                                        <ExternalLink size={14} /> Share on WhatsApp
+                                    </a>
+
+                                    <button
+                                        onClick={() => copyText(
+                                            `Welcome to AiRA Labs! 🎉\n\nDear ${approvedModalData.applicant.name},\nYour application has been accepted!\n\nPortal Login URL: ${typeof window !== "undefined" ? window.location.origin : "https://aira-lab.in"}/portal/login\nLogin ID: ${approvedModalData.credentials?.loginId}\nPassword: ${approvedModalData.credentials?.password}\n\nPlease log in and change your password in Settings.\n\nBest regards,\nAiRA Labs Team\ninfo@aira-lab.in`,
+                                            "Welcome credentials message"
+                                        )}
+                                        className="sm:col-span-2 py-2.5 px-3 rounded-xl border border-aira-gold/40 text-aira-gold hover:bg-aira-gold/15 text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
+                                    >
+                                        <Copy size={14} /> Copy Full Welcome & Credentials Message
+                                    </button>
+                                </div>
                             </div>
                         ) : (
-                            <div className="p-3 rounded-xl bg-slate-900/60 border border-white/10 text-xs text-slate-300">
-                                ℹ️ Existing account was found with this email. Their profile has been linked and updated.
+                            <div className="p-3.5 rounded-xl bg-slate-900/60 border border-white/10 text-xs text-slate-300">
+                                ℹ️ Existing account was found with this email ({approvedModalData.applicant.email}). Profile has been linked and updated.
                             </div>
                         )}
 

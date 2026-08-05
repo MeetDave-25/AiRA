@@ -139,6 +139,27 @@ export default function DashboardPage() {
                 </div>
             </div>
 
+            {/* Quick Actions & Security Banner */}
+            <div className="glass rounded-2xl p-6 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-aira-cyan/15 border border-aira-cyan/30 flex items-center justify-center text-aira-cyan shrink-0">
+                        <Award size={20} />
+                    </div>
+                    <div>
+                        <h3 className="font-orbitron font-bold text-sm text-white">Account Security & Password</h3>
+                        <p className="text-xs text-slate-400">Update your temporary password, manage security credentials, or reach support.</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Link
+                        href="/portal/settings"
+                        className="px-4 py-2 rounded-xl bg-aira-cyan text-slate-950 font-orbitron font-bold text-xs hover:scale-105 transition-transform shadow-md shadow-aira-cyan/20 flex items-center gap-1.5"
+                    >
+                        Change Password →
+                    </Link>
+                </div>
+            </div>
+
             {role !== "ADMIN" && (
                 <div className="glass rounded-2xl p-6 border border-aira-cyan/20">
                     <h2 className="font-orbitron font-bold text-white mb-4">My Mini Dashboard</h2>
