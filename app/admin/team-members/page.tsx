@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { 
     Crown, 
@@ -17,7 +17,9 @@ import {
     Linkedin,
     Github,
     Eye,
-    Check
+    Check,
+    RefreshCw,
+    Database
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -36,7 +38,7 @@ type MemberForm = {
     isPresident: boolean;
 };
 
-const baseForm: MemberForm = {
+const baseLeaderForm: MemberForm = {
     name: "",
     role: "Founder & Lead Architect",
     bio: "",
@@ -48,26 +50,45 @@ const baseForm: MemberForm = {
     isPresident: true,
 };
 
-const SUGGESTED_GROUPS = [
+const baseMemberForm: MemberForm = {
+    name: "",
+    role: "Robotics & AI Researcher",
+    bio: "",
+    photo: "",
+    linkedin: "",
+    github: "",
+    teamGroup: "AI & Software Division",
+    sortOrder: "10",
+    isPresident: false,
+};
+
+const LEADERSHIP_GROUPS = [
     "Founders & Executive Board",
     "Technical Leads",
-    "Research Mentors & Advisors",
-    "Core Team",
+    "Chief Advisors & Mentors",
+    "Domain Directors",
+];
+
+const PEOPLE_GROUPS = [
     "Robotics Division",
     "AI & Software Division",
+    "Hardware & Embedded Systems",
+    "Research Associates",
+    "Core Team",
 ];
 
 export default function TeamMembersAdminPage() {
     const [members, setMembers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<"LEADERSHIP" | "PEOPLE">("LEADERSHIP");
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [editing, setEditing] = useState<any | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
-    const [form, setForm] = useState<MemberForm>(baseForm);
+    const [form, setForm] = useState<MemberForm>(baseLeaderForm);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [selectedGroupFilter, setSelectedGroupFilter] = useState("ALL");
+    const [isSeeding, setIsSeeding] = useState(false);
 
     const fetchMembers = async () => {
         setIsLoading(true);
@@ -78,12 +99,9 @@ export default function TeamMembersAdminPage() {
             const res = await fetch("/api/team-members", { signal: controller.signal });
             const data = res.ok ? await res.json() : [];
             setMembers(Array.isArray(data) ? data : []);
-            if (!res.ok) {
-                toast.error("Could not load leadership profiles.");
-            }
         } catch {
             setMembers([]);
-            toast.error("Profile request timed out. Please retry.");
+            toast.error("Could not load profiles. Please refresh.");
         } finally {
             clearTimeout(timer);
             setIsLoading(false);
@@ -94,8 +112,46 @@ export default function TeamMembersAdminPage() {
         void fetchMembers();
     }, []);
 
-    const openCreate = () => {
-        setForm(baseForm);
+    // Split profiles into Leadership vs People (About Us)
+    const leadersList = useMemo(() => {
+        return members.filter((m) => {
+            const grp = (m.teamGroup || "").toLowerCase();
+            return (
+                m.isPresident === true ||
+                grp.includes("founder") ||
+                grp.includes("executive") ||
+                grp.includes("director") ||
+                grp.includes("advisor") ||
+                grp.includes("mentor") ||
+                grp.includes("lead")
+            );
+        });
+    }, [members]);
+
+    const peopleList = useMemo(() => {
+        return members.filter((m) => {
+            const grp = (m.teamGroup || "").toLowerCase();
+            const isLead = (
+                m.isPresident === true ||
+                grp.includes("founder") ||
+                grp.includes("executive") ||
+                grp.includes("director") ||
+                grp.includes("advisor") ||
+                grp.includes("mentor") ||
+                grp.includes("lead")
+            );
+            return !isLead;
+        });
+    }, [members]);
+
+    const openCreateLeader = () => {
+        setForm(baseLeaderForm);
+        setEditing(null);
+        setIsCreateOpen(true);
+    };
+
+    const openCreateMember = () => {
+        setForm(baseMemberForm);
         setEditing(null);
         setIsCreateOpen(true);
     };
@@ -109,7 +165,7 @@ export default function TeamMembersAdminPage() {
             photo: member.photo || "",
             linkedin: member.linkedin || "",
             github: member.github || "",
-            teamGroup: member.teamGroup || "Founders & Executive Board",
+            teamGroup: member.teamGroup || (member.isPresident ? "Founders & Executive Board" : "Core Team"),
             sortOrder: String(member.sortOrder || 0),
             isPresident: Boolean(member.isPresident),
         });
@@ -117,11 +173,11 @@ export default function TeamMembersAdminPage() {
 
     const uploadPhoto = async (file: File) => {
         setUploadingPhoto(true);
-        toast.loading("Uploading leader photo...", { id: "photo-upload" });
+        toast.loading("Uploading profile photo...", { id: "photo-upload" });
         try {
             const uploaded = await uploadDirectFile(file, { bucket: "uploads", folder: "leadership" });
             setForm((prev) => ({ ...prev, photo: uploaded.url || prev.photo }));
-            toast.success("Leader photo uploaded successfully!", { id: "photo-upload" });
+            toast.success("Photo uploaded successfully!", { id: "photo-upload" });
         } catch (error: any) {
             toast.error(error?.message || "Photo upload failed", { id: "photo-upload" });
         } finally {
@@ -132,7 +188,7 @@ export default function TeamMembersAdminPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!form.name.trim()) {
-            toast.error("Please enter a name for the leader / member");
+            toast.error("Please enter a name for the profile");
             return;
         }
 
@@ -152,10 +208,9 @@ export default function TeamMembersAdminPage() {
                 throw new Error(data.error || "Operation failed");
             }
 
-            toast.success(editing ? "Leader profile updated!" : "New leader profile created!");
+            toast.success(editing ? "Profile updated successfully!" : "New profile created!");
             setIsCreateOpen(false);
             setEditing(null);
-            setForm(baseForm);
             await fetchMembers();
         } catch (error: any) {
             toast.error(error?.message || "Failed to save profile");
@@ -169,7 +224,7 @@ export default function TeamMembersAdminPage() {
         try {
             const res = await fetch(`/api/team-members/${deleteId}`, { method: "DELETE" });
             if (!res.ok) throw new Error();
-            toast.success("Profile deleted");
+            toast.success("Profile permanently deleted");
             setDeleteId(null);
             await fetchMembers();
         } catch {
@@ -177,21 +232,36 @@ export default function TeamMembersAdminPage() {
         }
     };
 
-    // Filter & Search
-    const filteredMembers = members.filter((m) => {
-        const matchesSearch =
-            m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (m.role && m.role.toLowerCase().includes(searchQuery.toLowerCase())) ||
-            (m.teamGroup && m.teamGroup.toLowerCase().includes(searchQuery.toLowerCase()));
+    const handleSeedProfiles = async () => {
+        setIsSeeding(true);
+        toast.loading("Seeding starter leadership and team profiles...", { id: "seed" });
+        try {
+            const res = await fetch("/api/team-members/seed", { method: "POST" });
+            if (!res.ok) throw new Error();
+            toast.success("Starter profiles seeded to database!", { id: "seed" });
+            await fetchMembers();
+        } catch {
+            toast.error("Failed to seed profiles", { id: "seed" });
+        } finally {
+            setIsSeeding(false);
+        }
+    };
 
-        const matchesGroup = selectedGroupFilter === "ALL" || m.teamGroup === selectedGroupFilter;
-        return matchesSearch && matchesGroup;
+    // Filter by active tab & search
+    const currentList = activeTab === "LEADERSHIP" ? leadersList : peopleList;
+    const displayedMembers = currentList.filter((m) => {
+        const query = searchQuery.toLowerCase();
+        return (
+            m.name.toLowerCase().includes(query) ||
+            (m.role && m.role.toLowerCase().includes(query)) ||
+            (m.teamGroup && m.teamGroup.toLowerCase().includes(query))
+        );
     });
 
     const isModalOpen = isCreateOpen || Boolean(editing);
 
     return (
-        <div className="space-y-8 max-w-6xl mx-auto">
+        <div className="space-y-8 max-w-6xl mx-auto pb-12">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass p-6 md:p-8 rounded-3xl border border-white/10 animated-border">
                 <div>
@@ -200,90 +270,128 @@ export default function TeamMembersAdminPage() {
                             <Crown size={20} />
                         </span>
                         <h1 className="font-orbitron font-bold text-2xl md:text-3xl gradient-text-cyan">
-                            Leadership & People Management
+                            Leadership & People Manager
                         </h1>
                     </div>
                     <p className="text-slate-400 text-sm mt-1">
-                        Add, edit photos, update bios, and spotlight Founders, Executive Board, and Technical Leads.
+                        Easily add, edit pictures, update bios, and remove Leaders (shown on <strong className="text-amber-400">/leadership</strong>) and People (shown on <strong className="text-aira-cyan">/about</strong>).
                     </p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2.5">
+                    {members.length === 0 && (
+                        <button
+                            onClick={handleSeedProfiles}
+                            disabled={isSeeding}
+                            className="px-3.5 py-2 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 font-semibold text-xs flex items-center gap-1.5 hover:bg-amber-500/25 transition-all"
+                        >
+                            <Database size={14} /> Seed Starter Profiles
+                        </button>
+                    )}
                     <Link
-                        href="/leadership"
+                        href={activeTab === "LEADERSHIP" ? "/leadership" : "/about"}
                         target="_blank"
-                        className="px-4 py-2.5 rounded-xl border border-white/15 text-slate-300 hover:text-white hover:bg-white/5 font-semibold text-xs flex items-center gap-2 transition-all"
+                        className="px-3.5 py-2.5 rounded-xl border border-white/15 text-slate-300 hover:text-white hover:bg-white/5 font-semibold text-xs flex items-center gap-1.5 transition-all"
                     >
-                        <Eye size={16} className="text-aira-cyan" /> Preview Public Page
+                        <Eye size={15} className="text-aira-cyan" /> Preview {activeTab === "LEADERSHIP" ? "Leadership" : "About Us"}
                     </Link>
                     <button
-                        onClick={openCreate}
-                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-orbitron font-bold text-xs flex items-center gap-2 hover:scale-105 transition-transform shadow-lg shadow-aira-cyan/20"
+                        onClick={activeTab === "LEADERSHIP" ? openCreateLeader : openCreateMember}
+                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-orbitron font-bold text-xs flex items-center gap-1.5 hover:scale-105 transition-transform shadow-lg shadow-aira-cyan/20"
                     >
-                        <Plus size={16} /> Add New Leader / Member
+                        <Plus size={16} /> Add {activeTab === "LEADERSHIP" ? "Leader" : "Team Member"}
                     </button>
                 </div>
             </div>
 
-            {/* Filter & Search Bar */}
-            <div className="glass p-4 rounded-2xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="relative w-full sm:w-80">
+            {/* Top Navigation Tabs: Leadership vs People */}
+            <div className="flex items-center gap-3 p-1.5 rounded-2xl glass border border-white/10 w-fit">
+                <button
+                    onClick={() => setActiveTab("LEADERSHIP")}
+                    className={`px-5 py-2.5 rounded-xl font-orbitron font-bold text-xs flex items-center gap-2 transition-all ${
+                        activeTab === "LEADERSHIP"
+                            ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25"
+                            : "text-slate-400 hover:text-white"
+                    }`}
+                >
+                    <Crown size={15} />
+                    Leadership & Founders ({leadersList.length})
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/20 font-sans font-normal">Shows on /leadership</span>
+                </button>
+
+                <button
+                    onClick={() => setActiveTab("PEOPLE")}
+                    className={`px-5 py-2.5 rounded-xl font-orbitron font-bold text-xs flex items-center gap-2 transition-all ${
+                        activeTab === "PEOPLE"
+                            ? "bg-gradient-to-r from-aira-cyan to-blue-500 text-slate-950 shadow-lg shadow-aira-cyan/25"
+                            : "text-slate-400 hover:text-white"
+                    }`}
+                >
+                    <Users size={15} />
+                    People & Lab Members ({peopleList.length})
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/20 font-sans font-normal">Shows on /about</span>
+                </button>
+            </div>
+
+            {/* Search Bar */}
+            <div className="glass p-3 rounded-2xl border border-white/10 flex items-center justify-between gap-4">
+                <div className="relative w-full sm:w-96">
                     <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search leader by name, role, or team..."
+                        placeholder={`Search ${activeTab === "LEADERSHIP" ? "leaders" : "members"} by name, role, division...`}
                         className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-white text-xs outline-none focus:border-aira-cyan"
                     />
                 </div>
 
-                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                    <button
-                        onClick={() => setSelectedGroupFilter("ALL")}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                            selectedGroupFilter === "ALL"
-                                ? "bg-aira-cyan text-slate-950"
-                                : "bg-white/5 text-slate-400 hover:text-white"
-                        }`}
-                    >
-                        All ({members.length})
-                    </button>
-                    {SUGGESTED_GROUPS.slice(0, 3).map((grp) => (
-                        <button
-                            key={grp}
-                            onClick={() => setSelectedGroupFilter(grp)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                selectedGroupFilter === grp
-                                    ? "bg-aira-cyan text-slate-950"
-                                    : "bg-white/5 text-slate-400 hover:text-white"
-                            }`}
-                        >
-                            {grp}
-                        </button>
-                    ))}
+                <div className="text-xs text-slate-400 pr-2">
+                    Showing <strong className="text-white">{displayedMembers.length}</strong> {activeTab === "LEADERSHIP" ? "Leaders" : "Team Members"}
                 </div>
             </div>
 
-            {/* Leaders Grid */}
+            {/* Cards Grid */}
             {isLoading ? (
-                <div className="text-center py-16 text-slate-400 text-sm">
-                    Loading leadership profiles...
+                <div className="text-center py-16 text-slate-400 text-sm flex items-center justify-center gap-2">
+                    <RefreshCw size={16} className="animate-spin text-aira-cyan" /> Loading profiles from database...
                 </div>
-            ) : filteredMembers.length === 0 ? (
+            ) : displayedMembers.length === 0 ? (
                 <div className="glass p-12 rounded-3xl border border-white/10 text-center space-y-4">
-                    <Crown size={40} className="mx-auto text-slate-600" />
-                    <p className="text-slate-400 text-sm">No leadership profiles found matching your search.</p>
-                    <button
-                        onClick={openCreate}
-                        className="px-5 py-2.5 rounded-xl bg-aira-cyan text-slate-950 font-bold text-xs inline-flex items-center gap-2 hover:scale-105 transition-transform"
-                    >
-                        <Plus size={16} /> Add First Leader
-                    </button>
+                    {activeTab === "LEADERSHIP" ? (
+                        <Crown size={40} className="mx-auto text-amber-500/60" />
+                    ) : (
+                        <Users size={40} className="mx-auto text-aira-cyan/60" />
+                    )}
+                    <h3 className="font-orbitron font-bold text-base text-white">
+                        No {activeTab === "LEADERSHIP" ? "Leaders" : "Team Members"} Found
+                    </h3>
+                    <p className="text-slate-400 text-xs max-w-md mx-auto">
+                        {members.length === 0 
+                            ? "Your database doesn't have any profiles yet. Click below to add one or seed initial starter profiles."
+                            : `No profiles match your search criteria in the ${activeTab === "LEADERSHIP" ? "Leadership" : "People"} category.`
+                        }
+                    </p>
+                    <div className="flex justify-center gap-3 pt-2">
+                        {members.length === 0 && (
+                            <button
+                                onClick={handleSeedProfiles}
+                                className="px-4 py-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold text-xs hover:bg-amber-500/30"
+                            >
+                                ⚡ Seed Starter Profiles
+                            </button>
+                        )}
+                        <button
+                            onClick={activeTab === "LEADERSHIP" ? openCreateLeader : openCreateMember}
+                            className="px-5 py-2 rounded-xl bg-aira-cyan text-slate-950 font-bold text-xs inline-flex items-center gap-2 hover:scale-105 transition-transform"
+                        >
+                            <Plus size={16} /> Add {activeTab === "LEADERSHIP" ? "Leader" : "Team Member"}
+                        </button>
+                    </div>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredMembers.map((member) => (
+                    {displayedMembers.map((member) => (
                         <motion.div
                             key={member.id}
                             initial={{ opacity: 0, y: 15 }}
@@ -324,9 +432,9 @@ export default function TeamMembersAdminPage() {
                                 </div>
                             </div>
 
-                            {/* Center Avatar & Info */}
+                            {/* Avatar & Info */}
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/15 bg-slate-900 shrink-0">
+                                <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/15 bg-slate-900 shrink-0 relative">
                                     <img
                                         src={member.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=150`}
                                         alt={member.name}
@@ -355,7 +463,7 @@ export default function TeamMembersAdminPage() {
                                 </p>
                             )}
 
-                            {/* Social Badges */}
+                            {/* Social Badges & Actions */}
                             <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
                                 <div className="flex items-center gap-2">
                                     {member.linkedin && (
@@ -373,7 +481,7 @@ export default function TeamMembersAdminPage() {
                                     onClick={() => openEdit(member)}
                                     className="text-[11px] text-aira-cyan hover:underline font-semibold"
                                 >
-                                    Edit Details →
+                                    Edit Profile →
                                 </button>
                             </div>
                         </motion.div>
@@ -388,10 +496,50 @@ export default function TeamMembersAdminPage() {
                     setIsCreateOpen(false);
                     setEditing(null);
                 }}
-                title={editing ? "Edit Leadership Profile" : "Add New Leader / Team Member"}
-                subtitle="Configure name, executive role, photo, bio, and social workspace links."
+                title={editing ? `Edit ${form.isPresident ? "Leader" : "Team Member"} Profile` : `Add New ${form.isPresident ? "Leader" : "Team Member"}`}
+                subtitle="Manage photo, leadership role, bio statement, and placement page."
             >
                 <form onSubmit={handleSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+                    {/* Category Switch: Leadership vs People */}
+                    <div className="p-3 rounded-2xl bg-slate-900/90 border border-white/10 space-y-2">
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            Display Location & Category *
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setForm({ 
+                                    ...form, 
+                                    isPresident: true, 
+                                    teamGroup: form.teamGroup || "Founders & Executive Board" 
+                                })}
+                                className={`py-2 px-3 rounded-xl font-orbitron text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                                    form.isPresident
+                                        ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md"
+                                        : "bg-white/5 text-slate-400 hover:text-white"
+                                }`}
+                            >
+                                <Crown size={14} /> 👑 Leader (/leadership)
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setForm({ 
+                                    ...form, 
+                                    isPresident: false, 
+                                    teamGroup: form.teamGroup || "AI & Software Division" 
+                                })}
+                                className={`py-2 px-3 rounded-xl font-orbitron text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                                    !form.isPresident
+                                        ? "bg-gradient-to-r from-aira-cyan to-blue-500 text-slate-950 shadow-md"
+                                        : "bg-white/5 text-slate-400 hover:text-white"
+                                }`}
+                            >
+                                <Users size={14} /> 👥 Member (/about)
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Full Name */}
                     <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
@@ -416,16 +564,16 @@ export default function TeamMembersAdminPage() {
                             type="text"
                             value={form.role}
                             onChange={(e) => setForm({ ...form, role: e.target.value })}
-                            placeholder="e.g., Founder & Lead Architect"
+                            placeholder={form.isPresident ? "e.g., Founder & Lead Architect" : "e.g., Autonomous Systems Engineer"}
                             className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-sm outline-none focus:border-aira-cyan"
                             required
                         />
                     </div>
 
-                    {/* Category Group */}
+                    {/* Group / Division */}
                     <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                            Leadership Category / Group
+                            Division / Group Name
                         </label>
                         <input
                             type="text"
@@ -435,7 +583,7 @@ export default function TeamMembersAdminPage() {
                             className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-sm outline-none focus:border-aira-cyan"
                         />
                         <div className="flex flex-wrap gap-1.5 mt-2">
-                            {SUGGESTED_GROUPS.map((grp) => (
+                            {(form.isPresident ? LEADERSHIP_GROUPS : PEOPLE_GROUPS).map((grp) => (
                                 <button
                                     type="button"
                                     key={grp}
@@ -451,7 +599,7 @@ export default function TeamMembersAdminPage() {
                     {/* Photo Upload & URL */}
                     <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                            Profile Photo (Upload or Paste URL)
+                            Profile Picture (Upload Image or Paste URL)
                         </label>
                         <div className="flex gap-2">
                             <input
@@ -487,15 +635,15 @@ export default function TeamMembersAdminPage() {
                         )}
                     </div>
 
-                    {/* Bio / Vision Statement */}
+                    {/* Bio Statement */}
                     <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                            Bio & Leadership Vision
+                            Bio Statement / Vision
                         </label>
                         <textarea
                             value={form.bio}
                             onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                            placeholder="Briefly describe their research focus, contributions, or vision for AiRA Lab..."
+                            placeholder="Describe their background, research domains, or key accomplishments..."
                             rows={3}
                             className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs outline-none focus:border-aira-cyan resize-none font-sans"
                         />
@@ -529,38 +677,19 @@ export default function TeamMembersAdminPage() {
                         </div>
                     </div>
 
-                    {/* Sort Order & Spotlight Toggle */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                        <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                                Sort Order Number
-                            </label>
-                            <input
-                                type="number"
-                                value={form.sortOrder}
-                                onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
-                                placeholder="1"
-                                className="w-full px-3.5 py-2 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs outline-none focus:border-aira-cyan"
-                            />
-                            <span className="text-[10px] text-slate-500">Lower numbers appear first</span>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                                Spotlight Badge
-                            </label>
-                            <label className="flex items-center gap-2.5 p-2 rounded-xl border border-amber-400/30 bg-amber-500/10 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={form.isPresident}
-                                    onChange={(e) => setForm({ ...form, isPresident: e.target.checked })}
-                                    className="rounded accent-amber-500"
-                                />
-                                <span className="text-xs font-bold text-amber-300 flex items-center gap-1">
-                                    <Crown size={14} className="text-amber-400" /> Founder / Executive Spotlight
-                                </span>
-                            </label>
-                        </div>
+                    {/* Sort Order */}
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                            Display Sort Order
+                        </label>
+                        <input
+                            type="number"
+                            value={form.sortOrder}
+                            onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
+                            placeholder="1"
+                            className="w-full px-3.5 py-2 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs outline-none focus:border-aira-cyan"
+                        />
+                        <span className="text-[10px] text-slate-500">Lower numbers appear first on the page</span>
                     </div>
 
                     {/* Submit Button */}
@@ -580,7 +709,7 @@ export default function TeamMembersAdminPage() {
                             disabled={isSubmitting || uploadingPhoto}
                             className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-orbitron font-bold text-xs hover:scale-105 transition-transform disabled:opacity-50"
                         >
-                            {isSubmitting ? "Saving..." : editing ? "Save Changes" : "Create Leader Profile"}
+                            {isSubmitting ? "Saving..." : editing ? "Save Changes" : `Create ${form.isPresident ? "Leader" : "Member"} Profile`}
                         </button>
                     </div>
                 </form>
@@ -590,8 +719,8 @@ export default function TeamMembersAdminPage() {
             <AnimatedModal
                 open={Boolean(deleteId)}
                 onClose={() => setDeleteId(null)}
-                title="Delete Leader Profile"
-                subtitle="Are you sure you want to remove this profile from the leadership page?"
+                title="Delete Profile"
+                subtitle="Are you sure you want to permanently remove this profile?"
                 footer={
                     <div className="flex justify-end gap-3">
                         <button
@@ -610,7 +739,7 @@ export default function TeamMembersAdminPage() {
                 }
             >
                 <p className="text-xs text-slate-300">
-                    This profile will be permanently removed from the public leadership page and about page directory.
+                    This profile will be permanently deleted from the database and will no longer appear on public leadership or about pages.
                 </p>
             </AnimatedModal>
         </div>

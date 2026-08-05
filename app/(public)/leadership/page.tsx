@@ -196,8 +196,24 @@ export default function LeadershipPage() {
             fetch("/api/team-members").then(r => r.ok ? r.json() : []).catch(() => []),
             fetch("/api/settings").then(r => r.ok ? r.json() : {}).catch(() => ({}))
         ]).then(([membersData, settingsData]) => {
-            const list = Array.isArray(membersData) && membersData.length > 0 ? membersData : DEFAULT_LEADERS;
-            setLeaders(list);
+            if (Array.isArray(membersData) && membersData.length > 0) {
+                // Filter only leaders/presidents/board/directors
+                const dbLeaders = membersData.filter((m: any) => {
+                    const grp = (m.teamGroup || "").toLowerCase();
+                    return (
+                        m.isPresident === true ||
+                        grp.includes("founder") ||
+                        grp.includes("executive") ||
+                        grp.includes("director") ||
+                        grp.includes("advisor") ||
+                        grp.includes("mentor") ||
+                        grp.includes("lead")
+                    );
+                });
+                setLeaders(dbLeaders.length > 0 ? dbLeaders : membersData);
+            } else {
+                setLeaders(DEFAULT_LEADERS);
+            }
             setSettings(settingsData || {});
             setIsLoading(false);
         });
@@ -214,7 +230,7 @@ export default function LeadershipPage() {
 
     // Executive/Founders vs Grid list
     const executiveSpotlight = useMemo(() => {
-        return leaders.filter(l => l.isPresident || l.sortOrder === 1 || l.role.toLowerCase().includes("founder") || l.role.toLowerCase().includes("president"));
+        return leaders.filter(l => l.isPresident || l.sortOrder === 1 || (l.role || "").toLowerCase().includes("founder") || (l.role || "").toLowerCase().includes("president"));
     }, [leaders]);
 
     const filteredLeaders = useMemo(() => {
