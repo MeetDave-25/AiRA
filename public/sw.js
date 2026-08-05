@@ -1,4 +1,4 @@
-const CACHE_NAME = "aira-lab-shell-v1";
+const CACHE_NAME = "aira-lab-shell-v2";
 const OFFLINE_URL = "/offline";
 const PRECACHE_URLS = ["/", OFFLINE_URL];
 
@@ -62,4 +62,67 @@ self.addEventListener("fetch", (event) => {
             })
         );
     }
+});
+
+// ══ NATIVE SYSTEM PUSH NOTIFICATIONS (OUTSIDE APPLICATION / LOCK SCREEN) ══
+self.addEventListener("push", (event) => {
+    let payload = {
+        title: "AiRA Lab Alert",
+        body: "You have a new update in AiRA Lab.",
+        url: "/",
+        icon: "/icon.svg",
+    };
+
+    if (event.data) {
+        try {
+            payload = event.data.json();
+        } catch {
+            payload.body = event.data.text();
+        }
+    }
+
+    const options = {
+        body: payload.body || payload.message,
+        icon: payload.icon || "/icon.svg",
+        badge: "/icon.svg",
+        vibrate: [200, 100, 200, 100, 200],
+        tag: payload.id || `aira-notif-${Date.now()}`,
+        renotify: true,
+        data: {
+            url: payload.url || payload.link || "/",
+        },
+        actions: [
+            { action: "open", title: "View Details 🚀" },
+            { action: "dismiss", title: "Dismiss" }
+        ],
+    };
+
+    event.waitUntil(
+        self.registration.showNotification(payload.title || "AiRA Lab", options)
+    );
+});
+
+// ══ HANDLE NOTIFICATION CLICK (OPENS APP DIRECTLY FROM LOCK SCREEN / DESKTOP) ══
+self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
+
+    if (event.action === "dismiss") {
+        return;
+    }
+
+    const targetUrl = event.notification.data?.url || "/";
+
+    event.waitUntil(
+        clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+            for (const client of clientList) {
+                if ("focus" in client) {
+                    client.navigate(targetUrl);
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow(targetUrl);
+            }
+        })
+    );
 });

@@ -42,7 +42,7 @@ const TARGETS = [
 ];
 
 export default function BroadcastPage() {
-    const { triggerLocalNotification } = useNotifications();
+    const { triggerLocalNotification, triggerDelayedOutsideTest } = useNotifications();
     const [title, setTitle] = useState("");
     const [message, setMessage] = useState("");
     const [link, setLink] = useState("");
@@ -188,13 +188,21 @@ export default function BroadcastPage() {
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2.5">
                         <button
                             type="button"
                             onClick={handleTestPreview}
-                            className="px-4 py-2.5 rounded-xl border border-aira-cyan/40 bg-aira-cyan/10 text-aira-cyan font-semibold text-xs flex items-center gap-2 hover:bg-aira-cyan/20 transition-all shadow-md shadow-aira-cyan/10"
+                            className="px-3.5 py-2.5 rounded-xl border border-aira-cyan/40 bg-aira-cyan/10 text-aira-cyan font-semibold text-xs flex items-center gap-2 hover:bg-aira-cyan/20 transition-all shadow-md shadow-aira-cyan/10"
                         >
-                            <Volume2 size={16} /> Test Bell Chime & Banner
+                            <Volume2 size={15} /> Test Bell Sound & Banner
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => triggerDelayedOutsideTest(4)}
+                            className="px-3.5 py-2.5 rounded-xl border border-aira-purple/40 bg-aira-purple/15 text-purple-300 font-semibold text-xs flex items-center gap-2 hover:bg-aira-purple/25 transition-all shadow-md"
+                            title="Tests lock screen / outside app notification with a 4s delay so you can lock your screen"
+                        >
+                            <Smartphone size={15} /> Test Lock Screen Alert (4s)
                         </button>
                     </div>
                 </div>
