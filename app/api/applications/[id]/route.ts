@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/admin-guard";
 import bcrypt from "bcryptjs";
 import { generatePassword } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
-import { sendWelcomeEmail } from "@/lib/email";
+import { sendWelcomeEmail, PORTAL_URL } from "@/lib/email";
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
     const auth = await requireAdmin();
@@ -45,8 +45,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                 let activeUserId = existingUser?.id;
 
                 if (!existingUser) {
-                    // Create new user account
-                    const rawPassword = generatePassword(10);
+                    // Create new user account — default role is MEMBER until admin assigns
+                    const rawPassword = generatePassword(12);
                     const hashed = await bcrypt.hash(rawPassword, 12);
                     const newUserId = uuidv4();
 
@@ -57,7 +57,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                             name: applicantName,
                             email: targetEmail,
                             password: hashed,
-                            role: assignedRole || "TEAM_MEMBER",
+                            role: assignedRole || "MEMBER",
                             avatar: app.photo || null,
                             updatedAt: new Date().toISOString(),
                         })
@@ -72,6 +72,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                             password: rawPassword,
                             userId: createdUser.id,
                         };
+                    } else if (userError) {
+                        console.error("[Applications] User creation failed:", userError);
                     }
                 } else {
                     userCredentials = {
@@ -98,19 +100,24 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
                 // 3. Dispatch official Welcome Email from info@aira-lab.in
                 try {
-                    const baseUrl = req.nextUrl.origin || "https://aira-lab.in";
-                    const portalUrl = `${baseUrl}/portal/login`;
                     const roleLabel = assignedRole || app.interest || "Team Member";
 
                     emailDispatchResult = await sendWelcomeEmail({
                         to: targetEmail,
                         name: applicantName,
                         password: userCredentials.password,
-                        portalUrl,
+                        portalUrl: PORTAL_URL,
                         role: roleLabel,
                     });
+
+                    if (!emailDispatchResult.success) {
+                        console.error("[Applications] Email dispatch failed:", emailDispatchResult.error || emailDispatchResult.status);
+                    } else {
+                        console.log(`[Applications] Welcome email dispatched to ${targetEmail} — status: ${emailDispatchResult.status}`);
+                    }
                 } catch (emailErr) {
-                    console.warn("Welcome email dispatch warning:", emailErr);
+                    console.error("[Applications] Welcome email exception:", emailErr);
+                    emailDispatchResult = { success: false, error: String(emailErr), status: "exception" };
                 }
 
                 // 4. Check if TeamMemberProfile exists
