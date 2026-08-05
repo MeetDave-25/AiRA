@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Edit2, Trash2, Shield, Key, Copy, Eye, EyeOff, Crown, UploadCloud, Users } from "lucide-react";
+import { Plus, Edit2, Trash2, Shield, Key, Copy, Eye, EyeOff, Crown, UploadCloud, Users, ShieldAlert, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import AnimatedModal from "@/components/ui/AnimatedModal";
@@ -177,109 +177,127 @@ export default function AdminUsersPage() {
             <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="glass p-4 md:p-6 rounded-2xl border border-white/5 animated-border">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                     <div>
-                        <h1 className="font-orbitron font-bold text-2xl md:text-3xl gradient-text-cyan text-glow-cyan">People</h1>
-                        <p className="text-slate-400 text-sm mt-1">Manage system accounts and public team profiles</p>
+                        <h1 className="font-orbitron font-bold text-2xl md:text-3xl gradient-text-cyan text-glow-cyan">User Accounts & Profiles</h1>
+                        <p className="text-slate-400 text-sm mt-1">Manage portal login accounts (roles & passwords) and public website team profiles</p>
                     </div>
                     <button
                         onClick={() => tab === "accounts" ? openCreate() : openProfileCreate()}
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-aira-purple text-white font-semibold rounded-lg text-sm hover:scale-105 transition-transform shadow-lg shadow-aira-purple/30"
+                        className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-semibold rounded-xl text-sm hover:scale-105 transition-transform shadow-lg shadow-aira-cyan/20"
                     >
-                        <Plus size={16} /> {tab === "accounts" ? "Add User" : "Add Profile"}
+                        <Plus size={16} /> {tab === "accounts" ? "Add User Account" : "Add Public Profile"}
                     </button>
                 </div>
                 {/* Tabs */}
-                <div className="flex gap-2 mt-5">
-                    <button onClick={() => setTab("accounts")} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all border ${tab === "accounts" ? "bg-aira-cyan/10 text-aira-cyan border-aira-cyan/30" : "text-slate-400 border-white/5 hover:bg-white/5"}`}>
-                        <Shield size={14} /> System Accounts <span className="ml-1 text-[11px] px-1.5 py-0.5 rounded-full bg-white/10">{users.length}</span>
+                <div className="flex flex-wrap gap-2 mt-5">
+                    <button onClick={() => setTab("accounts")} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border ${tab === "accounts" ? "bg-aira-cyan/15 text-aira-cyan border-aira-cyan/40 shadow-sm shadow-aira-cyan/10" : "text-slate-400 border-white/5 hover:bg-white/5"}`}>
+                        <Shield size={15} /> System Accounts (Logins & Roles) <span className="ml-1 text-[11px] px-2 py-0.5 rounded-full bg-aira-cyan/20 text-aira-cyan font-bold">{users.length}</span>
                     </button>
-                    <button onClick={() => setTab("profiles")} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all border ${tab === "profiles" ? "bg-aira-purple/20 text-violet-300 border-aira-purple/30" : "text-slate-400 border-white/5 hover:bg-white/5"}`}>
-                        <Users size={14} /> Team Profiles <span className="ml-1 text-[11px] px-1.5 py-0.5 rounded-full bg-white/10">{profiles.length}</span>
+                    <button onClick={() => setTab("profiles")} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border ${tab === "profiles" ? "bg-aira-purple/25 text-violet-300 border-aira-purple/40 shadow-sm shadow-aira-purple/10" : "text-slate-400 border-white/5 hover:bg-white/5"}`}>
+                        <Users size={15} /> Public Team Profiles (About Orbit) <span className="ml-1 text-[11px] px-2 py-0.5 rounded-full bg-aira-purple/20 text-violet-300 font-bold">{profiles.length}</span>
                     </button>
                 </div>
             </motion.div>
 
             {/* ── System Accounts Tab ── */}
             {tab === "accounts" && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {usersLoading && <div className="md:col-span-3 glass rounded-2xl border border-white/10 p-6 text-center"><p className="text-slate-300">Loading users...</p></div>}
-                    {!usersLoading && users.length === 0 && <div className="md:col-span-3 glass rounded-2xl border border-white/10 p-6 text-center"><p className="text-slate-300">No users found.</p><button onClick={() => void fetchUsers(true)} className="mt-2 px-4 py-2 rounded-lg border border-aira-cyan/30 text-aira-cyan hover:bg-aira-cyan/10">Retry</button></div>}
-                    {users.map((u, idx) => (
-                        <motion.div key={u.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} className="glass rounded-2xl border border-white/5 p-4 flex flex-col gap-3">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-lg font-bold text-white">{u.name[0]?.toUpperCase()}</div>
-                                <div className="min-w-0 flex-1"><p className="text-white font-semibold text-sm truncate">{u.name}</p><p className="text-slate-400 text-xs truncate">{u.email}</p></div>
-                                {u.role === "ADMIN" && <Shield size={14} className="text-aira-magenta flex-shrink-0" />}
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${roleColor[u.role] || roleColor.TEAM_MEMBER}`}>{u.role.replace("_", " ")}</span>
-                                <div className="flex gap-2">
-                                    <button onClick={() => openEditUser(u)} className="p-1.5 glass rounded text-aira-cyan hover:bg-aira-cyan/20" title="Edit"><Edit2 size={13} /></button>
-                                    <button onClick={() => setDeleteUserId(u.id)} className="p-1.5 glass rounded text-aira-magenta hover:bg-aira-magenta/20" title="Delete"><Trash2 size={13} /></button>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                    <div className="glass p-3.5 rounded-xl border border-aira-cyan/20 bg-aira-cyan/5 flex items-center justify-between text-xs text-slate-300">
+                        <span>🔑 <strong>System Accounts</strong> grant login access to the Portal. You can assign roles: <em>CONTENT_MANAGER</em>, <em>CERTIFICATE_MANAGER</em>, <em>TEAM_LEAD</em>, <em>TEAM_MEMBER</em>, or <em>ADMIN</em>.</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {usersLoading && <div className="md:col-span-3 glass rounded-2xl border border-white/10 p-6 text-center"><p className="text-slate-300">Loading users...</p></div>}
+                        {!usersLoading && users.length === 0 && <div className="md:col-span-3 glass rounded-2xl border border-white/10 p-6 text-center"><p className="text-slate-300">No users found.</p><button onClick={() => void fetchUsers(true)} className="mt-2 px-4 py-2 rounded-lg border border-aira-cyan/30 text-aira-cyan hover:bg-aira-cyan/10">Retry</button></div>}
+                        {users.map((u, idx) => (
+                            <motion.div key={u.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} className="glass rounded-2xl border border-white/5 p-4 flex flex-col gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-lg font-bold text-white">{u.name[0]?.toUpperCase()}</div>
+                                    <div className="min-w-0 flex-1"><p className="text-white font-semibold text-sm truncate">{u.name}</p><p className="text-slate-400 text-xs truncate">{u.email}</p></div>
+                                    {u.role === "ADMIN" && <Shield size={14} className="text-aira-magenta flex-shrink-0" />}
                                 </div>
-                            </div>
-                            <p className="text-[11px] text-slate-600">Added {new Date(u.createdAt).toLocaleDateString()}</p>
-                        </motion.div>
-                    ))}
+                                <div className="flex items-center justify-between">
+                                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${roleColor[u.role] || roleColor.TEAM_MEMBER}`}>{u.role.replace("_", " ")}</span>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => openEditUser(u)} className="p-1.5 glass rounded text-aira-cyan hover:bg-aira-cyan/20" title="Edit / Reset Password"><Edit2 size={13} /></button>
+                                        <button onClick={() => setDeleteUserId(u.id)} className="p-1.5 glass rounded text-aira-magenta hover:bg-aira-magenta/20" title="Delete"><Trash2 size={13} /></button>
+                                    </div>
+                                </div>
+                                <p className="text-[11px] text-slate-600">Added {new Date(u.createdAt).toLocaleDateString()}</p>
+                            </motion.div>
+                        ))}
+                    </div>
                 </motion.div>
             )}
 
             {/* ── Team Profiles Tab ── */}
             {tab === "profiles" && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {profilesLoading && <div className="md:col-span-3 glass rounded-2xl border border-white/10 p-6 text-center"><p className="text-slate-300">Loading profiles...</p></div>}
-                    {!profilesLoading && profiles.length === 0 && <div className="md:col-span-3 glass rounded-2xl border border-white/10 p-6 text-center"><p className="text-slate-300">No profiles found.</p><button onClick={() => void fetchProfiles()} className="mt-2 px-4 py-2 rounded-lg border border-aira-cyan/30 text-aira-cyan hover:bg-aira-cyan/10">Retry</button></div>}
-                    {profiles.map((p, idx) => (
-                        <motion.div key={p.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} className="glass rounded-2xl border border-white/10 p-4">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <img src={p.photo || "https://placehold.co/100x100/0d1526/00D4FF?text=AL"} alt={p.name} className="w-11 h-11 rounded-full object-cover border border-white/15" />
-                                    <div className="min-w-0"><p className="text-white font-semibold text-sm truncate">{p.name}</p><p className="text-aira-cyan text-xs truncate">{p.role}</p></div>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                    <div className="glass p-3.5 rounded-xl border border-aira-purple/20 bg-aira-purple/5 flex items-center justify-between text-xs text-slate-300">
+                        <span>✨ <strong>Team Profiles</strong> are showcased publicly on the 3D Orbiting animation on the About page.</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {profilesLoading && <div className="md:col-span-3 glass rounded-2xl border border-white/10 p-6 text-center"><p className="text-slate-300">Loading profiles...</p></div>}
+                        {!profilesLoading && profiles.length === 0 && <div className="md:col-span-3 glass rounded-2xl border border-white/10 p-6 text-center"><p className="text-slate-300">No profiles found.</p><button onClick={() => void fetchProfiles()} className="mt-2 px-4 py-2 rounded-lg border border-aira-cyan/30 text-aira-cyan hover:bg-aira-cyan/10">Retry</button></div>}
+                        {profiles.map((p, idx) => (
+                            <motion.div key={p.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} className="glass rounded-2xl border border-white/10 p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <img src={p.photo || "https://placehold.co/100x100/0d1526/00D4FF?text=AL"} alt={p.name} className="w-11 h-11 rounded-full object-cover border border-white/15" />
+                                        <div className="min-w-0"><p className="text-white font-semibold text-sm truncate">{p.name}</p><p className="text-aira-cyan text-xs truncate">{p.role}</p></div>
+                                    </div>
+                                    {p.isPresident && <Crown size={16} className="text-aira-gold" />}
                                 </div>
-                                {p.isPresident && <Crown size={16} className="text-aira-gold" />}
-                            </div>
-                            <p className="text-xs text-slate-500 mb-2">{p.teamGroup || "Core Team"}</p>
-                            {p.bio && <p className="text-xs text-slate-300 line-clamp-2 mb-3">{p.bio}</p>}
-                            <div className="flex justify-end gap-2">
-                                <button onClick={() => openProfileEdit(p)} className="p-2 rounded-lg glass text-aira-cyan hover:bg-aira-cyan/20"><Edit2 size={14} /></button>
-                                <button onClick={() => setDeleteProfileId(p.id)} className="p-2 rounded-lg glass text-aira-magenta hover:bg-aira-magenta/20"><Trash2 size={14} /></button>
-                            </div>
-                        </motion.div>
-                    ))}
+                                <p className="text-xs text-slate-500 mb-2">{p.teamGroup || "Core Team"}</p>
+                                {p.bio && <p className="text-xs text-slate-300 line-clamp-2 mb-3">{p.bio}</p>}
+                                <div className="flex justify-end gap-2">
+                                    <button onClick={() => openProfileEdit(p)} className="p-2 rounded-lg glass text-aira-cyan hover:bg-aira-cyan/20"><Edit2 size={14} /></button>
+                                    <button onClick={() => setDeleteProfileId(p.id)} className="p-2 rounded-lg glass text-aira-magenta hover:bg-aira-magenta/20"><Trash2 size={14} /></button>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
                 </motion.div>
             )}
 
             {/* ══ System Account Modals ══ */}
 
             {/* Create User */}
-            <AnimatedModal open={isCreateOpen} onClose={() => { setIsCreateOpen(false); setCreatedCreds(null); }} title="Add System User" subtitle="Create a login account — assign to teams later"
+            <AnimatedModal open={isCreateOpen} onClose={() => { setIsCreateOpen(false); setCreatedCreds(null); }} title="Add System User Account" subtitle="Create a login account with a password and system role"
                 footer={<div className="flex justify-end gap-3"><button onClick={() => { setIsCreateOpen(false); setCreatedCreds(null); }} className="px-4 py-2 rounded-lg border border-white/15 text-slate-300 hover:bg-white/5">Close</button>{!createdCreds && <button disabled={isUserSubmitting} onClick={handleCreate} className="px-4 py-2 rounded-lg bg-aira-purple text-white font-semibold disabled:opacity-60">{isUserSubmitting ? "Creating..." : "Create User"}</button>}</div>}
             >
                 <div className="space-y-4">
                     {!createdCreds ? (<>
                         <div><label className="block text-xs text-slate-400 mb-1">Full Name *</label><input value={createForm.name} onChange={e => setCreateForm({ ...createForm, name: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-purple/60" placeholder="e.g. Jane Doe" /></div>
                         <div><label className="block text-xs text-slate-400 mb-1">Email / Login ID</label><input type="email" value={createForm.email} onChange={e => setCreateForm({ ...createForm, email: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-purple/60" placeholder="Leave blank to auto-generate" /></div>
-                        <div><label className="block text-xs text-slate-400 mb-1">Role</label><select value={createForm.role} onChange={e => setCreateForm({ ...createForm, role: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-purple/60">{ROLES.map(r => <option key={r} value={r}>{r.replace("_", " ")}</option>)}</select></div>
-                        <div><label className="block text-xs text-slate-400 mb-1">Password</label><div className="relative"><input type={showCreatePw ? "text" : "password"} value={createForm.password} onChange={e => setCreateForm({ ...createForm, password: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 pr-10 text-white outline-none focus:border-aira-purple/60" placeholder="Leave blank to auto-generate" /><button type="button" onClick={() => setShowCreatePw(!showCreatePw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{showCreatePw ? <EyeOff size={15} /> : <Eye size={15} />}</button></div></div>
+                        <div>
+                            <label className="block text-xs text-slate-400 mb-1">Role / Permissions</label>
+                            <select value={createForm.role} onChange={e => setCreateForm({ ...createForm, role: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-purple/60">
+                                {ROLES.map(r => <option key={r} value={r}>{r.replace("_", " ")}</option>)}
+                            </select>
+                            <p className="text-[11px] text-slate-500 mt-1">Choose CONTENT_MANAGER or CERTIFICATE_MANAGER for dedicated manager portals.</p>
+                        </div>
+                        <div><label className="block text-xs text-slate-400 mb-1">Password</label><div className="relative"><input type={showCreatePw ? "text" : "password"} value={createForm.password} onChange={e => setCreateForm({ ...createForm, password: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 pr-10 text-white outline-none focus:border-aira-purple/60" placeholder="Leave blank to auto-generate secure password" /><button type="button" onClick={() => setShowCreatePw(!showCreatePw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{showCreatePw ? <EyeOff size={15} /> : <Eye size={15} />}</button></div></div>
                     </>) : (
                         <div className="rounded-xl border border-aira-gold/30 bg-aira-gold/10 p-4 space-y-3">
-                            <p className="text-sm text-aira-gold font-semibold flex items-center gap-2"><Key size={14} /> Credentials (shown once)</p>
+                            <p className="text-sm text-aira-gold font-semibold flex items-center gap-2"><Key size={14} /> Credentials Created (shown once)</p>
                             <div className="flex items-center gap-2"><span className="text-[11px] text-slate-400 w-20">Login ID</span><code className="flex-1 rounded-md bg-slate-900/70 px-2 py-1 text-sm text-slate-200 truncate">{createdCreds.loginId}</code><button onClick={() => copyText(createdCreds.loginId, "Login ID")} className="p-1.5 rounded border border-aira-gold/40 text-aira-gold hover:bg-aira-gold/10"><Copy size={13} /></button></div>
                             <div className="flex items-center gap-2"><span className="text-[11px] text-slate-400 w-20">Password</span><code className="flex-1 rounded-md bg-slate-900/70 px-2 py-1 text-sm text-slate-200 truncate">{createdCreds.password}</code><button onClick={() => copyText(createdCreds.password, "Password")} className="p-1.5 rounded border border-aira-gold/40 text-aira-gold hover:bg-aira-gold/10"><Copy size={13} /></button></div>
-                            <button onClick={() => copyText(`Login ID: ${createdCreds.loginId}\nPassword: ${createdCreds.password}`, "Credentials")} className="w-full px-3 py-2 text-xs rounded-md border border-aira-gold/40 text-aira-gold hover:bg-aira-gold/10">Copy Both</button>
+                            <button onClick={() => copyText(`Login ID: ${createdCreds.loginId}\nPassword: ${createdCreds.password}`, "Credentials")} className="w-full px-3 py-2 text-xs rounded-md border border-aira-gold/40 text-aira-gold hover:bg-aira-gold/10">Copy Both Credentials</button>
                         </div>
                     )}
                 </div>
             </AnimatedModal>
 
             {/* Edit User */}
-            <AnimatedModal open={!!editingUser} onClose={() => setEditingUser(null)} title="Edit User" subtitle="Update credentials or role"
+            <AnimatedModal open={!!editingUser} onClose={() => setEditingUser(null)} title="Edit User Account" subtitle="Update credentials or role permissions"
                 footer={<div className="flex justify-end gap-3"><button onClick={() => setEditingUser(null)} className="px-4 py-2 rounded-lg border border-white/15 text-slate-300 hover:bg-white/5">Cancel</button><button disabled={isUserSubmitting} onClick={handleEditUser} className="px-4 py-2 rounded-lg bg-aira-cyan text-aira-bg font-semibold disabled:opacity-60">{isUserSubmitting ? "Saving..." : "Save Changes"}</button></div>}
             >
                 <div className="space-y-4">
                     <div><label className="block text-xs text-slate-400 mb-1">Full Name *</label><input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" /></div>
                     <div><label className="block text-xs text-slate-400 mb-1">Email / Login ID</label><input type="email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" /></div>
                     <div><label className="block text-xs text-slate-400 mb-1">Role</label><select value={editForm.role} onChange={e => setEditForm({ ...editForm, role: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60">{ROLES.map(r => <option key={r} value={r}>{r.replace("_", " ")}</option>)}</select></div>
-                    <div><label className="block text-xs text-slate-400 mb-1">New Password</label><div className="relative"><input type={showEditPw ? "text" : "password"} value={editForm.newPassword} onChange={e => setEditForm({ ...editForm, newPassword: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 pr-10 text-white outline-none focus:border-aira-cyan/60" placeholder="Leave blank to keep current" /><button type="button" onClick={() => setShowEditPw(!showEditPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{showEditPw ? <EyeOff size={15} /> : <Eye size={15} />}</button></div><p className="text-[11px] text-slate-500 mt-1">Leave blank to keep existing password.</p></div>
+                    <div><label className="block text-xs text-slate-400 mb-1">New Password (Reset)</label><div className="relative"><input type={showEditPw ? "text" : "password"} value={editForm.newPassword} onChange={e => setEditForm({ ...editForm, newPassword: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 pr-10 text-white outline-none focus:border-aira-cyan/60" placeholder="Enter new password to change" /><button type="button" onClick={() => setShowEditPw(!showEditPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{showEditPw ? <EyeOff size={15} /> : <Eye size={15} />}</button></div><p className="text-[11px] text-slate-500 mt-1">Leave blank to keep existing password.</p></div>
                 </div>
             </AnimatedModal>
 
@@ -293,13 +311,13 @@ export default function AdminUsersPage() {
             {/* ══ Team Profile Modals ══ */}
 
             {/* Create / Edit Profile */}
-            <AnimatedModal open={isProfileCreateOpen || !!editingProfile} onClose={() => { setIsProfileCreateOpen(false); setEditingProfile(null); }} title={editingProfile ? "Edit Profile" : "Add Team Profile"} subtitle="Powers the public About page orbit animation" size="lg"
+            <AnimatedModal open={isProfileCreateOpen || !!editingProfile} onClose={() => { setIsProfileCreateOpen(false); setEditingProfile(null); }} title={editingProfile ? "Edit Team Profile" : "Add Team Profile"} subtitle="Powers the public About page orbit animation" size="lg"
                 footer={<div className="flex justify-end gap-3"><button onClick={() => { setIsProfileCreateOpen(false); setEditingProfile(null); }} className="px-4 py-2 rounded-lg border border-white/15 text-slate-300 hover:bg-white/5">Cancel</button><button disabled={isProfileSubmitting} onClick={saveProfile} className="px-4 py-2 rounded-lg bg-aira-cyan text-aira-bg font-semibold disabled:opacity-60">{isProfileSubmitting ? "Saving..." : "Save Profile"}</button></div>}
             >
                 <div className="space-y-4 max-h-[68vh] overflow-y-auto pr-1">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div><label className="block text-xs text-slate-400 mb-1">Name</label><input value={profileForm.name} onChange={e => setProfileForm({ ...profileForm, name: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" /></div>
-                        <div><label className="block text-xs text-slate-400 mb-1">Role / Title</label><input value={profileForm.role} onChange={e => setProfileForm({ ...profileForm, role: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" /></div>
+                        <div><label className="block text-xs text-slate-400 mb-1">Name *</label><input value={profileForm.name} onChange={e => setProfileForm({ ...profileForm, name: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" /></div>
+                        <div><label className="block text-xs text-slate-400 mb-1">Role / Title *</label><input value={profileForm.role} onChange={e => setProfileForm({ ...profileForm, role: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" /></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div><label className="block text-xs text-slate-400 mb-1">Team Group</label><input value={profileForm.teamGroup} onChange={e => setProfileForm({ ...profileForm, teamGroup: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" /></div>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Crown, Edit2, Plus, Trash2, UploadCloud } from "lucide-react";
+import Link from "next/link";
+import { Crown, Edit2, Plus, Trash2, UploadCloud, Shield, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import AnimatedModal from "@/components/ui/AnimatedModal";
@@ -162,14 +163,23 @@ export default function TeamMembersAdminPage() {
             <div className="absolute -top-10 -right-10 w-52 h-52 bg-aira-purple/10 blur-3xl rounded-full pointer-events-none" />
             <div className="absolute -bottom-16 -left-12 w-56 h-56 bg-aira-cyan/10 blur-3xl rounded-full pointer-events-none" />
 
-            <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 glass p-6 rounded-2xl border border-white/5 animated-border">
-                <div>
-                    <h1 className="font-orbitron font-bold text-2xl md:text-3xl gradient-text-cyan text-glow-cyan">Team Profiles</h1>
-                    <p className="text-slate-400 text-sm mt-1">Manage president and member profiles for About page orbit animation</p>
+            {/* Header */}
+            <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="glass p-6 rounded-2xl border border-white/5 animated-border space-y-4">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                    <div>
+                        <h1 className="font-orbitron font-bold text-2xl md:text-3xl gradient-text-cyan text-glow-cyan">Public Team Profiles</h1>
+                        <p className="text-slate-400 text-sm mt-1">Manage president and member cards showcased on the public About page 3D orbit</p>
+                    </div>
+                    <button onClick={openCreate} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-aira-cyan text-aira-bg font-semibold rounded-xl text-sm hover:scale-105 transition-transform glow-cyan min-h-[42px]">
+                        <Plus size={16} /> Add Team Profile
+                    </button>
                 </div>
-                <button onClick={openCreate} className="flex items-center justify-center gap-2 px-4 py-2 bg-aira-cyan text-aira-bg font-semibold rounded-lg text-sm hover:scale-105 transition-transform glow-cyan min-h-[42px]">
-                    <Plus size={16} /> Add Member
-                </button>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-aira-purple/10 border border-aira-purple/20 text-xs text-slate-300">
+                    <span className="flex items-center gap-2"><Shield size={14} className="text-aira-purple flex-shrink-0" /> Looking to add a user login with password & permissions (e.g. Content Manager, Certificate Manager)?</span>
+                    <Link href="/admin/users" className="flex items-center gap-1 text-aira-cyan hover:underline font-semibold ml-2 flex-shrink-0">
+                        Go to User Accounts <ArrowRight size={13} />
+                    </Link>
+                </div>
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -189,7 +199,7 @@ export default function TeamMembersAdminPage() {
                 )}
 
                 {members.map((member, idx) => (
-                    <motion.div key={member.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} className="glass rounded-2xl border border-white/10 p-4">
+                    <motion.div key={member.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} className="glass rounded-2xl border border-white/5 p-4">
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-3 min-w-0">
                                 <img src={member.photo || "https://placehold.co/100x100/0d1526/00D4FF?text=AL"} alt={member.name} className="w-11 h-11 rounded-full object-cover border border-white/15" />
@@ -218,7 +228,7 @@ export default function TeamMembersAdminPage() {
                     setIsCreateOpen(false);
                     setEditing(null);
                 }}
-                title={editing ? "Edit Team Member" : "Add Team Member"}
+                title={editing ? "Edit Team Profile" : "Add Team Profile"}
                 subtitle="This data powers the About us interactive orbit"
                 size="lg"
                 footer={
@@ -230,7 +240,7 @@ export default function TeamMembersAdminPage() {
                             Cancel
                         </button>
                         <button disabled={isSubmitting} onClick={saveMember} className="px-4 py-2 rounded-lg bg-aira-cyan text-aira-bg font-semibold disabled:opacity-60">
-                            {isSubmitting ? "Saving..." : "Save Member"}
+                            {isSubmitting ? "Saving..." : "Save Profile"}
                         </button>
                     </div>
                 }
@@ -238,11 +248,11 @@ export default function TeamMembersAdminPage() {
                 <div className="space-y-4 max-h-[68vh] overflow-y-auto pr-1">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs text-slate-400 mb-1">Name</label>
+                            <label className="block text-xs text-slate-400 mb-1">Name *</label>
                             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" />
                         </div>
                         <div>
-                            <label className="block text-xs text-slate-400 mb-1">Role</label>
+                            <label className="block text-xs text-slate-400 mb-1">Role *</label>
                             <input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" />
                         </div>
                     </div>

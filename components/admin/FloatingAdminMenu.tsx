@@ -18,11 +18,14 @@ import {
     CheckSquare,
     Menu,
     X,
+    UserCheck,
+    Globe,
 } from "lucide-react";
 
 const adminLinks = [
     { label: "Analytics", href: "/admin", icon: BarChart3 },
-    { label: "People", href: "/admin/team-members", icon: Users },
+    { label: "User Accounts", href: "/admin/users", icon: UserCheck },
+    { label: "Public Profiles", href: "/admin/team-members", icon: Globe },
     { label: "Teams", href: "/admin/teams", icon: UsersRound },
     { label: "Tasks", href: "/admin/tasks", icon: CheckSquare },
     { label: "Events", href: "/admin/events", icon: CalendarDays },
@@ -30,7 +33,6 @@ const adminLinks = [
     { label: "Certificates", href: "/admin/certificates", icon: ClipboardList },
     { label: "Reports", href: "/admin/reports", icon: BarChart3 },
     { label: "Achievements", href: "/admin/achievements", icon: Trophy },
-    { label: "Users", href: "/admin/users", icon: Users },
     { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
