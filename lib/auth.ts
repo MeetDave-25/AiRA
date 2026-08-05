@@ -14,38 +14,70 @@ export const authOptions = {
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) return null;
 
-                // [ADMIN BYPASS] Allow admin login via env or standard fallback credentials.
-                const adminEmailEnv = process.env.ADMIN_EMAIL || "admin@airalabs.com";
+                const inputEmail = credentials.email.trim().toLowerCase();
+                const inputPassword = credentials.password;
+
+                // [1. ADMIN DEFAULT / BYPASS CREDENTIALS]
+                const adminEmailEnv = (process.env.ADMIN_EMAIL || "admin@airalabs.com").toLowerCase();
                 const adminPasswordEnv = process.env.ADMIN_PASSWORD || "Admin@123";
 
-                const isBypassEmail =
-                    credentials.email === adminEmailEnv ||
-                    credentials.email === "admin@airalabs.com" ||
-                    credentials.email === "admin@airalab.com";
-
-                const isBypassPassword = credentials.password === adminPasswordEnv;
-
-                if (isBypassEmail && isBypassPassword) {
+                if (
+                    (inputEmail === adminEmailEnv || inputEmail === "admin@airalabs.com" || inputEmail === "admin@airalab.com") &&
+                    inputPassword === adminPasswordEnv
+                ) {
                     return {
                         id: "local-bypass-admin",
                         name: "AIRA Admin",
-                        email: credentials.email,
+                        email: inputEmail,
                         role: "ADMIN",
                         avatar: "",
                         teams: [],
                     };
                 }
 
+                // [2. CONTENT MANAGER DEFAULT / BYPASS CREDENTIALS]
+                const contentPasswordEnv = process.env.CONTENT_MANAGER_PASSWORD || "Content@123";
+                if (
+                    (inputEmail === "content@airalabs.com" || inputEmail === "content@airalab.com") &&
+                    inputPassword === contentPasswordEnv
+                ) {
+                    return {
+                        id: "local-bypass-content-manager",
+                        name: "AiRA Content Manager",
+                        email: inputEmail,
+                        role: "CONTENT_MANAGER",
+                        avatar: "",
+                        teams: [],
+                    };
+                }
+
+                // [3. CERTIFICATE MANAGER DEFAULT / BYPASS CREDENTIALS]
+                const certificatePasswordEnv = process.env.CERTIFICATE_MANAGER_PASSWORD || "Certificate@123";
+                if (
+                    (inputEmail === "certificate@airalabs.com" || inputEmail === "certificate@airalab.com") &&
+                    inputPassword === certificatePasswordEnv
+                ) {
+                    return {
+                        id: "local-bypass-certificate-manager",
+                        name: "AiRA Certificate Manager",
+                        email: inputEmail,
+                        role: "CERTIFICATE_MANAGER",
+                        avatar: "",
+                        teams: [],
+                    };
+                }
+
+                // [4. DATABASE USERS]
                 try {
                     const { data: user, error } = await db
                         .from("User")
                         .select("id, name, email, password, role, avatar, TeamMembership(teamId, memberRole, Team(id, name, color))")
-                        .eq("email", credentials.email)
+                        .eq("email", inputEmail)
                         .single();
 
                     if (error || !user) return null;
 
-                    const passwordMatch = await bcrypt.compare(credentials.password, user.password);
+                    const passwordMatch = await bcrypt.compare(inputPassword, user.password);
                     if (!passwordMatch) return null;
 
                     return {
