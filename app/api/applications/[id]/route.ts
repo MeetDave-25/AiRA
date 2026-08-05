@@ -58,6 +58,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                             email: targetEmail,
                             password: hashed,
                             role: assignedRole || "TEAM_MEMBER",
+                            avatar: app.photo || null,
                             updatedAt: new Date().toISOString(),
                         })
                         .select("id, name, email, role")
@@ -115,7 +116,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                 // 4. Check if TeamMemberProfile exists
                 const { data: existingProfiles } = await db
                     .from("TeamMemberProfile")
-                    .select("id")
+                    .select("id, photo")
                     .ilike("name", applicantName)
                     .limit(1);
 
@@ -133,7 +134,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                             role: memberRole,
                             teamGroup: teamGroup,
                             bio: bio,
-                            photo: "",
+                            photo: app.photo || "",
                             sortOrder: 10,
                             isPresident: false,
                             updatedAt: new Date().toISOString(),
@@ -146,6 +147,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                     }
                 } else {
                     userCredentials.profileId = existingProfiles[0].id;
+                    if (!existingProfiles[0].photo && app.photo) {
+                        await db.from("TeamMemberProfile").update({ photo: app.photo }).eq("id", existingProfiles[0].id);
+                    }
                 }
             }
         }

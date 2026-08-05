@@ -23,7 +23,9 @@ import {
     ArrowUpRight,
     AlertTriangle,
     CheckSquare,
-    Square
+    Square,
+    User,
+    Camera
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -44,6 +46,9 @@ export default function ApplicationsPage() {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
     const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+
+    // Photo zoom preview state
+    const [previewPhoto, setPreviewPhoto] = useState<{ url: string; name: string } | null>(null);
 
     // Modal state for newly approved credentials
     const [approvedModalData, setApprovedModalData] = useState<{
@@ -350,7 +355,7 @@ export default function ApplicationsPage() {
                                     {/* Selection checkbox */}
                                     <button
                                         onClick={() => toggleSelect(app.id)}
-                                        className="mt-1 p-1 text-slate-400 hover:text-aira-cyan transition-colors"
+                                        className="mt-1 p-1 text-slate-400 hover:text-aira-cyan transition-colors shrink-0"
                                         title={isSelected ? "Deselect" : "Select"}
                                     >
                                         {isSelected ? (
@@ -359,6 +364,30 @@ export default function ApplicationsPage() {
                                             <Square size={18} className="text-slate-600 hover:text-slate-400" />
                                         )}
                                     </button>
+
+                                    {/* Applicant Photo Avatar */}
+                                    {app.photo ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setPreviewPhoto({ url: app.photo, name: app.name })}
+                                            className="relative w-12 h-12 rounded-xl overflow-hidden border border-aira-cyan/40 shrink-0 group/img hover:scale-105 transition-transform bg-slate-900 shadow-md"
+                                            title="Click to view full photo"
+                                        >
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img
+                                                src={app.photo}
+                                                alt={app.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity text-white text-[10px] font-semibold">
+                                                Zoom
+                                            </div>
+                                        </button>
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-aira-cyan/20 to-aira-purple/20 border border-white/10 flex items-center justify-center text-white font-orbitron font-bold text-sm shrink-0">
+                                            {app.name.slice(0, 2).toUpperCase()}
+                                        </div>
+                                    )}
 
                                     <div className="space-y-3 flex-1 min-w-0">
                                         <div className="flex flex-wrap items-center gap-3">
@@ -519,13 +548,29 @@ export default function ApplicationsPage() {
             >
                 {approvedModalData && (
                     <div className="space-y-4">
-                        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
-                            <p className="text-sm font-semibold text-emerald-300 flex items-center gap-2">
-                                <CheckCircle2 size={16} /> {approvedModalData.applicant.name} is now an active member!
-                            </p>
-                            <p className="text-xs text-slate-300">
-                                User account has been registered, in-app welcome notification sent, and member card created in <strong>People Profiles</strong>.
-                            </p>
+                        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3">
+                            {approvedModalData.applicant.photo ? (
+                                <div className="w-12 h-12 rounded-xl overflow-hidden border border-emerald-400 shrink-0 bg-slate-900">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src={approvedModalData.applicant.photo}
+                                        alt={approvedModalData.applicant.name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 font-orbitron font-bold text-sm shrink-0">
+                                    {approvedModalData.applicant.name.slice(0, 2).toUpperCase()}
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-emerald-300 flex items-center gap-2">
+                                    <CheckCircle2 size={16} /> {approvedModalData.applicant.name} is now an active member!
+                                </p>
+                                <p className="text-xs text-slate-300 mt-0.5">
+                                    User account registered, photo saved to profile, and credentials ready for sharing.
+                                </p>
+                            </div>
                         </div>
 
                         {approvedModalData.credentials?.userCreated && approvedModalData.credentials.password ? (
@@ -741,6 +786,41 @@ export default function ApplicationsPage() {
                         <span>Are you sure you want to permanently remove {selectedIds.length} application(s)? This action cannot be undone.</span>
                     </div>
                 </div>
+            </AnimatedModal>
+
+            {/* ══ Photo Zoom Lightbox Modal ══ */}
+            <AnimatedModal
+                open={!!previewPhoto}
+                onClose={() => setPreviewPhoto(null)}
+                title={previewPhoto?.name || "Applicant Photo"}
+                subtitle="Applicant profile picture preview"
+                size="md"
+                footer={
+                    <div className="flex justify-end w-full">
+                        <button
+                            onClick={() => setPreviewPhoto(null)}
+                            className="px-4 py-2 rounded-xl border border-white/15 text-slate-300 hover:bg-white/5 text-xs font-semibold"
+                        >
+                            Close
+                        </button>
+                    </div>
+                }
+            >
+                {previewPhoto && (
+                    <div className="flex flex-col items-center justify-center p-2">
+                        <div className="relative max-h-[70vh] rounded-2xl overflow-hidden border border-white/15 shadow-2xl bg-slate-950">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={previewPhoto.url}
+                                alt={previewPhoto.name}
+                                className="w-auto h-auto max-h-[60vh] max-w-full object-contain rounded-2xl"
+                            />
+                        </div>
+                        <p className="text-xs text-slate-400 mt-3 font-mono">
+                            {previewPhoto.name} &bull; AiRA Labs Applicant
+                        </p>
+                    </div>
+                )}
             </AnimatedModal>
         </div>
     );

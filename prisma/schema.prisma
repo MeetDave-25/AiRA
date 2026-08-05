@@ -159,6 +159,7 @@ model Application {
   phone     String?
   interest  String?
   message   String?
+  photo     String?
   status    String            @default("PENDING") // Enum polyfill
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt

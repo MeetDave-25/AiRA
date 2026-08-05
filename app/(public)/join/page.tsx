@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Send, CheckCircle, Mail, Phone, User, MessageSquare, Zap } from "lucide-react";
+import { Send, CheckCircle, Mail, Phone, User, MessageSquare, Zap, UploadCloud, Camera, X, Loader2, Image as ImageIcon } from "lucide-react";
 import toast from "react-hot-toast";
 
 const interests = [
@@ -11,9 +11,59 @@ const interests = [
 ];
 
 export default function JoinPage() {
-    const [form, setForm] = useState({ name: "", email: "", phone: "", interest: "", message: "" });
+    const [form, setForm] = useState({ name: "", email: "", phone: "", interest: "", message: "", photo: "" });
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            toast.error("Please select an image file (JPG, PNG, WEBP, etc.)");
+            return;
+        }
+
+        if (file.size > 8 * 1024 * 1024) {
+            toast.error("Image file size must be less than 8MB");
+            return;
+        }
+
+        setUploadingPhoto(true);
+        const toastId = toast.loading("Uploading photo...");
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("type", "applications");
+
+            const res = await fetch("/api/upload", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || "Failed to upload photo");
+            }
+
+            setForm((prev) => ({ ...prev, photo: data.url }));
+            toast.success("Photo uploaded successfully!", { id: toastId });
+        } catch (error: any) {
+            console.error("Upload error:", error);
+            toast.error(error?.message || "Failed to upload photo", { id: toastId });
+        } finally {
+            setUploadingPhoto(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
+    const handleRemovePhoto = () => {
+        setForm((prev) => ({ ...prev, photo: "" }));
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -60,7 +110,7 @@ export default function JoinPage() {
                         We&apos;ll review it and reach out to you at <span className="text-aira-cyan">{form.email}</span> soon.
                     </p>
                     <button
-                        onClick={() => { setSubmitted(false); setForm({ name: "", email: "", phone: "", interest: "", message: "" }); }}
+                        onClick={() => { setSubmitted(false); setForm({ name: "", email: "", phone: "", interest: "", message: "", photo: "" }); }}
                         className="px-6 py-3 rounded-xl glass border border-aira-cyan/30 text-aira-cyan text-sm hover:bg-aira-cyan/10 transition-all"
                     >
                         Submit Another
@@ -133,7 +183,86 @@ export default function JoinPage() {
                     className="glass-strong rounded-3xl p-8 border border-aira-cyan/20"
                 >
                     <h2 className="font-orbitron font-bold text-lg text-white mb-6">Application Form</h2>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        {/* Profile Picture Upload Field */}
+                        <div>
+                            <label className="text-xs text-slate-400 mb-2 block font-medium flex items-center justify-between">
+                                <span>Profile Picture (Optional)</span>
+                                <span className="text-[10px] text-aira-cyan font-mono">JPG, PNG, WEBP (Max 8MB)</span>
+                            </label>
+
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handlePhotoUpload}
+                                className="hidden"
+                            />
+
+                            {form.photo ? (
+                                <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-900/80 border border-aira-cyan/40">
+                                    <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-slate-800">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={form.photo}
+                                            alt="Profile Preview"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-semibold text-white truncate flex items-center gap-1.5">
+                                            <CheckCircle size={14} className="text-emerald-400 shrink-0" /> Photo attached
+                                        </p>
+                                        <p className="text-[11px] text-slate-400 mt-0.5">Will be featured on your team badge</p>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={uploadingPhoto}
+                                            className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-slate-200 transition-colors"
+                                        >
+                                            Change
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleRemovePhoto}
+                                            className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors"
+                                            title="Remove photo"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div
+                                    onClick={() => !uploadingPhoto && fileInputRef.current?.click()}
+                                    className={`group border-2 border-dashed border-white/15 hover:border-aira-cyan/50 rounded-2xl p-4 text-center cursor-pointer transition-all duration-300 bg-slate-900/40 hover:bg-aira-cyan/5 ${
+                                        uploadingPhoto ? "opacity-60 pointer-events-none" : ""
+                                    }`}
+                                >
+                                    {uploadingPhoto ? (
+                                        <div className="flex flex-col items-center justify-center py-2 space-y-2">
+                                            <Loader2 size={24} className="text-aira-cyan animate-spin" />
+                                            <p className="text-xs text-slate-300 font-medium">Uploading profile picture...</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center py-1 space-y-1.5">
+                                            <div className="w-10 h-10 rounded-full bg-aira-cyan/10 border border-aira-cyan/20 flex items-center justify-center text-aira-cyan group-hover:scale-110 transition-transform">
+                                                <Camera size={18} />
+                                            </div>
+                                            <p className="text-xs font-semibold text-white">
+                                                Click to upload your profile photo
+                                            </p>
+                                            <p className="text-[11px] text-slate-400">
+                                                Add a clear face picture for your member card
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
                         <div>
                             <label className="text-xs text-slate-400 mb-1.5 block font-medium">Full Name *</label>
                             <div className="relative">
@@ -206,8 +335,8 @@ export default function JoinPage() {
 
                         <button
                             type="submit"
-                            disabled={submitting}
-                            className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-semibold text-sm hover:shadow-lg hover:shadow-aira-cyan/30 hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+                            disabled={submitting || uploadingPhoto}
+                            className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-semibold text-sm hover:shadow-lg hover:shadow-aira-cyan/30 hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 font-orbitron uppercase tracking-wider"
                         >
                             {submitting ? (
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
