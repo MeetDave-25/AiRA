@@ -69,16 +69,28 @@ export default function Footer() {
                             Contact
                         </h3>
                         <ul className="space-y-3">
-                            {[
-                                { icon: Mail, text: "parth_ljcca@ljku.edu.in" },
-                                { icon: Phone, text: "+91 81609 01481" },
-                                { icon: MapPin, text: "LJCCA, L J College of Computer Application, Vastrapur, Ahmedabad" },
-                            ].map(({ icon: Icon, text }, i) => (
-                                <li key={i} className="flex items-center gap-3 text-slate-400 text-sm">
-                                    <Icon size={14} className="text-aira-cyan shrink-0" />
-                                    {text}
-                                </li>
-                            ))}
+                            <li className="flex items-center gap-3 text-slate-400 text-sm">
+                                <Mail size={14} className="text-aira-cyan shrink-0" />
+                                <a 
+                                    href="mailto:info@aira-lab.in" 
+                                    className="hover:text-aira-cyan hover:underline transition-colors"
+                                >
+                                    info@aira-lab.in
+                                </a>
+                            </li>
+                            <li className="flex items-center gap-3 text-slate-400 text-sm">
+                                <Phone size={14} className="text-aira-cyan shrink-0" />
+                                <a 
+                                    href="tel:+918160901481" 
+                                    className="hover:text-aira-cyan transition-colors"
+                                >
+                                    +91 81609 01481
+                                </a>
+                            </li>
+                            <li className="flex items-center gap-3 text-slate-400 text-sm">
+                                <MapPin size={14} className="text-aira-cyan shrink-0" />
+                                <span>LJCCA, L J College of Computer Application, Vastrapur, Ahmedabad</span>
+                            </li>
                         </ul>
                     </div>
                 </div>
