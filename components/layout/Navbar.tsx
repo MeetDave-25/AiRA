@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { NotificationBell } from "@/components/ui/NotificationBell";
 
 const navLinks = [
     { href: "/", label: "Home" },
@@ -70,7 +71,9 @@ export default function Navbar() {
                 </div>
 
                 {/* Right side */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                    {session && <NotificationBell />}
+
                     {session ? (
                         <Link
                             href="/portal/dashboard"
@@ -96,7 +99,7 @@ export default function Navbar() {
                         className="md:hidden p-2.5 rounded-xl text-aira-cyan bg-aira-cyan/10 border border-aira-cyan/20 active:scale-95 transition-transform"
                         aria-label="Toggle menu"
                     >
-                        {open ? <X size={28} /> : <Menu size={28} />}
+                        {open ? <X size={24} /> : <Menu size={24} />}
                     </button>
                 </div>
             </div>
@@ -108,7 +111,7 @@ export default function Navbar() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden fixed left-0 right-0 top-20 mx-4 bg-aira-bg/95 backdrop-blur-xl border border-aira-cyan/40 rounded-2xl overflow-hidden shadow-2xl shadow-aira-cyan/20 z-[9998]"
+                        className="md:hidden fixed left-0 right-0 top-20 mx-4 bg-slate-950/95 backdrop-blur-2xl border border-aira-cyan/40 rounded-2xl overflow-hidden shadow-2xl shadow-aira-cyan/20 z-[9998]"
                     >
                         <div className="p-5 space-y-2">
                             {navLinks.map((link) => (
@@ -117,7 +120,7 @@ export default function Navbar() {
                                     href={link.href}
                                     onClick={() => setOpen(false)}
                                     className={cn(
-                                        "block px-5 py-4 rounded-xl text-base font-semibold transition-all",
+                                        "block px-5 py-3.5 rounded-xl text-base font-semibold transition-all",
                                         pathname === link.href
                                             ? "text-aira-cyan bg-aira-cyan/10 border border-aira-cyan/20"
                                             : "text-slate-300 hover:text-aira-cyan hover:bg-white/5"
@@ -129,9 +132,9 @@ export default function Navbar() {
                             <Link
                                 href="/portal/login"
                                 onClick={() => setOpen(false)}
-                                className="block px-5 py-4 rounded-xl text-base font-bold text-white bg-gradient-to-r from-aira-cyan/20 to-aira-purple/20 border border-aira-cyan/30 text-center mt-4"
+                                className="block px-5 py-3.5 rounded-xl text-base font-bold text-white bg-gradient-to-r from-aira-cyan/20 to-aira-purple/20 border border-aira-cyan/30 text-center mt-4"
                             >
-                                {session ? "Access Portal" : "Login to Portal"}
+                                {session ? "Access Portal Dashboard" : "Login to Portal"}
                             </Link>
                         </div>
                     </motion.div>
