@@ -4,6 +4,51 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 
+export async function GET(req: NextRequest) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    try {
+        // Fetch recent notifications to aggregate broadcast history
+        const { data, error } = await db
+            .from("Notification")
+            .select("id, title, message, link, createdAt, userId")
+            .order("createdAt", { ascending: false })
+            .limit(200);
+
+        if (error) throw error;
+
+        // Group notifications by title and timestamp (within 2-second windows) to present unified broadcast items
+        const broadcastMap = new Map<string, any>();
+        for (const item of data || []) {
+            const timeKey = `${item.title}_${item.createdAt.slice(0, 16)}`;
+            if (!broadcastMap.has(timeKey)) {
+                broadcastMap.set(timeKey, {
+                    id: item.id,
+                    title: item.title,
+                    message: item.message,
+                    link: item.link,
+                    createdAt: item.createdAt,
+                    recipientsCount: 1,
+                    ids: [item.id],
+                });
+            } else {
+                const existing = broadcastMap.get(timeKey);
+                existing.recipientsCount += 1;
+                existing.ids.push(item.id);
+            }
+        }
+
+        const broadcasts = Array.from(broadcastMap.values()).slice(0, 30);
+        return NextResponse.json(broadcasts);
+    } catch (error) {
+        console.error("Fetch broadcasts error:", error);
+        return NextResponse.json([]);
+    }
+}
+
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -78,7 +123,6 @@ export async function POST(req: NextRequest) {
         }));
 
         if (notificationRecords.length > 0) {
-            // Batch insert notifications
             const { error: insertError } = await db
                 .from("Notification")
                 .insert(notificationRecords);
@@ -100,5 +144,44 @@ export async function POST(req: NextRequest) {
     } catch (error) {
         console.error("Broadcast notification error:", error);
         return NextResponse.json({ error: "Failed to broadcast notification", details: String(error) }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: NextRequest) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = (session.user as any)?.role || "TEAM_MEMBER";
+    if (role !== "ADMIN" && role !== "CONTENT_MANAGER") {
+        return NextResponse.json({ error: "Forbidden: insufficient permissions to delete broadcast" }, { status: 403 });
+    }
+
+    try {
+        const { searchParams } = new URL(req.url);
+        const title = searchParams.get("title");
+        const id = searchParams.get("id");
+        const clearAll = searchParams.get("clearAll") === "true";
+
+        if (clearAll) {
+            await db.from("Notification").delete().neq("id", "none");
+            return NextResponse.json({ success: true, message: "All notifications cleared" });
+        }
+
+        if (title) {
+            await db.from("Notification").delete().eq("title", title);
+            return NextResponse.json({ success: true, message: "Broadcast notifications deleted" });
+        }
+
+        if (id) {
+            await db.from("Notification").delete().eq("id", id);
+            return NextResponse.json({ success: true, message: "Notification deleted" });
+        }
+
+        return NextResponse.json({ error: "Provide title, id, or clearAll=true" }, { status: 400 });
+    } catch (error) {
+        console.error("Delete broadcast error:", error);
+        return NextResponse.json({ error: "Failed to delete broadcast" }, { status: 500 });
     }
 }

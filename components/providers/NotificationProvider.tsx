@@ -52,7 +52,7 @@ const NotificationContext = createContext<NotificationContextType>({
 
 export const useNotifications = () => useContext(NotificationContext);
 
-// Web Audio API notification chime generator (Instagram / iOS / Snapchat pop style)
+// Crystal-clear acoustic bell chime synthesizer (Apple / Glass Bell resonance)
 function playSocialChime() {
     try {
         const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -60,32 +60,55 @@ function playSocialChime() {
         const ctx = new AudioCtx();
         const now = ctx.currentTime;
 
-        // Tone 1: Soft high pop
+        // Strike 1 (High Crystal Ting - C6)
         const osc1 = ctx.createOscillator();
         const gain1 = ctx.createGain();
         osc1.type = "sine";
-        osc1.frequency.setValueAtTime(587.33, now); // D5
-        osc1.frequency.exponentialRampToValueAtTime(880, now + 0.1); // A5
-        gain1.gain.setValueAtTime(0.18, now);
-        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc1.frequency.setValueAtTime(1046.5, now);
+        gain1.gain.setValueAtTime(0.22, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
         osc1.connect(gain1);
         gain1.connect(ctx.destination);
         osc1.start(now);
-        osc1.stop(now + 0.22);
+        osc1.stop(now + 0.6);
 
-        // Tone 2: Crisp chime harmonic
+        // Strike 2 (Bell Harmony - E6)
         const osc2 = ctx.createOscillator();
         const gain2 = ctx.createGain();
-        osc2.type = "triangle";
-        osc2.frequency.setValueAtTime(1174.66, now + 0.06); // D6
-        gain2.gain.setValueAtTime(0.14, now + 0.06);
-        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+        osc2.type = "sine";
+        osc2.frequency.setValueAtTime(1318.5, now + 0.08);
+        gain2.gain.setValueAtTime(0.25, now + 0.08);
+        gain2.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
         osc2.connect(gain2);
         gain2.connect(ctx.destination);
-        osc2.start(now + 0.06);
-        osc2.stop(now + 0.28);
+        osc2.start(now + 0.08);
+        osc2.stop(now + 1.2);
+
+        // Resonant Body (G6 Bell body with warm decay)
+        const osc3 = ctx.createOscillator();
+        const gain3 = ctx.createGain();
+        osc3.type = "triangle";
+        osc3.frequency.setValueAtTime(1567.98, now + 0.12);
+        gain3.gain.setValueAtTime(0.18, now + 0.12);
+        gain3.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
+        osc3.connect(gain3);
+        gain3.connect(ctx.destination);
+        osc3.start(now + 0.12);
+        osc3.stop(now + 1.4);
+
+        // Sparkle Harmonic (High subtle overtone - E7)
+        const osc4 = ctx.createOscillator();
+        const gain4 = ctx.createGain();
+        osc4.type = "sine";
+        osc4.frequency.setValueAtTime(2637.0, now + 0.12);
+        gain4.gain.setValueAtTime(0.08, now + 0.12);
+        gain4.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+        osc4.connect(gain4);
+        gain4.connect(ctx.destination);
+        osc4.start(now + 0.12);
+        osc4.stop(now + 0.8);
     } catch {
-        // Audio playback restricted by browser autoplay policies
+        // Audio restricted by browser
     }
 }
 

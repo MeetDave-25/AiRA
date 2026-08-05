@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
@@ -21,8 +21,9 @@ import {
     UserCheck,
     Globe,
     Radio,
-    Sparkles,
+    ChevronLeft
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const adminLinks = [
     { label: "Analytics", href: "/admin", icon: BarChart3 },
@@ -41,40 +42,96 @@ const adminLinks = [
 
 export default function FloatingAdminMenu() {
     const [isOpen, setIsOpen] = useState(false);
+    const [isIdle, setIsIdle] = useState(false);
     const pathname = usePathname();
+    const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Prevent body scroll when menu is open on mobile
+    // Reset idle timer whenever user interacts, scrolls, or moves mouse
+    const resetIdleTimer = useCallback(() => {
+        setIsIdle(false);
+        if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+
+        // Don't minimize while drawer is open
+        if (!isOpen) {
+            idleTimerRef.current = setTimeout(() => {
+                setIsIdle(true);
+            }, 3500); // 3.5 seconds of inactivity -> auto-minimizes to avoid blocking view
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        const events = ["mousemove", "mousedown", "scroll", "touchstart", "keydown"];
+        events.forEach((event) => window.addEventListener(event, resetIdleTimer, { passive: true }));
+
+        resetIdleTimer();
+
+        return () => {
+            events.forEach((event) => window.removeEventListener(event, resetIdleTimer));
+            if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+        };
+    }, [resetIdleTimer]);
+
+    // Prevent body scroll when drawer menu is open
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = "hidden";
+            setIsIdle(false);
         } else {
             document.body.style.overflow = "unset";
+            resetIdleTimer();
         }
         return () => {
             document.body.style.overflow = "unset";
         };
-    }, [isOpen]);
+    }, [isOpen, resetIdleTimer]);
+
+    const handleFabClick = () => {
+        if (isIdle) {
+            setIsIdle(false);
+            resetIdleTimer();
+        } else {
+            setIsOpen(!isOpen);
+        }
+    };
 
     return (
         <>
             {/* 
               Floating Action Button (FAB)
-              - Fixed firmly in the bottom right corner with highest z-index z-[9990]
-              - High-contrast animated gradient glow & pulse indicator
-              - Touch-friendly sizing (56px x 56px on mobile, 64px x 64px on desktop)
+              - Smart auto-hide / auto-minimize when idle so it NEVER blocks user view
+              - Smooth spring expansion on click / hover / scroll
+              - High z-index z-[9990]
             */}
-            <div className="fixed bottom-5 right-5 md:bottom-8 md:right-8 z-[9990] pointer-events-auto">
+            <div
+                className={`fixed z-[9990] transition-all duration-500 ease-out pointer-events-auto ${
+                    isIdle && !isOpen
+                        ? "bottom-8 -right-2 opacity-35 hover:opacity-100 hover:right-4 scale-75 hover:scale-100"
+                        : "bottom-5 right-5 md:bottom-8 md:right-8 opacity-100 scale-100"
+                }`}
+                onMouseEnter={() => {
+                    setIsIdle(false);
+                    resetIdleTimer();
+                }}
+            >
                 <button
-                    onClick={() => setIsOpen(!isOpen)}
+                    onClick={handleFabClick}
                     className="relative group w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-tr from-aira-cyan via-aira-purple to-aira-magenta p-[2px] shadow-2xl shadow-aira-cyan/40 hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-aira-cyan/40 flex items-center justify-center"
                     aria-label="Toggle admin control menu"
-                    title="Open Admin Menu"
+                    title={isIdle ? "Click to expand menu" : "Open Admin Menu"}
                 >
                     <span className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-white group-hover:bg-slate-900 transition-colors">
-                        {isOpen ? <X size={26} className="text-white animate-spin-fast" /> : <Menu size={26} className="text-aira-cyan" />}
+                        {isOpen ? (
+                            <X size={26} className="text-white animate-spin-fast" />
+                        ) : isIdle ? (
+                            <ChevronLeft size={24} className="text-aira-cyan animate-pulse -ml-0.5" />
+                        ) : (
+                            <Menu size={26} className="text-aira-cyan" />
+                        )}
                     </span>
-                    {/* Glowing pulse ring */}
-                    <span className="absolute -inset-1 rounded-full bg-gradient-to-r from-aira-cyan to-aira-magenta opacity-40 blur-md group-hover:opacity-75 transition-opacity -z-10 animate-pulse" />
+                    {/* Glowing pulse ring when active */}
+                    {!isIdle && (
+                        <span className="absolute -inset-1 rounded-full bg-gradient-to-r from-aira-cyan to-aira-magenta opacity-40 blur-md group-hover:opacity-75 transition-opacity -z-10 animate-pulse" />
+                    )}
                 </button>
             </div>
 

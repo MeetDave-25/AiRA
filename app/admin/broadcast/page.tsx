@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
     Radio, 
     Send, 
@@ -17,11 +17,14 @@ import {
     Layers,
     Smartphone,
     X,
-    Eye
+    Eye,
+    Trash2,
+    RefreshCw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { useNotifications } from "@/components/providers/NotificationProvider";
+import AnimatedModal from "@/components/ui/AnimatedModal";
 
 const CATEGORIES = [
     { id: "ANNOUNCEMENT", label: "Announcement", icon: "📢", desc: "General update or news", color: "from-aira-cyan to-blue-500" },
@@ -48,14 +51,34 @@ export default function BroadcastPage() {
     const [teams, setTeams] = useState<any[]>([]);
     const [selectedTeamId, setSelectedTeamId] = useState("");
     const [isSending, setIsSending] = useState(false);
+    
+    // Broadcast history from DB
     const [broadcastHistory, setBroadcastHistory] = useState<any[]>([]);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const [showClearAllModal, setShowClearAllModal] = useState(false);
+
+    const fetchHistory = useCallback(async () => {
+        setIsLoadingHistory(true);
+        try {
+            const res = await fetch("/api/notifications/broadcast");
+            const data = res.ok ? await res.json() : [];
+            setBroadcastHistory(Array.isArray(data) ? data : []);
+        } catch {
+            setBroadcastHistory([]);
+        } finally {
+            setIsLoadingHistory(false);
+        }
+    }, []);
 
     useEffect(() => {
         fetch("/api/teams")
             .then(r => r.ok ? r.json() : [])
             .then(d => setTeams(Array.isArray(d) ? d : []))
             .catch(() => setTeams([]));
-    }, []);
+
+        fetchHistory();
+    }, [fetchHistory]);
 
     const handleSendBroadcast = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -84,29 +107,48 @@ export default function BroadcastPage() {
 
             toast.success(`Broadcast sent successfully to ${data.recipientCount || "all"} user(s)!`);
 
-            // Add to local history
-            setBroadcastHistory(prev => [
-                {
-                    id: Date.now().toString(),
-                    title: data.title || title,
-                    message,
-                    link,
-                    category,
-                    target: targetAudience,
-                    recipients: data.recipientCount || 0,
-                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                },
-                ...prev,
-            ]);
-
-            // Reset form
+            // Reset form & reload history
             setTitle("");
             setMessage("");
             setLink("");
+            await fetchHistory();
         } catch (error: any) {
             toast.error(error?.message || "Failed to send broadcast");
         } finally {
             setIsSending(false);
+        }
+    };
+
+    const handleDeleteBroadcast = async (item: any) => {
+        setIsDeleting(item.title);
+        try {
+            const res = await fetch(`/api/notifications/broadcast?title=${encodeURIComponent(item.title)}`, {
+                method: "DELETE",
+            });
+            if (!res.ok) throw new Error("Failed to delete broadcast");
+            toast.success("Broadcast notifications removed from recipients");
+            await fetchHistory();
+        } catch (error: any) {
+            toast.error(error?.message || "Delete failed");
+        } finally {
+            setIsDeleting(null);
+        }
+    };
+
+    const handleClearAllBroadcasts = async () => {
+        setIsDeleting("all");
+        try {
+            const res = await fetch("/api/notifications/broadcast?clearAll=true", {
+                method: "DELETE",
+            });
+            if (!res.ok) throw new Error("Failed to clear broadcasts");
+            toast.success("All broadcast notifications cleared");
+            setShowClearAllModal(false);
+            await fetchHistory();
+        } catch (error: any) {
+            toast.error(error?.message || "Failed to clear");
+        } finally {
+            setIsDeleting(null);
         }
     };
 
@@ -116,8 +158,8 @@ export default function BroadcastPage() {
             return;
         }
         triggerLocalNotification({
-            title: title.trim() || "AiRA Broadcast Preview",
-            message: message.trim() || "This is how users will see the real-time banner!",
+            title: title.trim() || "AiRA Broadcast Preview 🔔",
+            message: message.trim() || "This is how users will see the real-time glass bell banner!",
             link: link.trim() || undefined,
         });
     };
@@ -142,17 +184,19 @@ export default function BroadcastPage() {
                             </h1>
                         </div>
                         <p className="text-slate-400 text-sm">
-                            Instantly push real-time alerts like Instagram & Snapchat to all active users and portal members.
+                            Instantly push real-time alerts with crystal bell chimes & dynamic banners to all lab users.
                         </p>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={handleTestPreview}
-                        className="px-4 py-2.5 rounded-xl border border-aira-cyan/40 bg-aira-cyan/10 text-aira-cyan font-semibold text-xs flex items-center gap-2 hover:bg-aira-cyan/20 transition-all self-start md:self-auto"
-                    >
-                        <Volume2 size={16} /> Test Sound & Banner Preview
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={handleTestPreview}
+                            className="px-4 py-2.5 rounded-xl border border-aira-cyan/40 bg-aira-cyan/10 text-aira-cyan font-semibold text-xs flex items-center gap-2 hover:bg-aira-cyan/20 transition-all shadow-md shadow-aira-cyan/10"
+                        >
+                            <Volume2 size={16} /> Test Bell Chime & Banner
+                        </button>
+                    </div>
                 </div>
             </motion.div>
 
@@ -325,7 +369,7 @@ export default function BroadcastPage() {
                     </motion.form>
                 </div>
 
-                {/* Live Preview & Sent History (5 cols) */}
+                {/* Live Preview & Persisted Sent History (5 cols) */}
                 <div className="lg:col-span-5 space-y-6">
                     {/* Live Mobile Simulation Card */}
                     <div className="glass p-6 rounded-3xl border border-white/10 space-y-4">
@@ -333,7 +377,7 @@ export default function BroadcastPage() {
                             <Eye size={16} className="text-aira-cyan" /> Live Device Dropdown Preview
                         </h3>
                         <p className="text-xs text-slate-400">
-                            Here is how the dynamic top banner will pop on users' screens when you broadcast:
+                            Here is how the dynamic top banner will pop on users' screens with the glass bell chime:
                         </p>
 
                         {/* Simulated Phone Top Screen */}
@@ -376,32 +420,68 @@ export default function BroadcastPage() {
 
                         <div className="flex items-center gap-2 text-xs text-slate-400 p-2.5 rounded-xl bg-white/5 border border-white/5">
                             <Smartphone size={15} className="text-emerald-400 shrink-0" />
-                            <span>Includes audio chime pop, haptic vibration, and native browser push.</span>
+                            <span>Includes crystal glass bell sound, mobile vibration, & web push.</span>
                         </div>
                     </div>
 
-                    {/* Broadcast History */}
+                    {/* Persisted Broadcast History with Deletion */}
                     <div className="glass p-6 rounded-3xl border border-white/10 space-y-4">
-                        <h3 className="font-orbitron font-bold text-sm text-white flex items-center gap-2">
-                            <Sparkles size={16} className="text-aira-gold" /> Session Broadcast History
-                        </h3>
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-orbitron font-bold text-sm text-white flex items-center gap-2">
+                                <Sparkles size={16} className="text-aira-gold" /> Sent Broadcasts
+                            </h3>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={fetchHistory}
+                                    className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-white text-xs transition-colors"
+                                    title="Refresh history"
+                                >
+                                    <RefreshCw size={13} className={isLoadingHistory ? "animate-spin text-aira-cyan" : ""} />
+                                </button>
+                                {broadcastHistory.length > 0 && (
+                                    <button
+                                        onClick={() => setShowClearAllModal(true)}
+                                        className="text-[11px] text-red-400 hover:text-red-300 font-medium hover:underline flex items-center gap-1"
+                                    >
+                                        <Trash2 size={12} /> Clear All
+                                    </button>
+                                )}
+                            </div>
+                        </div>
 
-                        {broadcastHistory.length === 0 ? (
-                            <p className="text-xs text-slate-500 text-center py-4">
-                                No broadcasts sent during this session yet.
+                        {isLoadingHistory ? (
+                            <div className="text-center py-6 text-slate-500 text-xs flex items-center justify-center gap-2">
+                                <RefreshCw size={14} className="animate-spin text-aira-cyan" /> Loading broadcasts...
+                            </div>
+                        ) : broadcastHistory.length === 0 ? (
+                            <p className="text-xs text-slate-500 text-center py-6">
+                                No previous broadcasts found in the database.
                             </p>
                         ) : (
-                            <div className="space-y-2.5 max-h-60 overflow-y-auto">
+                            <div className="space-y-3 max-h-72 overflow-y-auto divide-y divide-white/5 pr-1">
                                 {broadcastHistory.map((item) => (
-                                    <div key={item.id} className="p-3 rounded-xl bg-slate-900/60 border border-white/5 text-xs space-y-1">
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-bold text-white truncate">{item.title}</span>
-                                            <span className="text-[10px] text-slate-500">{item.time}</span>
+                                    <div key={item.id} className="pt-2.5 first:pt-0 space-y-1.5 group">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <span className="font-bold text-white text-xs leading-snug line-clamp-1">
+                                                {item.title}
+                                            </span>
+                                            <button
+                                                disabled={isDeleting === item.title}
+                                                onClick={() => handleDeleteBroadcast(item)}
+                                                className="opacity-70 group-hover:opacity-100 p-1 rounded-lg text-red-400 hover:bg-red-500/15 transition-all text-[11px] shrink-0"
+                                                title="Delete this broadcast"
+                                            >
+                                                <Trash2 size={13} />
+                                            </button>
                                         </div>
-                                        <p className="text-slate-400 text-[11px] line-clamp-1">{item.message}</p>
-                                        <div className="flex items-center justify-between text-[10px] text-aira-cyan pt-1">
-                                            <span>Audience: {item.target}</span>
-                                            <span>{item.recipients} delivered</span>
+
+                                        <p className="text-slate-400 text-[11px] line-clamp-2 leading-relaxed font-sans">
+                                            {item.message}
+                                        </p>
+
+                                        <div className="flex items-center justify-between text-[10px] text-slate-500 pt-0.5">
+                                            <span>{new Date(item.createdAt).toLocaleDateString()} • {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            <span className="text-aira-cyan font-mono">{item.recipientsCount} recipient(s)</span>
                                         </div>
                                     </div>
                                 ))}
@@ -410,6 +490,36 @@ export default function BroadcastPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Clear All Modal */}
+            <AnimatedModal
+                open={showClearAllModal}
+                onClose={() => setShowClearAllModal(false)}
+                title="Clear All Broadcasts"
+                subtitle="Are you sure you want to remove all broadcast notifications?"
+                footer={
+                    <div className="flex justify-end gap-3">
+                        <button
+                            onClick={() => setShowClearAllModal(false)}
+                            className="px-4 py-2 rounded-lg border border-white/15 text-slate-300 hover:bg-white/5 text-xs"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            disabled={isDeleting === "all"}
+                            onClick={handleClearAllBroadcasts}
+                            className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold text-xs hover:bg-red-700 transition-colors flex items-center gap-1.5"
+                        >
+                            <Trash2 size={14} /> {isDeleting === "all" ? "Clearing..." : "Yes, Clear All"}
+                        </button>
+                    </div>
+                }
+            >
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-200 flex items-start gap-2">
+                    <AlertTriangle size={16} className="text-red-400 shrink-0 mt-0.5" />
+                    <span>This will permanently delete all previous broadcast notifications from users' notification feeds.</span>
+                </div>
+            </AnimatedModal>
         </div>
     );
 }
