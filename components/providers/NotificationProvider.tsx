@@ -35,7 +35,7 @@ interface NotificationContextType {
     requestPushPermission: () => Promise<boolean>;
     pushPermission: NotificationPermission | "default";
     triggerLocalNotification: (notif: Partial<Notification>) => void;
-    triggerDelayedOutsideTest: (seconds?: number) => void;
+    triggerDelayedOutsideTest: (customData?: { title?: string; message?: string; link?: string }, seconds?: number) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType>({
@@ -235,20 +235,26 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         setActiveBanner(null);
     };
 
-    // Delayed outside test helper so user can lock screen or switch apps to test!
-    const triggerDelayedOutsideTest = (seconds: number = 4) => {
+    // Delayed outside test helper so user can lock screen or switch apps to test with custom message!
+    const triggerDelayedOutsideTest = (customData?: { title?: string; message?: string; link?: string }, seconds: number = 4) => {
+        const finalTitle = customData?.title?.trim() || "🚀 AiRA Lab: Lock Screen Alert!";
+        const finalMessage = customData?.message?.trim() || "This notification appeared outside the app just like Instagram & Snapchat!";
+        const finalLink = customData?.link?.trim() || "/portal/dashboard";
+
+        const deliverAlert = () => {
+            triggerNativeOutsideNotification({
+                title: finalTitle,
+                message: finalMessage,
+                link: finalLink,
+            });
+            playBellChime();
+        };
+
         if (typeof window !== "undefined" && "Notification" in window && Notification.permission !== "granted") {
             requestPushPermission().then((granted) => {
                 if (granted) {
-                    toast.success(`Lock your phone or switch apps! Notification will pop in ${seconds}s 🔔`);
-                    setTimeout(() => {
-                        triggerNativeOutsideNotification({
-                            title: "🚀 AiRA Lab: Lock Screen Alert!",
-                            message: "This notification appeared outside the app just like Instagram & Snapchat!",
-                            link: "/events",
-                        });
-                        playBellChime();
-                    }, seconds * 1000);
+                    toast.success(`Lock your phone or switch apps! Your custom notification will pop in ${seconds}s 🔔`);
+                    setTimeout(deliverAlert, seconds * 1000);
                 } else {
                     toast.error("Please allow notification permission to receive lock screen alerts.");
                 }
@@ -256,15 +262,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        toast.success(`Lock your phone or switch apps! Alert will pop in ${seconds}s 🔔`);
-        setTimeout(() => {
-            triggerNativeOutsideNotification({
-                title: "🚀 AiRA Lab: Lock Screen Alert!",
-                message: "This notification appeared outside the app just like Instagram & Snapchat!",
-                link: "/events",
-            });
-            playBellChime();
-        }, seconds * 1000);
+        toast.success(`Lock your phone or switch apps! Your custom alert will pop in ${seconds}s 🔔`);
+        setTimeout(deliverAlert, seconds * 1000);
     };
 
     // Fetch notifications from API

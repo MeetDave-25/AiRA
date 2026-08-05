@@ -164,6 +164,23 @@ export default function BroadcastPage() {
         });
     };
 
+    const handleOutsideLockScreenTest = () => {
+        let formattedTitle = title.trim();
+        if (formattedTitle) {
+            if (category === "EVENT" && !formattedTitle.startsWith("📅")) formattedTitle = `📅 ${formattedTitle}`;
+            else if (category === "ACHIEVEMENT" && !formattedTitle.startsWith("🏆")) formattedTitle = `🏆 ${formattedTitle}`;
+            else if (category === "ALERT" && !formattedTitle.startsWith("⚡")) formattedTitle = `⚡ ${formattedTitle}`;
+            else if (category === "TASK" && !formattedTitle.startsWith("🚀")) formattedTitle = `🚀 ${formattedTitle}`;
+            else if (category === "ANNOUNCEMENT" && !formattedTitle.startsWith("📢")) formattedTitle = `📢 ${formattedTitle}`;
+        }
+
+        triggerDelayedOutsideTest({
+            title: formattedTitle || "📢 AiRA Lab: Custom Alert",
+            message: message.trim() || "This is your custom message delivered outside the app to your lock screen!",
+            link: link.trim() || "/portal/dashboard",
+        }, 4);
+    };
+
     const currentCatObj = CATEGORIES.find(c => c.id === category) || CATEGORIES[0];
 
     return (
@@ -198,9 +215,9 @@ export default function BroadcastPage() {
                         </button>
                         <button
                             type="button"
-                            onClick={() => triggerDelayedOutsideTest(4)}
+                            onClick={handleOutsideLockScreenTest}
                             className="px-3.5 py-2.5 rounded-xl border border-aira-purple/40 bg-aira-purple/15 text-purple-300 font-semibold text-xs flex items-center gap-2 hover:bg-aira-purple/25 transition-all shadow-md"
-                            title="Tests lock screen / outside app notification with a 4s delay so you can lock your screen"
+                            title="Tests lock screen / outside app notification using your custom message with a 4s delay so you can lock your screen"
                         >
                             <Smartphone size={15} /> Test Lock Screen Alert (4s)
                         </button>
