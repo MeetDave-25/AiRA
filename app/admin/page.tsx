@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, FileText, TrendingUp, Trophy, Users } from "lucide-react";
+import { CalendarDays, FileText, TrendingUp, Trophy, Users, Crown } from "lucide-react";
 
 type GrowthRow = {
     month: string;
@@ -104,7 +104,7 @@ export default function AdminAnalyticsPage() {
         { label: "Upcoming Events", value: upcomingCount, icon: TrendingUp, tone: "#7C3AED" },
         { label: "Applications", value: applications.length, icon: FileText, tone: "#F59E0B" },
         { label: "Achievements", value: achievements.length, icon: Trophy, tone: "#FF006E" },
-        { label: "Team Profiles", value: teamMembers.length, icon: Users, tone: "#22C55E" },
+        { label: "Leadership & People", value: teamMembers.length, icon: Crown, tone: "#22C55E" },
         { label: "Teams", value: teams.length, icon: Users, tone: "#38BDF8" },
     ];
 

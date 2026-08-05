@@ -15,7 +15,8 @@ export function NotificationBell() {
         setUnreadBadge, 
         markAsRead, 
         markAllAsRead, 
-        requestPushPermission, 
+        requestPushPermission,
+        openPushPrompt,
         pushPermission 
     } = useNotifications();
     
@@ -111,13 +112,16 @@ export function NotificationBell() {
                             <div className="p-3 bg-gradient-to-r from-aira-cyan/10 to-aira-purple/10 border-b border-white/10 flex items-center justify-between gap-2 text-xs">
                                 <div className="flex items-center gap-2 text-slate-300">
                                     <Smartphone size={15} className="text-aira-cyan shrink-0" />
-                                    <span className="text-[11px]">Get phone & desktop alerts</span>
+                                    <span className="text-[11px]">Get lock screen alerts</span>
                                 </div>
                                 <button
-                                    onClick={handleEnablePush}
+                                    onClick={() => {
+                                        setOpen(false);
+                                        openPushPrompt();
+                                    }}
                                     className="px-2.5 py-1 rounded-lg bg-aira-cyan text-aira-bg font-bold text-[11px] hover:scale-105 transition-transform shrink-0"
                                 >
-                                    Enable Push
+                                    Enable
                                 </button>
                             </div>
                         )}

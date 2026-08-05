@@ -393,6 +393,14 @@ export default function AboutPage() {
                         </h2>
                     </div>
 
+                    <Link
+                        href="/leadership"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-bold hover:bg-amber-400/20 hover:scale-105 transition-all shadow-md"
+                    >
+                        <Crown size={14} className="text-amber-400" />
+                        <span>View Founders & Executive Board →</span>
+                    </Link>
+
                     {/* Group Filter Buttons */}
                     {teamGroups.length > 2 && (
                         <div className="flex flex-wrap gap-2">

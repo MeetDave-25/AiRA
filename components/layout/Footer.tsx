@@ -44,7 +44,8 @@ export default function Footer() {
                         <ul className="space-y-3">
                             {[
                                 { href: "/", label: "Home" },
-                                { href: "/events", label: "Events" },
+                                { href: "/leadership", label: "Leadership & Visionaries" },
+                                { href: "/events", label: "Events & Workshops" },
                                 { href: "/about", label: "About Us" },
                                 { href: "/achievements", label: "Achievements" },
                                 { href: "/join", label: "Join AIRA Labs" },

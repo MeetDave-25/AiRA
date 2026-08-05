@@ -10,10 +10,6 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     try {
         const isPresident = body.isPresident === true || body.isPresident === "true";
 
-        if (isPresident) {
-            await db.from("TeamMemberProfile").update({ isPresident: false }).eq("isPresident", true);
-        }
-
         const { id, createdAt, updatedAt, ...updateData } = body;
         const { data, error } = await db
             .from("TeamMemberProfile")
@@ -21,6 +17,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                 ...updateData,
                 sortOrder: updateData.sortOrder !== undefined ? Number(updateData.sortOrder) : undefined,
                 isPresident,
+                updatedAt: new Date().toISOString(),
             })
             .eq("id", params.id)
             .select()
@@ -29,7 +26,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         if (error) throw error;
         return NextResponse.json(data);
     } catch (error) {
-        return NextResponse.json({ error: "Failed to update member" }, { status: 500 });
+        return NextResponse.json({ error: "Failed to update leader / member" }, { status: 500 });
     }
 }
 

@@ -2,8 +2,24 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Crown, Edit2, Plus, Trash2, UploadCloud, Shield, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { 
+    Crown, 
+    Edit2, 
+    Plus, 
+    Trash2, 
+    UploadCloud, 
+    Shield, 
+    ArrowRight,
+    ExternalLink,
+    Search,
+    Users,
+    Sparkles,
+    Linkedin,
+    Github,
+    Eye,
+    Check
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import AnimatedModal from "@/components/ui/AnimatedModal";
 import { uploadDirectFile } from "@/lib/upload-client";
@@ -22,15 +38,24 @@ type MemberForm = {
 
 const baseForm: MemberForm = {
     name: "",
-    role: "Member",
+    role: "Founder & Lead Architect",
     bio: "",
     photo: "",
     linkedin: "",
     github: "",
-    teamGroup: "Core Team",
-    sortOrder: "0",
-    isPresident: false,
+    teamGroup: "Founders & Executive Board",
+    sortOrder: "1",
+    isPresident: true,
 };
+
+const SUGGESTED_GROUPS = [
+    "Founders & Executive Board",
+    "Technical Leads",
+    "Research Mentors & Advisors",
+    "Core Team",
+    "Robotics Division",
+    "AI & Software Division",
+];
 
 export default function TeamMembersAdminPage() {
     const [members, setMembers] = useState<any[]>([]);
@@ -41,6 +66,8 @@ export default function TeamMembersAdminPage() {
     const [form, setForm] = useState<MemberForm>(baseForm);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedGroupFilter, setSelectedGroupFilter] = useState("ALL");
 
     const fetchMembers = async () => {
         setIsLoading(true);
@@ -52,11 +79,11 @@ export default function TeamMembersAdminPage() {
             const data = res.ok ? await res.json() : [];
             setMembers(Array.isArray(data) ? data : []);
             if (!res.ok) {
-                toast.error("Could not load team profiles right now.");
+                toast.error("Could not load leadership profiles.");
             }
         } catch {
             setMembers([]);
-            toast.error("Team profile request timed out. Please retry.");
+            toast.error("Profile request timed out. Please retry.");
         } finally {
             clearTimeout(timer);
             setIsLoading(false);
@@ -82,7 +109,7 @@ export default function TeamMembersAdminPage() {
             photo: member.photo || "",
             linkedin: member.linkedin || "",
             github: member.github || "",
-            teamGroup: member.teamGroup || "Core Team",
+            teamGroup: member.teamGroup || "Founders & Executive Board",
             sortOrder: String(member.sortOrder || 0),
             isPresident: Boolean(member.isPresident),
         });
@@ -90,12 +117,11 @@ export default function TeamMembersAdminPage() {
 
     const uploadPhoto = async (file: File) => {
         setUploadingPhoto(true);
-        toast.loading("Preparing photo...", { id: "photo-upload" });
+        toast.loading("Uploading leader photo...", { id: "photo-upload" });
         try {
-            toast.loading("Uploading photo...", { id: "photo-upload" });
-            const uploaded = await uploadDirectFile(file, { bucket: "uploads", folder: "team-members" });
+            const uploaded = await uploadDirectFile(file, { bucket: "uploads", folder: "leadership" });
             setForm((prev) => ({ ...prev, photo: uploaded.url || prev.photo }));
-            toast.success("Photo uploaded", { id: "photo-upload" });
+            toast.success("Leader photo uploaded successfully!", { id: "photo-upload" });
         } catch (error: any) {
             toast.error(error?.message || "Photo upload failed", { id: "photo-upload" });
         } finally {
@@ -103,223 +129,489 @@ export default function TeamMembersAdminPage() {
         }
     };
 
-    const saveMember = async () => {
-        if (!form.name.trim() || !form.role.trim()) {
-            toast.error("Name and role are required.");
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!form.name.trim()) {
+            toast.error("Please enter a name for the leader / member");
             return;
         }
 
         setIsSubmitting(true);
         try {
-            const payload = {
-                ...form,
-                name: form.name.trim(),
-                role: form.role.trim(),
-                bio: form.bio.trim(),
-                teamGroup: form.teamGroup.trim(),
-                sortOrder: Number(form.sortOrder || 0),
-            };
-
             const endpoint = editing ? `/api/team-members/${editing.id}` : "/api/team-members";
             const method = editing ? "PUT" : "POST";
+
             const res = await fetch(endpoint, {
                 method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
+                body: JSON.stringify(form),
             });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error || "Failed to save member");
 
-            toast.success(editing ? "Member updated" : "Member added");
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || "Operation failed");
+            }
+
+            toast.success(editing ? "Leader profile updated!" : "New leader profile created!");
             setIsCreateOpen(false);
             setEditing(null);
-            fetchMembers();
+            setForm(baseForm);
+            await fetchMembers();
         } catch (error: any) {
-            toast.error(error?.message || "Save failed");
+            toast.error(error?.message || "Failed to save profile");
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const removeMember = async () => {
+    const handleDelete = async () => {
         if (!deleteId) return;
-        setIsSubmitting(true);
         try {
             const res = await fetch(`/api/team-members/${deleteId}`, { method: "DELETE" });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error || "Failed to delete member");
-            toast.success("Member deleted");
+            if (!res.ok) throw new Error();
+            toast.success("Profile deleted");
             setDeleteId(null);
-            fetchMembers();
-        } catch (error: any) {
-            toast.error(error?.message || "Delete failed");
-        } finally {
-            setIsSubmitting(false);
+            await fetchMembers();
+        } catch {
+            toast.error("Failed to delete profile");
         }
     };
 
-    return (
-        <div className="space-y-6 relative">
-            <div className="absolute -top-10 -right-10 w-52 h-52 bg-aira-purple/10 blur-3xl rounded-full pointer-events-none" />
-            <div className="absolute -bottom-16 -left-12 w-56 h-56 bg-aira-cyan/10 blur-3xl rounded-full pointer-events-none" />
+    // Filter & Search
+    const filteredMembers = members.filter((m) => {
+        const matchesSearch =
+            m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (m.role && m.role.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (m.teamGroup && m.teamGroup.toLowerCase().includes(searchQuery.toLowerCase()));
 
+        const matchesGroup = selectedGroupFilter === "ALL" || m.teamGroup === selectedGroupFilter;
+        return matchesSearch && matchesGroup;
+    });
+
+    const isModalOpen = isCreateOpen || Boolean(editing);
+
+    return (
+        <div className="space-y-8 max-w-6xl mx-auto">
             {/* Header */}
-            <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="glass p-6 rounded-2xl border border-white/5 animated-border space-y-4">
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                    <div>
-                        <h1 className="font-orbitron font-bold text-2xl md:text-3xl gradient-text-cyan text-glow-cyan">Public Team Profiles</h1>
-                        <p className="text-slate-400 text-sm mt-1">Manage president and member cards showcased on the public About page 3D orbit</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass p-6 md:p-8 rounded-3xl border border-white/10 animated-border">
+                <div>
+                    <div className="flex items-center gap-2">
+                        <span className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                            <Crown size={20} />
+                        </span>
+                        <h1 className="font-orbitron font-bold text-2xl md:text-3xl gradient-text-cyan">
+                            Leadership & People Management
+                        </h1>
                     </div>
-                    <button onClick={openCreate} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-aira-cyan text-aira-bg font-semibold rounded-xl text-sm hover:scale-105 transition-transform glow-cyan min-h-[42px]">
-                        <Plus size={16} /> Add Team Profile
+                    <p className="text-slate-400 text-sm mt-1">
+                        Add, edit photos, update bios, and spotlight Founders, Executive Board, and Technical Leads.
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <Link
+                        href="/leadership"
+                        target="_blank"
+                        className="px-4 py-2.5 rounded-xl border border-white/15 text-slate-300 hover:text-white hover:bg-white/5 font-semibold text-xs flex items-center gap-2 transition-all"
+                    >
+                        <Eye size={16} className="text-aira-cyan" /> Preview Public Page
+                    </Link>
+                    <button
+                        onClick={openCreate}
+                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-orbitron font-bold text-xs flex items-center gap-2 hover:scale-105 transition-transform shadow-lg shadow-aira-cyan/20"
+                    >
+                        <Plus size={16} /> Add New Leader / Member
                     </button>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-aira-purple/10 border border-aira-purple/20 text-xs text-slate-300">
-                    <span className="flex items-center gap-2"><Shield size={14} className="text-aira-purple flex-shrink-0" /> Looking to add a user login with password & permissions (e.g. Content Manager, Certificate Manager)?</span>
-                    <Link href="/admin/users" className="flex items-center gap-1 text-aira-cyan hover:underline font-semibold ml-2 flex-shrink-0">
-                        Go to User Accounts <ArrowRight size={13} />
-                    </Link>
-                </div>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {isLoading && (
-                    <div className="md:col-span-2 xl:col-span-3 glass rounded-2xl border border-white/10 p-6 text-center">
-                        <p className="text-slate-300">Loading team profiles...</p>
-                    </div>
-                )}
-
-                {!isLoading && members.length === 0 && (
-                    <div className="md:col-span-2 xl:col-span-3 glass rounded-2xl border border-white/10 p-6 text-center space-y-3">
-                        <p className="text-slate-300">No profiles found or server is temporarily unavailable.</p>
-                        <button onClick={() => void fetchMembers()} className="px-4 py-2 rounded-lg border border-aira-cyan/30 text-aira-cyan hover:bg-aira-cyan/10">
-                            Retry
-                        </button>
-                    </div>
-                )}
-
-                {members.map((member, idx) => (
-                    <motion.div key={member.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} className="glass rounded-2xl border border-white/5 p-4">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-3 min-w-0">
-                                <img src={member.photo || "https://placehold.co/100x100/0d1526/00D4FF?text=AL"} alt={member.name} className="w-11 h-11 rounded-full object-cover border border-white/15" />
-                                <div className="min-w-0">
-                                    <p className="text-white font-semibold text-sm truncate">{member.name}</p>
-                                    <p className="text-aira-cyan text-xs truncate">{member.role}</p>
-                                </div>
-                            </div>
-                            {member.isPresident && <Crown size={16} className="text-aira-gold" />}
-                        </div>
-
-                        <p className="text-xs text-slate-500 mb-2">{member.teamGroup || "Core Team"}</p>
-                        {member.bio && <p className="text-xs text-slate-300 line-clamp-3 mb-3">{member.bio}</p>}
-
-                        <div className="flex justify-end gap-2">
-                            <button onClick={() => openEdit(member)} className="p-2 rounded-lg glass text-aira-cyan hover:bg-aira-cyan/20"><Edit2 size={14} /></button>
-                            <button onClick={() => setDeleteId(member.id)} className="p-2 rounded-lg glass text-aira-magenta hover:bg-aira-magenta/20"><Trash2 size={14} /></button>
-                        </div>
-                    </motion.div>
-                ))}
             </div>
 
+            {/* Filter & Search Bar */}
+            <div className="glass p-4 rounded-2xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="relative w-full sm:w-80">
+                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search leader by name, role, or team..."
+                        className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-white text-xs outline-none focus:border-aira-cyan"
+                    />
+                </div>
+
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <button
+                        onClick={() => setSelectedGroupFilter("ALL")}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            selectedGroupFilter === "ALL"
+                                ? "bg-aira-cyan text-slate-950"
+                                : "bg-white/5 text-slate-400 hover:text-white"
+                        }`}
+                    >
+                        All ({members.length})
+                    </button>
+                    {SUGGESTED_GROUPS.slice(0, 3).map((grp) => (
+                        <button
+                            key={grp}
+                            onClick={() => setSelectedGroupFilter(grp)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                selectedGroupFilter === grp
+                                    ? "bg-aira-cyan text-slate-950"
+                                    : "bg-white/5 text-slate-400 hover:text-white"
+                            }`}
+                        >
+                            {grp}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Leaders Grid */}
+            {isLoading ? (
+                <div className="text-center py-16 text-slate-400 text-sm">
+                    Loading leadership profiles...
+                </div>
+            ) : filteredMembers.length === 0 ? (
+                <div className="glass p-12 rounded-3xl border border-white/10 text-center space-y-4">
+                    <Crown size={40} className="mx-auto text-slate-600" />
+                    <p className="text-slate-400 text-sm">No leadership profiles found matching your search.</p>
+                    <button
+                        onClick={openCreate}
+                        className="px-5 py-2.5 rounded-xl bg-aira-cyan text-slate-950 font-bold text-xs inline-flex items-center gap-2 hover:scale-105 transition-transform"
+                    >
+                        <Plus size={16} /> Add First Leader
+                    </button>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredMembers.map((member) => (
+                        <motion.div
+                            key={member.id}
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`glass p-6 rounded-3xl border transition-all flex flex-col justify-between space-y-5 group relative ${
+                                member.isPresident
+                                    ? "border-amber-400/40 shadow-lg shadow-amber-500/10"
+                                    : "border-white/10 hover:border-aira-cyan/40"
+                            }`}
+                        >
+                            {/* Card Header */}
+                            <div className="flex items-start justify-between">
+                                {member.isPresident ? (
+                                    <span className="px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[10px] font-bold flex items-center gap-1">
+                                        <Crown size={12} className="text-amber-400" /> Executive / Founder
+                                    </span>
+                                ) : (
+                                    <span className="px-2.5 py-0.5 rounded-full bg-white/5 text-slate-400 text-[10px] font-medium border border-white/5">
+                                        Sort #{member.sortOrder || 0}
+                                    </span>
+                                )}
+
+                                <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={() => openEdit(member)}
+                                        className="p-1.5 rounded-lg glass hover:bg-white/15 text-slate-300 hover:text-white transition-colors"
+                                        title="Edit Profile"
+                                    >
+                                        <Edit2 size={14} />
+                                    </button>
+                                    <button
+                                        onClick={() => setDeleteId(member.id)}
+                                        className="p-1.5 rounded-lg glass hover:bg-red-500/20 text-red-400 transition-colors"
+                                        title="Delete Profile"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Center Avatar & Info */}
+                            <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/15 bg-slate-900 shrink-0">
+                                    <img
+                                        src={member.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=150`}
+                                        alt={member.name}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => { 
+                                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=150`; 
+                                        }}
+                                    />
+                                </div>
+
+                                <div className="min-w-0">
+                                    <h3 className="font-orbitron font-bold text-base text-white truncate group-hover:text-aira-cyan transition-colors">
+                                        {member.name}
+                                    </h3>
+                                    <p className="text-xs font-semibold text-slate-300 truncate mt-0.5">{member.role}</p>
+                                    {member.teamGroup && (
+                                        <p className="text-[10px] text-violet-300 truncate mt-0.5">{member.teamGroup}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Bio */}
+                            {member.bio && (
+                                <p className="text-xs text-slate-400 line-clamp-2 font-sans leading-relaxed">
+                                    "{member.bio}"
+                                </p>
+                            )}
+
+                            {/* Social Badges */}
+                            <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+                                <div className="flex items-center gap-2">
+                                    {member.linkedin && (
+                                        <a href={member.linkedin} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline flex items-center gap-1 text-[11px]">
+                                            <Linkedin size={13} /> LinkedIn
+                                        </a>
+                                    )}
+                                    {member.github && (
+                                        <a href={member.github} target="_blank" rel="noreferrer" className="text-slate-300 hover:underline flex items-center gap-1 text-[11px]">
+                                            <Github size={13} /> GitHub
+                                        </a>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={() => openEdit(member)}
+                                    className="text-[11px] text-aira-cyan hover:underline font-semibold"
+                                >
+                                    Edit Details →
+                                </button>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            )}
+
+            {/* ══ ADD / EDIT MODAL ══ */}
             <AnimatedModal
-                open={isCreateOpen || !!editing}
+                open={isModalOpen}
                 onClose={() => {
                     setIsCreateOpen(false);
                     setEditing(null);
                 }}
-                title={editing ? "Edit Team Profile" : "Add Team Profile"}
-                subtitle="This data powers the About us interactive orbit"
-                size="lg"
-                footer={
-                    <div className="flex justify-end gap-3">
-                        <button onClick={() => {
-                            setIsCreateOpen(false);
-                            setEditing(null);
-                        }} className="px-4 py-2 rounded-lg border border-white/15 text-slate-300 hover:bg-white/5">
+                title={editing ? "Edit Leadership Profile" : "Add New Leader / Team Member"}
+                subtitle="Configure name, executive role, photo, bio, and social workspace links."
+            >
+                <form onSubmit={handleSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+                    {/* Full Name */}
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                            Full Name *
+                        </label>
+                        <input
+                            type="text"
+                            value={form.name}
+                            onChange={(e) => setForm({ ...form, name: e.target.value })}
+                            placeholder="e.g., Meet Dave"
+                            className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-sm outline-none focus:border-aira-cyan"
+                            required
+                        />
+                    </div>
+
+                    {/* Role */}
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                            Role / Title *
+                        </label>
+                        <input
+                            type="text"
+                            value={form.role}
+                            onChange={(e) => setForm({ ...form, role: e.target.value })}
+                            placeholder="e.g., Founder & Lead Architect"
+                            className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-sm outline-none focus:border-aira-cyan"
+                            required
+                        />
+                    </div>
+
+                    {/* Category Group */}
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                            Leadership Category / Group
+                        </label>
+                        <input
+                            type="text"
+                            value={form.teamGroup}
+                            onChange={(e) => setForm({ ...form, teamGroup: e.target.value })}
+                            placeholder="e.g., Founders & Executive Board"
+                            className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-sm outline-none focus:border-aira-cyan"
+                        />
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                            {SUGGESTED_GROUPS.map((grp) => (
+                                <button
+                                    type="button"
+                                    key={grp}
+                                    onClick={() => setForm({ ...form, teamGroup: grp })}
+                                    className="text-[10px] px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5"
+                                >
+                                    + {grp}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Photo Upload & URL */}
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                            Profile Photo (Upload or Paste URL)
+                        </label>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={form.photo}
+                                onChange={(e) => setForm({ ...form, photo: e.target.value })}
+                                placeholder="https://... or click Upload"
+                                className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs outline-none focus:border-aira-cyan font-mono"
+                            />
+                            <label className="px-4 py-2.5 rounded-xl bg-aira-cyan/15 border border-aira-cyan/40 text-aira-cyan text-xs font-semibold cursor-pointer hover:bg-aira-cyan/25 transition-all flex items-center gap-1.5 shrink-0">
+                                <UploadCloud size={15} />
+                                {uploadingPhoto ? "Uploading..." : "Upload Photo"}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) void uploadPhoto(file);
+                                    }}
+                                />
+                            </label>
+                        </div>
+                        {form.photo && (
+                            <div className="mt-2 flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/5">
+                                <img
+                                    src={form.photo}
+                                    alt="Preview"
+                                    className="w-12 h-12 rounded-xl object-cover border border-white/15"
+                                />
+                                <div className="text-[11px] text-slate-300">Photo preview loaded</div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Bio / Vision Statement */}
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                            Bio & Leadership Vision
+                        </label>
+                        <textarea
+                            value={form.bio}
+                            onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                            placeholder="Briefly describe their research focus, contributions, or vision for AiRA Lab..."
+                            rows={3}
+                            className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs outline-none focus:border-aira-cyan resize-none font-sans"
+                        />
+                    </div>
+
+                    {/* Social Links */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                                LinkedIn Profile
+                            </label>
+                            <input
+                                type="text"
+                                value={form.linkedin}
+                                onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
+                                placeholder="https://linkedin.com/in/..."
+                                className="w-full px-3.5 py-2 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs outline-none focus:border-aira-cyan font-mono"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                                GitHub Workspace
+                            </label>
+                            <input
+                                type="text"
+                                value={form.github}
+                                onChange={(e) => setForm({ ...form, github: e.target.value })}
+                                placeholder="https://github.com/..."
+                                className="w-full px-3.5 py-2 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs outline-none focus:border-aira-cyan font-mono"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Sort Order & Spotlight Toggle */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                                Sort Order Number
+                            </label>
+                            <input
+                                type="number"
+                                value={form.sortOrder}
+                                onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
+                                placeholder="1"
+                                className="w-full px-3.5 py-2 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs outline-none focus:border-aira-cyan"
+                            />
+                            <span className="text-[10px] text-slate-500">Lower numbers appear first</span>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                                Spotlight Badge
+                            </label>
+                            <label className="flex items-center gap-2.5 p-2 rounded-xl border border-amber-400/30 bg-amber-500/10 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={form.isPresident}
+                                    onChange={(e) => setForm({ ...form, isPresident: e.target.checked })}
+                                    className="rounded accent-amber-500"
+                                />
+                                <span className="text-xs font-bold text-amber-300 flex items-center gap-1">
+                                    <Crown size={14} className="text-amber-400" /> Founder / Executive Spotlight
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="pt-4 flex justify-end gap-3 border-t border-white/10">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsCreateOpen(false);
+                                setEditing(null);
+                            }}
+                            className="px-4 py-2.5 rounded-xl border border-white/15 text-slate-300 text-xs font-semibold hover:bg-white/5"
+                        >
                             Cancel
                         </button>
-                        <button disabled={isSubmitting} onClick={saveMember} className="px-4 py-2 rounded-lg bg-aira-cyan text-aira-bg font-semibold disabled:opacity-60">
-                            {isSubmitting ? "Saving..." : "Save Profile"}
+                        <button
+                            type="submit"
+                            disabled={isSubmitting || uploadingPhoto}
+                            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-orbitron font-bold text-xs hover:scale-105 transition-transform disabled:opacity-50"
+                        >
+                            {isSubmitting ? "Saving..." : editing ? "Save Changes" : "Create Leader Profile"}
                         </button>
                     </div>
-                }
-            >
-                <div className="space-y-4 max-h-[68vh] overflow-y-auto pr-1">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-xs text-slate-400 mb-1">Name *</label>
-                            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" />
-                        </div>
-                        <div>
-                            <label className="block text-xs text-slate-400 mb-1">Role *</label>
-                            <input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-xs text-slate-400 mb-1">Team Group</label>
-                            <input value={form.teamGroup} onChange={(e) => setForm({ ...form, teamGroup: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" />
-                        </div>
-                        <div>
-                            <label className="block text-xs text-slate-400 mb-1">Sort Order</label>
-                            <input type="number" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-xs text-slate-400 mb-1">Bio</label>
-                        <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={4} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-xs text-slate-400 mb-1">LinkedIn URL</label>
-                            <input value={form.linkedin} onChange={(e) => setForm({ ...form, linkedin: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" />
-                        </div>
-                        <div>
-                            <label className="block text-xs text-slate-400 mb-1">GitHub URL</label>
-                            <input value={form.github} onChange={(e) => setForm({ ...form, github: e.target.value })} className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" />
-                        </div>
-                    </div>
-
-                    <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3 space-y-2">
-                        <label className="block text-xs text-slate-400">Photo URL</label>
-                        <input value={form.photo} onChange={(e) => setForm({ ...form, photo: e.target.value })} placeholder="https://..." className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2.5 text-white outline-none focus:border-aira-cyan/60" />
-                        <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-aira-cyan/30 text-aira-cyan text-xs cursor-pointer hover:bg-aira-cyan/10">
-                            <UploadCloud size={14} />
-                            {uploadingPhoto ? "Uploading..." : "Upload Photo"}
-                            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) uploadPhoto(file);
-                            }} />
-                        </label>
-                        {form.photo && <img src={form.photo} alt="Preview" className="w-20 h-20 rounded-lg object-cover border border-white/15" />}
-                    </div>
-
-                    <label className="flex items-center gap-2 text-sm text-slate-300">
-                        <input type="checkbox" checked={form.isPresident} onChange={(e) => setForm({ ...form, isPresident: e.target.checked })} className="h-4 w-4" />
-                        Mark as President (this will replace existing president)
-                    </label>
-                </div>
+                </form>
             </AnimatedModal>
 
+            {/* Delete Modal */}
             <AnimatedModal
-                open={!!deleteId}
+                open={Boolean(deleteId)}
                 onClose={() => setDeleteId(null)}
-                title="Delete Member"
-                subtitle="This action cannot be undone"
+                title="Delete Leader Profile"
+                subtitle="Are you sure you want to remove this profile from the leadership page?"
                 footer={
                     <div className="flex justify-end gap-3">
-                        <button onClick={() => setDeleteId(null)} className="px-4 py-2 rounded-lg border border-white/15 text-slate-300 hover:bg-white/5">Cancel</button>
-                        <button disabled={isSubmitting} onClick={removeMember} className="px-4 py-2 rounded-lg bg-aira-magenta text-white font-semibold disabled:opacity-60">
-                            {isSubmitting ? "Deleting..." : "Delete"}
+                        <button
+                            onClick={() => setDeleteId(null)}
+                            className="px-4 py-2 rounded-lg border border-white/15 text-slate-300 text-xs"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            className="px-4 py-2 rounded-lg bg-red-600 text-white font-bold text-xs hover:bg-red-700 transition-colors flex items-center gap-1.5"
+                        >
+                            <Trash2 size={14} /> Yes, Delete
                         </button>
                     </div>
                 }
             >
-                <p className="text-sm text-slate-300">Are you sure you want to delete this member profile?</p>
+                <p className="text-xs text-slate-300">
+                    This profile will be permanently removed from the public leadership page and about page directory.
+                </p>
             </AnimatedModal>
         </div>
     );

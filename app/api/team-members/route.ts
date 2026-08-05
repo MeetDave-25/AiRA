@@ -27,16 +27,12 @@ export async function POST(req: NextRequest) {
     try {
         const isPresident = body.isPresident === true || body.isPresident === "true";
 
-        if (isPresident) {
-            await db.from("TeamMemberProfile").update({ isPresident: false }).eq("isPresident", true);
-        }
-
         const { data, error } = await db
             .from("TeamMemberProfile")
             .insert({
                 ...body,
                 id: uuidv4(),
-                sortOrder: body.sortOrder ? Number(body.sortOrder) : 0,
+                sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : 0,
                 isPresident,
                 updatedAt: new Date().toISOString()
             })
@@ -46,6 +42,6 @@ export async function POST(req: NextRequest) {
         if (error) throw error;
         return NextResponse.json(data, { status: 201 });
     } catch (error) {
-        return NextResponse.json({ error: "Failed to create team member", details: String(error) }, { status: 500 });
+        return NextResponse.json({ error: "Failed to create leader / team member", details: String(error) }, { status: 500 });
     }
 }

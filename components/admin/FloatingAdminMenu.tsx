@@ -21,15 +21,16 @@ import {
     UserCheck,
     Globe,
     Radio,
-    ChevronLeft
+    ChevronLeft,
+    Crown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const adminLinks = [
     { label: "Analytics", href: "/admin", icon: BarChart3 },
     { label: "Live Broadcast", href: "/admin/broadcast", icon: Radio, highlight: true },
+    { label: "Leadership & People", href: "/admin/team-members", icon: Crown },
     { label: "User Accounts", href: "/admin/users", icon: UserCheck },
-    { label: "Public Profiles", href: "/admin/team-members", icon: Globe },
     { label: "Teams", href: "/admin/teams", icon: UsersRound },
     { label: "Tasks", href: "/admin/tasks", icon: CheckSquare },
     { label: "Events", href: "/admin/events", icon: CalendarDays },

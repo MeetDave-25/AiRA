@@ -33,6 +33,7 @@ interface NotificationContextType {
     setUnreadBadge: (v: boolean) => void;
     dismissBanner: () => void;
     requestPushPermission: () => Promise<boolean>;
+    openPushPrompt: () => void;
     pushPermission: NotificationPermission | "default";
     triggerLocalNotification: (notif: Partial<Notification>) => void;
     triggerDelayedOutsideTest: (customData?: { title?: string; message?: string; link?: string }, seconds?: number) => void;
@@ -48,6 +49,7 @@ const NotificationContext = createContext<NotificationContextType>({
     setUnreadBadge: () => { },
     dismissBanner: () => { },
     requestPushPermission: async () => false,
+    openPushPrompt: () => { },
     pushPermission: "default",
     triggerLocalNotification: () => { },
     triggerDelayedOutsideTest: () => { },
@@ -132,39 +134,65 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const [activeBanner, setActiveBanner] = useState<Notification | null>(null);
     const [pushPermission, setPushPermission] = useState<NotificationPermission | "default">("default");
     const [showPushPrompt, setShowPushPrompt] = useState(false);
+    const [showBlockedGuide, setShowBlockedGuide] = useState(false);
     const bannerTimerRef = useRef<NodeJS.Timeout | null>(null);
     const seenIdsRef = useRef<Set<string>>(new Set());
 
-    // Check existing push permission & show prompt if not decided
+    // Prompt user on visit if notifications are not yet enabled (just like mobile games / Instagram)
     useEffect(() => {
         if (typeof window !== "undefined" && "Notification" in window) {
             setPushPermission(Notification.permission);
-            if (Notification.permission === "default") {
-                const timer = setTimeout(() => {
-                    const dismissed = localStorage.getItem("aira_push_prompt_dismissed");
-                    if (!dismissed) setShowPushPrompt(true);
-                }, 4000);
-                return () => clearTimeout(timer);
+            if (Notification.permission !== "granted") {
+                const sessionDismissed = sessionStorage.getItem("aira_notif_prompt_session_dismissed");
+                if (!sessionDismissed) {
+                    const timer = setTimeout(() => {
+                        setShowPushPrompt(true);
+                    }, 2200);
+                    return () => clearTimeout(timer);
+                }
             }
         }
     }, []);
+
+    const openPushPrompt = () => {
+        if (typeof window !== "undefined" && "Notification" in window) {
+            setPushPermission(Notification.permission);
+            if (Notification.permission === "denied") {
+                setShowBlockedGuide(true);
+            } else {
+                setShowPushPrompt(true);
+            }
+        } else {
+            setShowPushPrompt(true);
+        }
+    };
 
     // Request native device push permission (for Outside-App Lock Screen Push)
     const requestPushPermission = async (): Promise<boolean> => {
         if (typeof window !== "undefined" && "Notification" in window) {
             try {
+                if (Notification.permission === "denied") {
+                    setShowPushPrompt(false);
+                    setShowBlockedGuide(true);
+                    return false;
+                }
+
                 const permission = await Notification.requestPermission();
                 setPushPermission(permission);
                 setShowPushPrompt(false);
 
                 if (permission === "granted") {
-                    // Send an immediate test notification to confirm
+                    playBellChime();
+                    toast.success("🔔 Instant notifications enabled!");
                     triggerNativeOutsideNotification({
                         title: "🔔 AiRA Lab Alerts Enabled!",
                         message: "You will now receive instant lock screen notifications like Instagram & Snapchat.",
                         link: "/portal/dashboard",
                     });
                     return true;
+                } else if (permission === "denied") {
+                    setShowBlockedGuide(true);
+                    return false;
                 }
                 return false;
             } catch {
@@ -172,6 +200,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             }
         }
         return false;
+    };
+
+    const handleSessionOnly = () => {
+        playBellChime();
+        setShowPushPrompt(false);
+        sessionStorage.setItem("aira_notif_prompt_session_dismissed", "true");
+        toast("🔊 In-app sound & live drop alerts active for this visit!", { icon: "🔔" });
+    };
+
+    const handleDecline = () => {
+        setShowPushPrompt(false);
+        sessionStorage.setItem("aira_notif_prompt_session_dismissed", "true");
     };
 
     // Helper: Trigger Native OS-Level Notification (Shows outside app, on lock screen, status bar)
@@ -390,6 +430,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 setUnreadBadge,
                 dismissBanner,
                 requestPushPermission,
+                openPushPrompt,
                 pushPermission,
                 triggerLocalNotification,
                 triggerDelayedOutsideTest,
@@ -397,43 +438,170 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         >
             {children}
 
-            {/* ══ OUTSIDE-APP LOCK SCREEN PUSH PROMPT PILL ══ */}
+            {/* ══ OUTSIDE-APP LOCK SCREEN PUSH PERMISSION CARD (Game & Instagram Style) ══ */}
             <AnimatePresence>
                 {showPushPrompt && (
                     <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 30 }}
-                        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[99995] w-full max-w-sm px-4 pointer-events-auto"
+                        initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 40, scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 360, damping: 28 }}
+                        className="fixed bottom-4 inset-x-3 sm:bottom-6 sm:right-6 sm:inset-x-auto sm:w-96 z-[99995] pointer-events-auto mx-auto max-w-md"
                     >
-                        <div className="bg-slate-950/95 backdrop-blur-2xl border border-aira-cyan/50 rounded-2xl p-3.5 shadow-2xl shadow-black flex items-center justify-between gap-3 ring-1 ring-aira-cyan/20">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="w-8 h-8 rounded-xl bg-aira-cyan/20 flex items-center justify-center text-aira-cyan shrink-0">
-                                    <Smartphone size={17} />
+                        <div className="relative bg-slate-950/95 backdrop-blur-2xl border border-aira-cyan/40 rounded-3xl p-4 sm:p-5 shadow-2xl shadow-black/90 ring-1 ring-white/15 overflow-hidden">
+                            {/* Glowing background highlights */}
+                            <div className="absolute -top-12 -right-12 w-32 h-32 bg-aira-cyan/20 blur-2xl rounded-full pointer-events-none" />
+                            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-aira-purple/20 blur-2xl rounded-full pointer-events-none" />
+
+                            {/* Header */}
+                            <div className="flex items-start justify-between gap-3 relative z-10 mb-2.5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-aira-cyan/20 to-aira-purple/30 border border-aira-cyan/40 flex items-center justify-center text-aira-cyan shadow-md shrink-0">
+                                        <Bell size={20} className="animate-pulse" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-orbitron font-bold text-sm text-white flex items-center gap-1.5">
+                                            Enable Notifications
+                                            <span className="w-2 h-2 rounded-full bg-aira-cyan animate-ping" />
+                                        </h3>
+                                        <p className="text-[11px] text-slate-400 font-sans">Lock screen & real-time updates</p>
+                                    </div>
                                 </div>
-                                <div className="min-w-0">
-                                    <p className="text-xs font-bold text-white truncate">Enable Outside-App Alerts</p>
-                                    <p className="text-[10px] text-slate-400 truncate">Get lock screen alerts like Instagram</p>
-                                </div>
+
+                                <button
+                                    onClick={handleDecline}
+                                    className="w-7 h-7 rounded-full glass border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-white/30 transition-all shrink-0"
+                                    aria-label="Close notification prompt"
+                                >
+                                    <X size={14} />
+                                </button>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
+
+                            {/* Body Message */}
+                            <p className="text-xs text-slate-300 font-sans leading-relaxed relative z-10 mb-3.5">
+                                Would you like to receive instant notifications for live event broadcasts, leadership announcements, and tasks (like Instagram & Snapchat)?
+                            </p>
+
+                            {/* 3-Action Options */}
+                            <div className="flex flex-col gap-2 relative z-10">
                                 <button
                                     onClick={requestPushPermission}
-                                    className="px-3 py-1.5 rounded-xl bg-aira-cyan text-aira-bg font-bold text-xs hover:scale-105 transition-transform"
+                                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-aira-cyan via-blue-500 to-aira-purple text-white font-orbitron font-bold text-xs hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-aira-cyan/25 flex items-center justify-center gap-2"
                                 >
-                                    Enable
+                                    <Bell size={14} /> Always Allow
                                 </button>
-                                <button
-                                    onClick={() => {
-                                        setShowPushPrompt(false);
-                                        localStorage.setItem("aira_push_prompt_dismissed", "true");
-                                    }}
-                                    className="p-1 text-slate-500 hover:text-white"
-                                >
-                                    <X size={15} />
-                                </button>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        onClick={handleSessionOnly}
+                                        className="py-2 px-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white font-semibold text-[11px] transition-colors flex items-center justify-center gap-1.5"
+                                    >
+                                        <Volume2 size={12} className="text-aira-cyan" /> While Using App
+                                    </button>
+
+                                    <button
+                                        onClick={handleDecline}
+                                        className="py-2 px-3 rounded-xl glass border border-white/10 text-slate-400 hover:text-white font-semibold text-[11px] transition-colors"
+                                    >
+                                        Don&apos;t Allow
+                                    </button>
+                                </div>
                             </div>
                         </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ══ BROWSER UNBLOCK GUIDE MODAL (If user previously clicked 'Block' in browser) ══ */}
+            <AnimatePresence>
+                {showBlockedGuide && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[99998] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+                        onClick={() => setShowBlockedGuide(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 20 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full max-w-md bg-slate-950 border border-aira-cyan/50 rounded-3xl p-6 shadow-2xl shadow-aira-cyan/20 ring-1 ring-white/10 relative overflow-hidden"
+                        >
+                            <div className="absolute -top-12 -right-12 w-36 h-36 bg-aira-cyan/20 blur-3xl rounded-full pointer-events-none" />
+
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                                        <ShieldCheck size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-orbitron font-bold text-sm text-white">Unblock in Browser</h3>
+                                        <p className="text-xs text-slate-400">Notifications are currently blocked</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setShowBlockedGuide(false)}
+                                    className="p-1.5 rounded-full glass border border-white/10 text-slate-400 hover:text-white"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+
+                            <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+                                Your browser is currently blocking notifications for this site. Follow these quick steps to enable them:
+                            </p>
+
+                            <div className="space-y-3 mb-6">
+                                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-900/60 border border-white/5">
+                                    <span className="w-6 h-6 rounded-full bg-aira-cyan/20 text-aira-cyan font-bold text-xs flex items-center justify-center shrink-0">1</span>
+                                    <p className="text-xs text-slate-300">
+                                        Click the <strong className="text-white">🔒 Lock / Settings icon</strong> next to the URL in your browser address bar.
+                                    </p>
+                                </div>
+
+                                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-900/60 border border-white/5">
+                                    <span className="w-6 h-6 rounded-full bg-aira-cyan/20 text-aira-cyan font-bold text-xs flex items-center justify-center shrink-0">2</span>
+                                    <p className="text-xs text-slate-300">
+                                        Find <strong className="text-white">Notifications</strong> and switch it to <strong className="text-emerald-400">Allow</strong>.
+                                    </p>
+                                </div>
+
+                                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-900/60 border border-white/5">
+                                    <span className="w-6 h-6 rounded-full bg-aira-cyan/20 text-aira-cyan font-bold text-xs flex items-center justify-center shrink-0">3</span>
+                                    <p className="text-xs text-slate-300">
+                                        Refresh the page or tap the button below to confirm.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        if (typeof window !== "undefined" && "Notification" in window) {
+                                            if (Notification.permission === "granted") {
+                                                setPushPermission("granted");
+                                                setShowBlockedGuide(false);
+                                                toast.success("Notifications are now unblocked & active!");
+                                                playBellChime();
+                                            } else {
+                                                window.location.reload();
+                                            }
+                                        }
+                                    }}
+                                    className="flex-1 py-2.5 rounded-xl bg-aira-cyan text-aira-bg font-orbitron font-bold text-xs hover:scale-105 transition-transform text-center shadow-lg shadow-aira-cyan/20"
+                                >
+                                    Check Status / Reload
+                                </button>
+                                <button
+                                    onClick={() => setShowBlockedGuide(false)}
+                                    className="px-4 py-2.5 rounded-xl glass border border-white/10 text-slate-400 hover:text-white text-xs font-semibold"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
