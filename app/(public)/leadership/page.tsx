@@ -47,86 +47,153 @@ function LeaderDetailModal({ leader, onClose }: { leader: LeaderProfile | null; 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[99995] bg-black/85 backdrop-blur-xl flex items-center justify-center p-4"
+                className="fixed inset-0 z-[99999] bg-slate-950/85 backdrop-blur-xl overflow-y-auto overscroll-contain p-3 sm:p-6 md:p-8 flex items-start sm:items-center justify-center min-h-screen"
                 onClick={onClose}
             >
                 <motion.div
-                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    initial={{ scale: 0.94, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
-                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                    exit={{ scale: 0.94, opacity: 0, y: 20 }}
                     transition={{ type: "spring", stiffness: 350, damping: 28 }}
-                    className="glass-strong rounded-3xl p-6 sm:p-8 max-w-xl w-full relative border border-white/20 shadow-2xl shadow-aira-cyan/20 overflow-hidden"
+                    className="glass-strong rounded-3xl border border-white/20 shadow-2xl shadow-aira-cyan/20 w-full max-w-4xl max-h-[90vh] sm:max-h-[86vh] flex flex-col relative overflow-hidden my-auto z-10"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Background glow orb */}
-                    <div className="absolute -top-16 -right-16 w-52 h-52 bg-aira-cyan/20 blur-3xl rounded-full pointer-events-none" />
-                    <div className="absolute -bottom-16 -left-16 w-52 h-52 bg-aira-magenta/20 blur-3xl rounded-full pointer-events-none" />
+                    {/* Background glow orbs */}
+                    <div className="absolute -top-24 -right-24 w-80 h-80 bg-aira-cyan/15 blur-[90px] rounded-full pointer-events-none" />
+                    <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-aira-purple/15 blur-[90px] rounded-full pointer-events-none" />
 
-                    <button 
-                        onClick={onClose} 
-                        className="absolute top-4 right-4 w-9 h-9 rounded-full glass border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-aira-cyan/50 transition-all z-10"
-                        aria-label="Close modal"
-                    >
-                        <X size={18} />
-                    </button>
-
-                    <div className="text-center relative z-10 mb-6">
-                        <div className="relative inline-block mb-4">
-                            <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-3xl overflow-hidden border-2 border-aira-cyan glow-cyan mx-auto bg-slate-950 shadow-2xl">
-                                <img
-                                    src={leader.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=0d1526&color=00D4FF&size=300`}
-                                    alt={leader.name}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => { 
-                                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=0d1526&color=00D4FF&size=300`; 
-                                    }}
-                                />
-                            </div>
-                            {leader.isPresident && (
-                                <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 flex items-center gap-1 text-[11px] font-bold text-slate-950 shadow-lg ring-2 ring-slate-950">
-                                    <Crown size={12} className="fill-slate-950" /> FOUNDER / LEAD
-                                </div>
+                    {/* Top Bar with Badge & Close button */}
+                    <div className="flex items-center justify-between px-5 sm:px-8 py-3.5 sm:py-4 border-b border-white/10 bg-slate-950/40 shrink-0 relative z-20">
+                        <div className="flex items-center gap-2">
+                            {leader.isPresident ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-orbitron font-bold">
+                                    <Crown size={13} className="text-amber-400" /> Executive Board Profile
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aira-cyan/15 text-aira-cyan border border-aira-cyan/30 text-[11px] font-orbitron font-bold">
+                                    <Sparkles size={13} /> Leadership Profile
+                                </span>
+                            )}
+                            {leader.teamGroup && (
+                                <span className="hidden sm:inline-block text-[11px] text-slate-400 font-mono">
+                                    • {leader.teamGroup}
+                                </span>
                             )}
                         </div>
 
-                        <h2 className="font-orbitron font-bold text-2xl text-white tracking-tight">{leader.name}</h2>
-                        <p className="text-aira-cyan font-medium text-sm mt-1">{leader.role}</p>
-
-                        {leader.teamGroup && (
-                            <span className="inline-block px-3.5 py-1 mt-2.5 text-xs font-semibold rounded-full bg-aira-purple/25 text-violet-300 border border-aira-purple/40">
-                                {leader.teamGroup}
-                            </span>
-                        )}
+                        <button 
+                            onClick={onClose} 
+                            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full glass border border-white/15 flex items-center justify-center text-slate-300 hover:text-white hover:bg-rose-500/20 hover:border-rose-500/40 transition-all"
+                            aria-label="Close modal"
+                        >
+                            <X size={18} />
+                        </button>
                     </div>
 
-                    {leader.bio && (
-                        <div className="p-5 bg-slate-900/80 rounded-2xl border border-white/10 mb-6 text-slate-200 text-sm leading-relaxed text-center relative font-sans">
-                            <Quote size={20} className="text-aira-cyan/40 mb-2 mx-auto" />
-                            <p className="italic">"{leader.bio}"</p>
-                        </div>
-                    )}
+                    {/* Modal Main Body (2 Columns on Laptop / 1 Column on Mobile) */}
+                    <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] divide-y md:divide-y-0 md:divide-x divide-white/10 overflow-y-auto overscroll-contain flex-1">
+                        {/* Left Sidebar: Photo, Identity & Social Links */}
+                        <div className="p-5 sm:p-7 flex flex-col items-center md:items-start text-center md:text-left space-y-4 bg-slate-950/20">
+                            {/* Profile Photo */}
+                            <div className="relative group">
+                                <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-3xl overflow-hidden border-2 border-aira-cyan/60 glow-cyan bg-slate-900 shadow-2xl">
+                                    <img
+                                        src={leader.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=0d1526&color=00D4FF&size=300`}
+                                        alt={leader.name}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => { 
+                                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=0d1526&color=00D4FF&size=300`; 
+                                        }}
+                                    />
+                                </div>
+                                {leader.isPresident && (
+                                    <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 flex items-center gap-1 text-[10px] font-bold text-slate-950 shadow-lg ring-2 ring-slate-950">
+                                        <Crown size={11} className="fill-slate-950" /> FOUNDER
+                                    </div>
+                                )}
+                            </div>
 
-                    <div className="flex flex-wrap justify-center gap-3 pt-2">
-                        {leader.linkedin && (
-                            <a 
-                                href={leader.linkedin.startsWith("http") ? leader.linkedin : `https://${leader.linkedin}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0077b5]/20 border border-[#0077b5]/50 text-blue-300 text-xs font-semibold hover:bg-[#0077b5]/30 hover:scale-105 transition-all shadow-md"
-                            >
-                                <Linkedin size={16} /> LinkedIn Profile
-                            </a>
-                        )}
-                        {leader.github && (
-                            <a 
-                                href={leader.github.startsWith("http") ? leader.github : `https://${leader.github}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white text-xs font-semibold hover:bg-white/20 hover:scale-105 transition-all shadow-md"
-                            >
-                                <Github size={16} /> GitHub Workspace
-                            </a>
-                        )}
+                            {/* Name & Title */}
+                            <div className="w-full">
+                                <h2 className="font-orbitron font-bold text-xl sm:text-2xl text-white tracking-tight break-words">
+                                    {leader.name}
+                                </h2>
+                                <p className="text-aira-cyan font-semibold text-xs sm:text-sm mt-1 leading-snug">
+                                    {leader.role}
+                                </p>
+                                {leader.teamGroup && (
+                                    <span className="inline-block px-3 py-1 mt-2 text-[11px] font-semibold rounded-full bg-aira-purple/25 text-violet-300 border border-aira-purple/40">
+                                        {leader.teamGroup}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Social Buttons */}
+                            <div className="flex flex-col gap-2 w-full pt-2">
+                                {leader.linkedin && (
+                                    <a 
+                                        href={leader.linkedin.startsWith("http") ? leader.linkedin : `https://${leader.linkedin}`} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center md:justify-start gap-2.5 px-4 py-2.5 rounded-xl bg-[#0077b5]/20 border border-[#0077b5]/50 text-blue-300 text-xs font-semibold hover:bg-[#0077b5]/30 hover:scale-[1.02] transition-all shadow-md w-full"
+                                    >
+                                        <Linkedin size={15} className="shrink-0" />
+                                        <span className="truncate">Connect on LinkedIn</span>
+                                        <ExternalLink size={12} className="ml-auto opacity-70 hidden md:inline" />
+                                    </a>
+                                )}
+                                {leader.github && (
+                                    <a 
+                                        href={leader.github.startsWith("http") ? leader.github : `https://${leader.github}`} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center md:justify-start gap-2.5 px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white text-xs font-semibold hover:bg-white/20 hover:scale-[1.02] transition-all shadow-md w-full"
+                                    >
+                                        <Github size={15} className="shrink-0" />
+                                        <span className="truncate">GitHub Workspace</span>
+                                        <ExternalLink size={12} className="ml-auto opacity-70 hidden md:inline" />
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Right Main Content: Bio Statement & Background */}
+                        <div className="p-5 sm:p-8 flex flex-col justify-between space-y-6">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 text-xs font-orbitron font-bold uppercase tracking-wider text-slate-400 pb-2 border-b border-white/10">
+                                    <Quote size={15} className="text-aira-cyan" />
+                                    <span>Leadership Statement & Vision</span>
+                                </div>
+
+                                {leader.bio ? (
+                                    <div className="text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed font-sans space-y-3 break-words">
+                                        {leader.bio.split("\n\n").map((para, i) => (
+                                            <p key={i} className="leading-relaxed text-slate-300">
+                                                {para}
+                                            </p>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-slate-500 text-sm italic">
+                                        No bio statement provided yet for this leader.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Bottom Metadata Badges */}
+                            <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+                                <div className="flex items-center gap-2">
+                                    <Shield size={14} className="text-aira-cyan" />
+                                    <span>Verified AiRA Labs Leader</span>
+                                </div>
+                                <button
+                                    onClick={onClose}
+                                    className="px-4 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 text-xs font-medium transition-colors"
+                                >
+                                    Close Profile
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </motion.div>
             </motion.div>

@@ -19,7 +19,11 @@ import {
     Eye,
     Check,
     RefreshCw,
-    Database
+    Database,
+    AlertCircle,
+    X,
+    FileText,
+    Image as ImageIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -37,6 +41,9 @@ type MemberForm = {
     sortOrder: string;
     isPresident: boolean;
 };
+
+const MAX_BIO_WORDS = 500;
+const MAX_BIO_CHARS = 3000;
 
 const baseLeaderForm: MemberForm = {
     name: "",
@@ -111,6 +118,14 @@ export default function TeamMembersAdminPage() {
     useEffect(() => {
         void fetchMembers();
     }, []);
+
+    // Bio word & character count calculations
+    const bioWordCount = useMemo(() => {
+        const trimmed = (form.bio || "").trim();
+        return trimmed ? trimmed.split(/\s+/).length : 0;
+    }, [form.bio]);
+
+    const isBioOverLimit = bioWordCount > MAX_BIO_WORDS || (form.bio || "").length > MAX_BIO_CHARS;
 
     // Split profiles into Leadership vs People (About Us)
     const leadersList = useMemo(() => {
@@ -187,8 +202,19 @@ export default function TeamMembersAdminPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!form.name.trim()) {
+        const trimmedName = form.name.trim();
+        if (!trimmedName) {
             toast.error("Please enter a name for the profile");
+            return;
+        }
+
+        if (bioWordCount > MAX_BIO_WORDS) {
+            toast.error(`Bio exceeds ${MAX_BIO_WORDS} words (currently ${bioWordCount} words). Please shorten it.`);
+            return;
+        }
+
+        if ((form.bio || "").length > MAX_BIO_CHARS) {
+            toast.error(`Bio statement exceeds maximum character limit (${MAX_BIO_CHARS} characters).`);
             return;
         }
 
@@ -200,7 +226,12 @@ export default function TeamMembersAdminPage() {
             const res = await fetch(endpoint, {
                 method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(form),
+                body: JSON.stringify({
+                    ...form,
+                    name: trimmedName,
+                    bio: form.bio.trim(),
+                    teamGroup: form.teamGroup.trim()
+                }),
             });
 
             if (!res.ok) {
@@ -238,52 +269,55 @@ export default function TeamMembersAdminPage() {
         try {
             const res = await fetch("/api/team-members/seed", { method: "POST" });
             if (!res.ok) throw new Error();
-            toast.success("Starter profiles seeded to database!", { id: "seed" });
+            toast.success("Starter profiles added successfully!", { id: "seed" });
             await fetchMembers();
         } catch {
-            toast.error("Failed to seed profiles", { id: "seed" });
+            toast.error("Failed to seed starter profiles", { id: "seed" });
         } finally {
             setIsSeeding(false);
         }
     };
 
-    // Filter by active tab & search
     const currentList = activeTab === "LEADERSHIP" ? leadersList : peopleList;
-    const displayedMembers = currentList.filter((m) => {
-        const query = searchQuery.toLowerCase();
-        return (
-            m.name.toLowerCase().includes(query) ||
-            (m.role && m.role.toLowerCase().includes(query)) ||
-            (m.teamGroup && m.teamGroup.toLowerCase().includes(query))
+
+    const displayedMembers = useMemo(() => {
+        if (!searchQuery.trim()) return currentList;
+        const q = searchQuery.toLowerCase();
+        return currentList.filter(
+            (m) =>
+                (m.name || "").toLowerCase().includes(q) ||
+                (m.role || "").toLowerCase().includes(q) ||
+                (m.teamGroup || "").toLowerCase().includes(q) ||
+                (m.bio || "").toLowerCase().includes(q)
         );
-    });
+    }, [currentList, searchQuery]);
 
     const isModalOpen = isCreateOpen || Boolean(editing);
 
     return (
-        <div className="space-y-8 max-w-6xl mx-auto pb-12">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass p-6 md:p-8 rounded-3xl border border-white/10 animated-border">
+        <div className="space-y-6 max-w-7xl mx-auto px-3 sm:px-6 py-4">
+            {/* Header Area */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass p-4 sm:p-6 rounded-3xl border border-white/10">
                 <div>
-                    <div className="flex items-center gap-2">
-                        <span className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                    <div className="flex items-center gap-2.5">
+                        <span className="p-2 rounded-xl bg-aira-cyan/20 text-aira-cyan border border-aira-cyan/30">
                             <Crown size={20} />
                         </span>
-                        <h1 className="font-orbitron font-bold text-2xl md:text-3xl gradient-text-cyan">
+                        <h1 className="font-orbitron font-bold text-xl sm:text-2xl md:text-3xl gradient-text-cyan">
                             Leadership & People Manager
                         </h1>
                     </div>
-                    <p className="text-slate-400 text-sm mt-1">
+                    <p className="text-slate-400 text-xs sm:text-sm mt-1.5 leading-relaxed">
                         Easily add, edit pictures, update bios, and remove Leaders (shown on <strong className="text-amber-400">/leadership</strong>) and People (shown on <strong className="text-aira-cyan">/about</strong>).
                     </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                     {members.length === 0 && (
                         <button
                             onClick={handleSeedProfiles}
                             disabled={isSeeding}
-                            className="px-3.5 py-2 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 font-semibold text-xs flex items-center gap-1.5 hover:bg-amber-500/25 transition-all"
+                            className="px-3.5 py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 font-semibold text-xs flex items-center gap-1.5 hover:bg-amber-500/25 transition-all"
                         >
                             <Database size={14} /> Seed Starter Profiles
                         </button>
@@ -305,10 +339,10 @@ export default function TeamMembersAdminPage() {
             </div>
 
             {/* Top Navigation Tabs: Leadership vs People */}
-            <div className="flex items-center gap-3 p-1.5 rounded-2xl glass border border-white/10 w-fit">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-1.5 rounded-2xl glass border border-white/10 w-full sm:w-fit">
                 <button
                     onClick={() => setActiveTab("LEADERSHIP")}
-                    className={`px-5 py-2.5 rounded-xl font-orbitron font-bold text-xs flex items-center gap-2 transition-all ${
+                    className={`px-4 sm:px-5 py-2.5 rounded-xl font-orbitron font-bold text-xs flex items-center justify-center sm:justify-start gap-2 transition-all ${
                         activeTab === "LEADERSHIP"
                             ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25"
                             : "text-slate-400 hover:text-white"
@@ -316,12 +350,12 @@ export default function TeamMembersAdminPage() {
                 >
                     <Crown size={15} />
                     Leadership & Founders ({leadersList.length})
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/20 font-sans font-normal">Shows on /leadership</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/20 font-sans font-normal hidden sm:inline">Shows on /leadership</span>
                 </button>
 
                 <button
                     onClick={() => setActiveTab("PEOPLE")}
-                    className={`px-5 py-2.5 rounded-xl font-orbitron font-bold text-xs flex items-center gap-2 transition-all ${
+                    className={`px-4 sm:px-5 py-2.5 rounded-xl font-orbitron font-bold text-xs flex items-center justify-center sm:justify-start gap-2 transition-all ${
                         activeTab === "PEOPLE"
                             ? "bg-gradient-to-r from-aira-cyan to-blue-500 text-slate-950 shadow-lg shadow-aira-cyan/25"
                             : "text-slate-400 hover:text-white"
@@ -329,12 +363,12 @@ export default function TeamMembersAdminPage() {
                 >
                     <Users size={15} />
                     People & Lab Members ({peopleList.length})
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/20 font-sans font-normal">Shows on /about</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/20 font-sans font-normal hidden sm:inline">Shows on /about</span>
                 </button>
             </div>
 
-            {/* Search Bar */}
-            <div className="glass p-3 rounded-2xl border border-white/10 flex items-center justify-between gap-4">
+            {/* Search Bar & Counter */}
+            <div className="glass p-3 rounded-2xl border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="relative w-full sm:w-96">
                     <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
@@ -342,11 +376,11 @@ export default function TeamMembersAdminPage() {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={`Search ${activeTab === "LEADERSHIP" ? "leaders" : "members"} by name, role, division...`}
-                        className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-white text-xs outline-none focus:border-aira-cyan"
+                        className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-white text-xs sm:text-sm outline-none focus:border-aira-cyan placeholder:text-slate-500"
                     />
                 </div>
 
-                <div className="text-xs text-slate-400 pr-2">
+                <div className="text-xs text-slate-400 sm:pr-2">
                     Showing <strong className="text-white">{displayedMembers.length}</strong> {activeTab === "LEADERSHIP" ? "Leaders" : "Team Members"}
                 </div>
             </div>
@@ -357,7 +391,7 @@ export default function TeamMembersAdminPage() {
                     <RefreshCw size={16} className="animate-spin text-aira-cyan" /> Loading profiles from database...
                 </div>
             ) : displayedMembers.length === 0 ? (
-                <div className="glass p-12 rounded-3xl border border-white/10 text-center space-y-4">
+                <div className="glass p-8 sm:p-12 rounded-3xl border border-white/10 text-center space-y-4">
                     {activeTab === "LEADERSHIP" ? (
                         <Crown size={40} className="mx-auto text-amber-500/60" />
                     ) : (
@@ -366,37 +400,37 @@ export default function TeamMembersAdminPage() {
                     <h3 className="font-orbitron font-bold text-base text-white">
                         No {activeTab === "LEADERSHIP" ? "Leaders" : "Team Members"} Found
                     </h3>
-                    <p className="text-slate-400 text-xs max-w-md mx-auto">
+                    <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto">
                         {members.length === 0 
                             ? "Your database doesn't have any profiles yet. Click below to add one or seed initial starter profiles."
                             : `No profiles match your search criteria in the ${activeTab === "LEADERSHIP" ? "Leadership" : "People"} category.`
                         }
                     </p>
-                    <div className="flex justify-center gap-3 pt-2">
+                    <div className="flex flex-wrap justify-center gap-3 pt-2">
                         {members.length === 0 && (
                             <button
                                 onClick={handleSeedProfiles}
-                                className="px-4 py-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold text-xs hover:bg-amber-500/30"
+                                className="px-4 py-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold text-xs hover:bg-amber-500/30 transition-all"
                             >
                                 ⚡ Seed Starter Profiles
                             </button>
                         )}
                         <button
                             onClick={activeTab === "LEADERSHIP" ? openCreateLeader : openCreateMember}
-                            className="px-5 py-2 rounded-xl bg-aira-cyan text-slate-950 font-bold text-xs inline-flex items-center gap-2 hover:scale-105 transition-transform"
+                            className="px-5 py-2.5 rounded-xl bg-aira-cyan text-slate-950 font-bold text-xs inline-flex items-center gap-2 hover:scale-105 transition-transform"
                         >
                             <Plus size={16} /> Add {activeTab === "LEADERSHIP" ? "Leader" : "Team Member"}
                         </button>
                     </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {displayedMembers.map((member) => (
                         <motion.div
                             key={member.id}
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className={`glass p-6 rounded-3xl border transition-all flex flex-col justify-between space-y-5 group relative ${
+                            className={`glass p-5 sm:p-6 rounded-3xl border transition-all flex flex-col justify-between space-y-4 sm:space-y-5 group relative ${
                                 member.isPresident
                                     ? "border-amber-400/40 shadow-lg shadow-amber-500/10"
                                     : "border-white/10 hover:border-aira-cyan/40"
@@ -414,17 +448,17 @@ export default function TeamMembersAdminPage() {
                                     </span>
                                 )}
 
-                                <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-1.5 opacity-90 sm:opacity-80 group-hover:opacity-100 transition-opacity">
                                     <button
                                         onClick={() => openEdit(member)}
-                                        className="p-1.5 rounded-lg glass hover:bg-white/15 text-slate-300 hover:text-white transition-colors"
+                                        className="p-2 rounded-xl glass hover:bg-white/15 text-slate-300 hover:text-white transition-colors"
                                         title="Edit Profile"
                                     >
                                         <Edit2 size={14} />
                                     </button>
                                     <button
                                         onClick={() => setDeleteId(member.id)}
-                                        className="p-1.5 rounded-lg glass hover:bg-red-500/20 text-red-400 transition-colors"
+                                        className="p-2 rounded-xl glass hover:bg-red-500/20 text-red-400 transition-colors"
                                         title="Delete Profile"
                                     >
                                         <Trash2 size={14} />
@@ -433,8 +467,8 @@ export default function TeamMembersAdminPage() {
                             </div>
 
                             {/* Avatar & Info */}
-                            <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/15 bg-slate-900 shrink-0 relative">
+                            <div className="flex items-center gap-3.5 sm:gap-4">
+                                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border border-white/15 bg-slate-900 shrink-0 relative">
                                     <img
                                         src={member.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=150`}
                                         alt={member.name}
@@ -445,8 +479,8 @@ export default function TeamMembersAdminPage() {
                                     />
                                 </div>
 
-                                <div className="min-w-0">
-                                    <h3 className="font-orbitron font-bold text-base text-white truncate group-hover:text-aira-cyan transition-colors">
+                                <div className="min-w-0 flex-1">
+                                    <h3 className="font-orbitron font-bold text-sm sm:text-base text-white truncate group-hover:text-aira-cyan transition-colors">
                                         {member.name}
                                     </h3>
                                     <p className="text-xs font-semibold text-slate-300 truncate mt-0.5">{member.role}</p>
@@ -456,9 +490,9 @@ export default function TeamMembersAdminPage() {
                                 </div>
                             </div>
 
-                            {/* Bio */}
+                            {/* Bio Preview */}
                             {member.bio && (
-                                <p className="text-xs text-slate-400 line-clamp-2 font-sans leading-relaxed">
+                                <p className="text-xs text-slate-400 line-clamp-2 font-sans leading-relaxed break-words">
                                     "{member.bio}"
                                 </p>
                             )}
@@ -496,16 +530,52 @@ export default function TeamMembersAdminPage() {
                     setIsCreateOpen(false);
                     setEditing(null);
                 }}
-                title={editing ? `Edit ${form.isPresident ? "Leader" : "Team Member"} Profile` : `Add New ${form.isPresident ? "Leader" : "Team Member"}`}
+                title={editing ? `Edit ${form.isPresident ? "Leader" : "Team Member"}` : `Add New ${form.isPresident ? "Leader" : "Team Member"}`}
                 subtitle="Manage photo, leadership role, bio statement, and placement page."
+                size="lg"
+                footer={
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full gap-3">
+                        <div className="text-[11px] text-slate-400 font-mono text-center sm:text-left">
+                            {form.isPresident ? "👑 Placed on /leadership" : "👥 Placed on /about"}
+                        </div>
+                        <div className="flex items-center justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsCreateOpen(false);
+                                    setEditing(null);
+                                }}
+                                className="w-full sm:w-auto px-4 py-2 rounded-xl border border-white/15 text-slate-300 text-xs font-semibold hover:bg-white/5 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                form="member-admin-form"
+                                disabled={isSubmitting || uploadingPhoto || isBioOverLimit}
+                                className="w-full sm:w-auto px-6 py-2 rounded-xl bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-orbitron font-bold text-xs hover:scale-105 transition-transform disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-lg shadow-aira-cyan/20"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <RefreshCw size={14} className="animate-spin" /> Saving...
+                                    </>
+                                ) : editing ? (
+                                    "Save Changes"
+                                ) : (
+                                    `Create ${form.isPresident ? "Leader" : "Member"}`
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                }
             >
-                <form onSubmit={handleSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+                <form id="member-admin-form" onSubmit={handleSubmit} className="space-y-4">
                     {/* Category Switch: Leadership vs People */}
                     <div className="p-3 rounded-2xl bg-slate-900/90 border border-white/10 space-y-2">
                         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
                             Display Location & Category *
                         </label>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <button
                                 type="button"
                                 onClick={() => setForm({ 
@@ -513,7 +583,7 @@ export default function TeamMembersAdminPage() {
                                     isPresident: true, 
                                     teamGroup: form.teamGroup || "Founders & Executive Board" 
                                 })}
-                                className={`py-2 px-3 rounded-xl font-orbitron text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                                className={`py-2.5 px-3 rounded-xl font-orbitron text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                                     form.isPresident
                                         ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md"
                                         : "bg-white/5 text-slate-400 hover:text-white"
@@ -529,7 +599,7 @@ export default function TeamMembersAdminPage() {
                                     isPresident: false, 
                                     teamGroup: form.teamGroup || "AI & Software Division" 
                                 })}
-                                className={`py-2 px-3 rounded-xl font-orbitron text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                                className={`py-2.5 px-3 rounded-xl font-orbitron text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                                     !form.isPresident
                                         ? "bg-gradient-to-r from-aira-cyan to-blue-500 text-slate-950 shadow-md"
                                         : "bg-white/5 text-slate-400 hover:text-white"
@@ -540,34 +610,37 @@ export default function TeamMembersAdminPage() {
                         </div>
                     </div>
 
-                    {/* Full Name */}
-                    <div>
-                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                            Full Name *
-                        </label>
-                        <input
-                            type="text"
-                            value={form.name}
-                            onChange={(e) => setForm({ ...form, name: e.target.value })}
-                            placeholder="e.g., Meet Dave"
-                            className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-sm outline-none focus:border-aira-cyan"
-                            required
-                        />
-                    </div>
+                    {/* Full Name & Role */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                                Full Name *
+                            </label>
+                            <input
+                                type="text"
+                                maxLength={100}
+                                value={form.name}
+                                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                placeholder="e.g., Meet Dave"
+                                className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs sm:text-sm outline-none focus:border-aira-cyan"
+                                required
+                            />
+                        </div>
 
-                    {/* Role */}
-                    <div>
-                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                            Role / Title *
-                        </label>
-                        <input
-                            type="text"
-                            value={form.role}
-                            onChange={(e) => setForm({ ...form, role: e.target.value })}
-                            placeholder={form.isPresident ? "e.g., Founder & Lead Architect" : "e.g., Autonomous Systems Engineer"}
-                            className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-sm outline-none focus:border-aira-cyan"
-                            required
-                        />
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                                Role / Title *
+                            </label>
+                            <input
+                                type="text"
+                                maxLength={120}
+                                value={form.role}
+                                onChange={(e) => setForm({ ...form, role: e.target.value })}
+                                placeholder={form.isPresident ? "e.g., Founder & Lead Architect" : "e.g., Autonomous Systems Engineer"}
+                                className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs sm:text-sm outline-none focus:border-aira-cyan"
+                                required
+                            />
+                        </div>
                     </div>
 
                     {/* Group / Division */}
@@ -577,10 +650,11 @@ export default function TeamMembersAdminPage() {
                         </label>
                         <input
                             type="text"
+                            maxLength={100}
                             value={form.teamGroup}
                             onChange={(e) => setForm({ ...form, teamGroup: e.target.value })}
                             placeholder="e.g., Founders & Executive Board"
-                            className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-sm outline-none focus:border-aira-cyan"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs sm:text-sm outline-none focus:border-aira-cyan"
                         />
                         <div className="flex flex-wrap gap-1.5 mt-2">
                             {(form.isPresident ? LEADERSHIP_GROUPS : PEOPLE_GROUPS).map((grp) => (
@@ -588,7 +662,7 @@ export default function TeamMembersAdminPage() {
                                     type="button"
                                     key={grp}
                                     onClick={() => setForm({ ...form, teamGroup: grp })}
-                                    className="text-[10px] px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5"
+                                    className="text-[10px] px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-colors"
                                 >
                                     + {grp}
                                 </button>
@@ -596,26 +670,34 @@ export default function TeamMembersAdminPage() {
                         </div>
                     </div>
 
-                    {/* Photo Upload & URL */}
+                    {/* Photo Upload & Preview */}
                     <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
                             Profile Picture (Upload Image or Paste URL)
                         </label>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                             <input
                                 type="text"
                                 value={form.photo}
                                 onChange={(e) => setForm({ ...form, photo: e.target.value })}
-                                placeholder="https://... or click Upload"
-                                className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs outline-none focus:border-aira-cyan font-mono"
+                                placeholder="https://... or click Upload Image"
+                                className="flex-1 px-3.5 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs outline-none focus:border-aira-cyan font-mono"
                             />
-                            <label className="px-4 py-2.5 rounded-xl bg-aira-cyan/15 border border-aira-cyan/40 text-aira-cyan text-xs font-semibold cursor-pointer hover:bg-aira-cyan/25 transition-all flex items-center gap-1.5 shrink-0">
-                                <UploadCloud size={15} />
-                                {uploadingPhoto ? "Uploading..." : "Upload Photo"}
+                            <label className="px-4 py-2.5 rounded-xl bg-aira-cyan/15 border border-aira-cyan/40 text-aira-cyan text-xs font-semibold cursor-pointer hover:bg-aira-cyan/25 transition-all flex items-center justify-center gap-1.5 shrink-0">
+                                {uploadingPhoto ? (
+                                    <>
+                                        <RefreshCw size={14} className="animate-spin" /> Uploading...
+                                    </>
+                                ) : (
+                                    <>
+                                        <UploadCloud size={15} /> Upload Photo
+                                    </>
+                                )}
                                 <input
                                     type="file"
                                     accept="image/*"
                                     className="hidden"
+                                    disabled={uploadingPhoto}
                                     onChange={(e) => {
                                         const file = e.target.files?.[0];
                                         if (file) void uploadPhoto(file);
@@ -623,30 +705,70 @@ export default function TeamMembersAdminPage() {
                                 />
                             </label>
                         </div>
+
                         {form.photo && (
-                            <div className="mt-2 flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/5">
-                                <img
-                                    src={form.photo}
-                                    alt="Preview"
-                                    className="w-12 h-12 rounded-xl object-cover border border-white/15"
-                                />
-                                <div className="text-[11px] text-slate-300">Photo preview loaded</div>
+                            <div className="mt-2.5 flex items-center justify-between p-2.5 rounded-2xl bg-white/5 border border-white/10">
+                                <div className="flex items-center gap-3">
+                                    <img
+                                        src={form.photo}
+                                        alt="Preview"
+                                        className="w-12 h-12 rounded-xl object-cover border border-white/20 bg-slate-900 shadow-md"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(form.name || "Preview")}&background=0d1526&color=00D4FF&size=100`;
+                                        }}
+                                    />
+                                    <div>
+                                        <p className="text-xs font-semibold text-white">Profile Photo Preview</p>
+                                        <p className="text-[10px] text-slate-400 font-mono truncate max-w-[200px] sm:max-w-xs">{form.photo}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setForm({ ...form, photo: "" })}
+                                    className="p-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 transition-colors"
+                                    title="Remove photo"
+                                >
+                                    <X size={14} />
+                                </button>
                             </div>
                         )}
                     </div>
 
-                    {/* Bio Statement */}
+                    {/* Bio Statement with 500-word limit counter */}
                     <div>
-                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                            Bio Statement / Vision
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                Bio Statement / Vision
+                            </label>
+                            <span 
+                                className={`text-[11px] font-mono transition-colors ${
+                                    isBioOverLimit
+                                        ? "text-rose-400 font-bold"
+                                        : bioWordCount > 400
+                                        ? "text-amber-400 font-semibold"
+                                        : "text-slate-400"
+                                }`}
+                            >
+                                {bioWordCount} / {MAX_BIO_WORDS} words ({form.bio.length}/{MAX_BIO_CHARS} chars)
+                            </span>
+                        </div>
                         <textarea
                             value={form.bio}
                             onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                            placeholder="Describe their background, research domains, or key accomplishments..."
-                            rows={3}
-                            className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs outline-none focus:border-aira-cyan resize-none font-sans"
+                            placeholder="Describe their background, research domains, mission, or key accomplishments (up to 500 words)..."
+                            rows={4}
+                            maxLength={MAX_BIO_CHARS}
+                            className={`w-full px-3.5 py-2.5 rounded-xl border bg-slate-950/80 text-white text-xs sm:text-sm outline-none resize-none font-sans leading-relaxed transition-colors ${
+                                isBioOverLimit
+                                    ? "border-rose-500 focus:border-rose-500"
+                                    : "border-white/10 focus:border-aira-cyan"
+                            }`}
                         />
+                        {isBioOverLimit && (
+                            <p className="text-[11px] text-rose-400 mt-1 flex items-center gap-1 font-semibold">
+                                <AlertCircle size={12} /> Exceeded maximum word limit of {MAX_BIO_WORDS} words.
+                            </p>
+                        )}
                     </div>
 
                     {/* Social Links */}
@@ -657,6 +779,7 @@ export default function TeamMembersAdminPage() {
                             </label>
                             <input
                                 type="text"
+                                maxLength={250}
                                 value={form.linkedin}
                                 onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
                                 placeholder="https://linkedin.com/in/..."
@@ -669,6 +792,7 @@ export default function TeamMembersAdminPage() {
                             </label>
                             <input
                                 type="text"
+                                maxLength={250}
                                 value={form.github}
                                 onChange={(e) => setForm({ ...form, github: e.target.value })}
                                 placeholder="https://github.com/..."
@@ -680,7 +804,7 @@ export default function TeamMembersAdminPage() {
                     {/* Sort Order */}
                     <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                            Display Sort Order
+                            Display Sort Order (Number)
                         </label>
                         <input
                             type="number"
@@ -690,27 +814,6 @@ export default function TeamMembersAdminPage() {
                             className="w-full px-3.5 py-2 rounded-xl border border-white/10 bg-slate-950/80 text-white text-xs outline-none focus:border-aira-cyan"
                         />
                         <span className="text-[10px] text-slate-500">Lower numbers appear first on the page</span>
-                    </div>
-
-                    {/* Submit Button */}
-                    <div className="pt-4 flex justify-end gap-3 border-t border-white/10">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setIsCreateOpen(false);
-                                setEditing(null);
-                            }}
-                            className="px-4 py-2.5 rounded-xl border border-white/15 text-slate-300 text-xs font-semibold hover:bg-white/5"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSubmitting || uploadingPhoto}
-                            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-orbitron font-bold text-xs hover:scale-105 transition-transform disabled:opacity-50"
-                        >
-                            {isSubmitting ? "Saving..." : editing ? "Save Changes" : `Create ${form.isPresident ? "Leader" : "Member"} Profile`}
-                        </button>
                     </div>
                 </form>
             </AnimatedModal>
@@ -725,20 +828,20 @@ export default function TeamMembersAdminPage() {
                     <div className="flex justify-end gap-3">
                         <button
                             onClick={() => setDeleteId(null)}
-                            className="px-4 py-2 rounded-lg border border-white/15 text-slate-300 text-xs"
+                            className="px-4 py-2 rounded-xl border border-white/15 text-slate-300 text-xs font-semibold hover:bg-white/5"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleDelete}
-                            className="px-4 py-2 rounded-lg bg-red-600 text-white font-bold text-xs hover:bg-red-700 transition-colors flex items-center gap-1.5"
+                            className="px-4 py-2 rounded-xl bg-red-600 text-white font-bold text-xs hover:bg-red-700 transition-colors flex items-center gap-1.5"
                         >
                             <Trash2 size={14} /> Yes, Delete
                         </button>
                     </div>
                 }
             >
-                <p className="text-xs text-slate-300">
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
                     This profile will be permanently deleted from the database and will no longer appear on public leadership or about pages.
                 </p>
             </AnimatedModal>

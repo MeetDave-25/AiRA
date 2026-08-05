@@ -20,7 +20,8 @@ import {
     Rocket, 
     ArrowRight,
     Crown,
-    Target
+    Target,
+    Quote
 } from "lucide-react";
 
 function MemberModal({ member, onClose }: { member: any; onClose: () => void }) {
@@ -32,80 +33,151 @@ function MemberModal({ member, onClose }: { member: any; onClose: () => void }) 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+                className="fixed inset-0 z-[99999] bg-slate-950/85 backdrop-blur-xl overflow-y-auto overscroll-contain p-3 sm:p-6 md:p-8 flex items-start sm:items-center justify-center min-h-screen"
                 onClick={onClose}
             >
                 <motion.div
-                    initial={{ scale: 0.85, opacity: 0, y: 24 }}
+                    initial={{ scale: 0.94, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
-                    exit={{ scale: 0.85, opacity: 0, y: 24 }}
-                    transition={{ type: "spring", stiffness: 320, damping: 26 }}
-                    className="glass-strong rounded-3xl p-6 sm:p-8 max-w-lg w-full relative border border-white/15 shadow-2xl shadow-aira-cyan/10"
+                    exit={{ scale: 0.94, opacity: 0, y: 20 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                    className="glass-strong rounded-3xl border border-white/20 shadow-2xl shadow-aira-cyan/20 w-full max-w-4xl max-h-[90vh] sm:max-h-[86vh] flex flex-col relative overflow-hidden my-auto z-10"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <button 
-                        onClick={onClose} 
-                        className="absolute top-4 right-4 w-9 h-9 rounded-full glass flex items-center justify-center text-slate-400 hover:text-aira-cyan hover:border-aira-cyan/40 transition-colors"
-                        aria-label="Close modal"
-                    >
-                        <X size={18} />
-                    </button>
+                    {/* Background glow orbs */}
+                    <div className="absolute -top-24 -right-24 w-80 h-80 bg-aira-cyan/15 blur-[90px] rounded-full pointer-events-none" />
+                    <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-aira-purple/15 blur-[90px] rounded-full pointer-events-none" />
 
-                    <div className="text-center mb-6">
-                        <div className="relative inline-block mb-4">
-                            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden border-2 border-aira-cyan/60 glow-cyan mx-auto bg-slate-900">
-                                <img
-                                    src={member.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=200`}
-                                    alt={member.name}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => { 
-                                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=200`; 
-                                    }}
-                                />
-                            </div>
-                            {member.isPresident && (
-                                <div className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-sm shadow-md">
-                                    👑
-                                </div>
+                    {/* Top Bar with Badge & Close button */}
+                    <div className="flex items-center justify-between px-5 sm:px-8 py-3.5 sm:py-4 border-b border-white/10 bg-slate-950/40 shrink-0 relative z-20">
+                        <div className="flex items-center gap-2">
+                            {member.isPresident ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-orbitron font-bold">
+                                    👑 Executive Leader Profile
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aira-cyan/15 text-aira-cyan border border-aira-cyan/30 text-[11px] font-orbitron font-bold">
+                                    🤖 AiRA Lab Member Profile
+                                </span>
+                            )}
+                            {member.teamGroup && (
+                                <span className="hidden sm:inline-block text-[11px] text-slate-400 font-mono">
+                                    • {member.teamGroup}
+                                </span>
                             )}
                         </div>
 
-                        <h2 className="font-orbitron font-bold text-xl sm:text-2xl text-white">{member.name}</h2>
-                        <p className="text-aira-cyan text-sm font-medium mt-1">{member.role}</p>
-                        {member.teamGroup && (
-                            <span className="inline-block px-3 py-1 mt-2 text-xs rounded-full bg-aira-purple/20 text-violet-300 border border-aira-purple/30">
-                                {member.teamGroup}
-                            </span>
-                        )}
+                        <button 
+                            onClick={onClose} 
+                            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full glass border border-white/15 flex items-center justify-center text-slate-300 hover:text-white hover:bg-rose-500/20 hover:border-rose-500/40 transition-all"
+                            aria-label="Close modal"
+                        >
+                            <X size={18} />
+                        </button>
                     </div>
 
-                    {member.bio && (
-                        <div className="p-4 bg-slate-900/60 rounded-2xl border border-white/5 mb-6 text-slate-300 text-sm leading-relaxed text-center">
-                            {member.bio}
-                        </div>
-                    )}
+                    {/* Modal Main Body (2 Columns on Laptop / 1 Column on Mobile) */}
+                    <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] divide-y md:divide-y-0 md:divide-x divide-white/10 overflow-y-auto overscroll-contain flex-1">
+                        {/* Left Sidebar: Photo, Identity & Social Links */}
+                        <div className="p-5 sm:p-7 flex flex-col items-center md:items-start text-center md:text-left space-y-4 bg-slate-950/20">
+                            {/* Profile Photo */}
+                            <div className="relative group">
+                                <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-3xl overflow-hidden border-2 border-aira-cyan/60 glow-cyan bg-slate-900 shadow-2xl">
+                                    <img
+                                        src={member.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=300`}
+                                        alt={member.name}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => { 
+                                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=300`; 
+                                        }}
+                                    />
+                                </div>
+                                {member.isPresident && (
+                                    <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 flex items-center gap-1 text-[10px] font-bold text-slate-950 shadow-lg ring-2 ring-slate-950">
+                                        👑 FOUNDER
+                                    </div>
+                                )}
+                            </div>
 
-                    <div className="flex flex-wrap justify-center gap-3">
-                        {member.linkedin && (
-                            <a 
-                                href={member.linkedin.startsWith("http") ? member.linkedin : `https://${member.linkedin}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl glass border border-aira-cyan/30 text-aira-cyan text-xs hover:bg-aira-cyan/15 hover:scale-105 transition-all font-semibold"
-                            >
-                                <Linkedin size={15} /> LinkedIn
-                            </a>
-                        )}
-                        {member.github && (
-                            <a 
-                                href={member.github.startsWith("http") ? member.github : `https://${member.github}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl glass border border-white/15 text-slate-200 text-xs hover:border-aira-cyan/40 hover:text-aira-cyan hover:scale-105 transition-all font-semibold"
-                            >
-                                <Github size={15} /> GitHub
-                            </a>
-                        )}
+                            {/* Name & Title */}
+                            <div className="w-full">
+                                <h2 className="font-orbitron font-bold text-xl sm:text-2xl text-white tracking-tight break-words">
+                                    {member.name}
+                                </h2>
+                                <p className="text-aira-cyan font-semibold text-xs sm:text-sm mt-1 leading-snug">
+                                    {member.role}
+                                </p>
+                                {member.teamGroup && (
+                                    <span className="inline-block px-3 py-1 mt-2 text-[11px] font-semibold rounded-full bg-aira-purple/25 text-violet-300 border border-aira-purple/40">
+                                        {member.teamGroup}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Social Buttons */}
+                            <div className="flex flex-col gap-2 w-full pt-2">
+                                {member.linkedin && (
+                                    <a 
+                                        href={member.linkedin.startsWith("http") ? member.linkedin : `https://${member.linkedin}`} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center md:justify-start gap-2.5 px-4 py-2.5 rounded-xl bg-[#0077b5]/20 border border-[#0077b5]/50 text-blue-300 text-xs font-semibold hover:bg-[#0077b5]/30 hover:scale-[1.02] transition-all shadow-md w-full"
+                                    >
+                                        <Linkedin size={15} className="shrink-0" />
+                                        <span className="truncate">LinkedIn Profile</span>
+                                    </a>
+                                )}
+                                {member.github && (
+                                    <a 
+                                        href={member.github.startsWith("http") ? member.github : `https://${member.github}`} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center md:justify-start gap-2.5 px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white text-xs font-semibold hover:bg-white/20 hover:scale-[1.02] transition-all shadow-md w-full"
+                                    >
+                                        <Github size={15} className="shrink-0" />
+                                        <span className="truncate">GitHub Workspace</span>
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Right Main Content: Bio Statement & Background */}
+                        <div className="p-5 sm:p-8 flex flex-col justify-between space-y-6">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 text-xs font-orbitron font-bold uppercase tracking-wider text-slate-400 pb-2 border-b border-white/10">
+                                    <Quote size={15} className="text-aira-cyan" />
+                                    <span>About & Vision</span>
+                                </div>
+
+                                {member.bio ? (
+                                    <div className="text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed font-sans space-y-3 break-words">
+                                        {member.bio.split("\n\n").map((para: string, i: number) => (
+                                            <p key={i} className="leading-relaxed text-slate-300">
+                                                {para}
+                                            </p>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-slate-500 text-sm italic">
+                                        No bio statement provided yet.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Bottom Metadata */}
+                            <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                    <span>Active AiRA Labs Contributor</span>
+                                </div>
+                                <button
+                                    onClick={onClose}
+                                    className="px-4 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 text-xs font-medium transition-colors"
+                                >
+                                    Close Profile
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </motion.div>
             </motion.div>
