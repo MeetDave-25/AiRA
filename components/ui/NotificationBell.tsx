@@ -23,6 +23,17 @@ export function NotificationBell() {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
+    function timeAgo(dateStr: string) {
+        const now = new Date();
+        const date = new Date(dateStr);
+        const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+        if (diff < 60) return "just now";
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+        return date.toLocaleDateString();
+    }
+
     // Close when clicking outside
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -160,7 +171,7 @@ export function NotificationBell() {
                                                 </p>
                                                 <div className="flex items-center justify-between mt-2.5 pt-1">
                                                     <span className="text-[10px] text-slate-500 font-mono">
-                                                        {new Date(notif.createdAt).toLocaleDateString()} • {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        {timeAgo(notif.createdAt)}
                                                     </span>
                                                     {notif.link && (
                                                         <Link

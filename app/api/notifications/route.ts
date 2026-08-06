@@ -62,7 +62,18 @@ export async function PUT(req: NextRequest) {
     try {
         const body = await req.json();
         const { id, markAll } = body;
-        const userId = (session.user as any)?.id;
+        const userEmail = session.user.email.toLowerCase();
+        let userId = (session.user as any)?.id;
+
+        // Resolve virtual userId for bypass admin sessions
+        if (!userId || userId.startsWith("local-bypass-")) {
+            const { data: dbUser } = await db
+                .from("User")
+                .select("id")
+                .eq("email", userEmail)
+                .maybeSingle();
+            if (dbUser) userId = dbUser.id;
+        }
 
         if (markAll) {
             await db
