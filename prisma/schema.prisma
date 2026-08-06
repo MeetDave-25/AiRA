@@ -13,18 +13,19 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  name         String
-  email        String    @unique
-  password     String
-  role         String    @default("TEAM_MEMBER") // Enum polyfill
-  avatar       String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  memberships  TeamMembership[]
-  taskUpdates  TaskUpdate[]
-  notifications Notification[]
-  reports      Report[]
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  password        String
+  role            String    @default("TEAM_MEMBER") // Enum polyfill
+  avatar          String?
+  passwordChanges Int       @default(0)            // Max 3 self-service changes
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  memberships     TeamMembership[]
+  taskUpdates     TaskUpdate[]
+  notifications   Notification[]
+  reports         Report[]
 }
 
 model Team {
