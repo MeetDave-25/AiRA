@@ -25,7 +25,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
             return NextResponse.json({ error: "Application not found" }, { status: 404 });
         }
 
-        let userCredentials: { loginId?: string; password?: string; userCreated?: boolean; userId?: string; profileId?: string } = {};
+        let userCredentials: { loginId?: string; password?: string; setupToken?: string; userCreated?: boolean; userId?: string; profileId?: string } = {};
 
         let emailDispatchResult: any = null;
 
@@ -66,10 +66,25 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
                     if (!userError && createdUser) {
                         activeUserId = createdUser.id;
+
+                        // Create a Setup Token
+                        const setupToken = uuidv4();
+                        const expiresAt = new Date();
+                        expiresAt.setHours(expiresAt.getHours() + 24);
+
+                        await db.from("PasswordResetToken").insert({
+                            id: uuidv4(),
+                            token: setupToken,
+                            userId: createdUser.id,
+                            expiresAt: expiresAt.toISOString(),
+                            createdAt: new Date().toISOString(),
+                        });
+
                         userCredentials = {
                             userCreated: true,
                             loginId: targetEmail,
                             password: rawPassword,
+                            setupToken: setupToken,
                             userId: createdUser.id,
                         };
                     } else if (userError) {
@@ -90,8 +105,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                             id: uuidv4(),
                             userId: activeUserId,
                             title: "🎉 Welcome to AiRA Labs!",
-                            message: "Your membership application has been accepted! Access your team tasks and change your temporary password in Settings.",
-                            link: "/portal/settings",
+                            message: "Your membership application has been accepted! Welcome to the portal.",
+                            link: "/portal/dashboard",
                             read: false,
                             createdAt: new Date().toISOString(),
                         });
@@ -106,6 +121,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                         to: targetEmail,
                         name: applicantName,
                         password: userCredentials.password,
+                        setupToken: userCredentials.setupToken,
                         portalUrl: PORTAL_URL,
                         role: roleLabel,
                     });

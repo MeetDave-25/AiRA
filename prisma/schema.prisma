@@ -26,6 +26,7 @@ model User {
   taskUpdates     TaskUpdate[]
   notifications   Notification[]
   reports         Report[]
+  resetTokens     PasswordResetToken[]
 }
 
 model Team {
@@ -196,4 +197,15 @@ model Report {
   createdAt DateTime @default(now())
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

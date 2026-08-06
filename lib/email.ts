@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 
 export const AIRA_OFFICIAL_EMAIL = "info@aira-lab.in";
-export const AIRA_SENDER_NAME = "AiRA Labs";
+export const AIRA_SENDER_NAME = "AiRA Lab";
 export const AIRA_SENDER = `"${AIRA_SENDER_NAME}" <${AIRA_OFFICIAL_EMAIL}>`;
 export const PORTAL_URL = "https://www.aira-lab.in/portal/login";
 
@@ -9,6 +9,7 @@ interface WelcomeEmailParams {
     to: string;
     name: string;
     password?: string;
+    setupToken?: string;
     portalUrl?: string;
     role?: string;
 }
@@ -64,23 +65,26 @@ export function generateWelcomeEmailHtml({
     name,
     email,
     password,
+    setupToken,
     portalUrl = PORTAL_URL,
     role = "Team Member",
 }: {
     name: string;
     email: string;
     password?: string;
+    setupToken?: string;
     portalUrl?: string;
     role?: string;
 }) {
     const firstName = name.split(" ")[0];
+    const setupUrl = setupToken ? `https://www.aira-lab.in/portal/setup-password?token=${setupToken}` : portalUrl;
 
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to AiRA Labs</title>
+  <title>Welcome to AiRA Lab</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -119,20 +123,6 @@ export function generateWelcomeEmailHtml({
       width: 240px; height: 160px;
       background: radial-gradient(ellipse, rgba(0,212,255,0.18) 0%, transparent 70%);
       pointer-events: none;
-    }
-    .logo-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 60px; height: 60px;
-      background: linear-gradient(135deg, #00D4FF 0%, #7C3AED 100%);
-      border-radius: 18px;
-      margin-bottom: 18px;
-      box-shadow: 0 8px 24px rgba(0, 212, 255, 0.4);
-      font-weight: 900;
-      font-size: 18px;
-      color: #ffffff;
-      letter-spacing: 1px;
     }
     .header-label {
       font-size: 10px;
@@ -353,21 +343,20 @@ export function generateWelcomeEmailHtml({
       <!-- Header -->
       <div class="header">
         <div class="header-glow"></div>
-        <div class="logo-badge">AL</div>
         <div class="header-label">Official Membership Notice</div>
-        <h1 class="header-title">Welcome to <span>AiRA Labs</span></h1>
+        <h1 class="header-title">Welcome to <span>AiRA Lab</span></h1>
       </div>
 
       <!-- Congrats Banner -->
       <div class="congrats-banner">
-        <p>🎉 Your application has been <strong>ACCEPTED</strong> — you're now an official AiRA Labs member!</p>
+        <p>🎉 Your application has been <strong>ACCEPTED</strong> — you're now an official AiRA Lab member!</p>
       </div>
 
       <!-- Main Content -->
       <div class="content">
         <div class="greeting">Hi ${firstName}! 👋</div>
         <p class="text">
-          We're excited to welcome you to <strong style="color:#e2e8f0;">AiRA Labs</strong> — Artificial Intelligence &amp; Robotics Association. Your account has been set up and you can now access the member portal using the credentials below.
+          We're excited to welcome you to <strong style="color:#e2e8f0;">AiRA Lab</strong> — Advanced Innovation Research and analysis Lab. Your account has been set up and you can now access the member portal using the credentials below.
         </p>
 
         <!-- Credentials Box -->
@@ -390,27 +379,27 @@ export function generateWelcomeEmailHtml({
           </div>` : ""}
         </div>
 
-        <!-- Password change notice -->
         ${password ? `
         <div class="notice">
-          ⚠️ <strong>Important:</strong> This is a temporary password. Please log in and go to <strong>Portal → Settings</strong> to change it immediately.
+          ⚠️ <strong>Tip:</strong> You can log in using the password above, or click the button below to set your own custom password before logging in.
         </div>` : ""}
 
-        <!-- CTA Button -->
+        <!-- CTA Buttons -->
         <div class="cta-wrap">
-          <a href="${portalUrl}" class="cta-btn" target="_blank">Access Member Portal →</a>
+          ${setupToken ? `<a href="${setupUrl}" class="cta-btn" target="_blank" style="background: linear-gradient(135deg, #00D4FF 0%, #7C3AED 100%); display:inline-block;">Set My Own Password →</a>` : `<a href="${portalUrl}" class="cta-btn" target="_blank">Access Member Portal →</a>`}
         </div>
+        ${setupToken ? `<p style="text-align:center;font-size:12px;color:#64748b;margin:-16px 0 28px;">or log in directly with the password above</p>` : ""}
 
         <!-- Steps -->
         <div class="steps-box">
-          <div class="steps-title">🛡️ First Steps After Login</div>
+          <div class="steps-title">🛡️ How to Get Started</div>
           <div class="step">
             <span class="step-num">1</span>
-            <span>Log in at <a href="${portalUrl}" style="color:#00D4FF;">${portalUrl}</a> using your credentials above.</span>
+            <span><strong style="color:#e2e8f0;">Option A:</strong> Click <em>Set My Own Password</em> above to choose your own password, then log in.</span>
           </div>
           <div class="step">
             <span class="step-num">2</span>
-            <span>Go to <strong style="color:#e2e8f0;">Settings</strong> and change your temporary password immediately.</span>
+            <span><strong style="color:#e2e8f0;">Option B:</strong> Log in directly at <a href="${portalUrl}" style="color:#00D4FF;">${portalUrl}</a> using the provided password above.</span>
           </div>
           <div class="step">
             <span class="step-num">3</span>
@@ -430,15 +419,15 @@ export function generateWelcomeEmailHtml({
 
       <!-- Footer -->
       <div class="footer">
-        <div class="footer-logo">AiRA Labs</div>
-        <p class="footer-sub">Artificial Intelligence &amp; Robotics Association</p>
+        <div class="footer-logo">AiRA Lab</div>
+        <p class="footer-sub">Advanced Innovation Research and analysis Lab</p>
         <p class="footer-sub">
           <a href="mailto:${AIRA_OFFICIAL_EMAIL}">${AIRA_OFFICIAL_EMAIL}</a> &nbsp;•&nbsp;
           <a href="https://www.aira-lab.in">www.aira-lab.in</a>
         </p>
         <div class="divider"></div>
         <p class="footer-sub" style="font-size:11px; color:#334155;">
-          This email was sent to ${email} because your application to AiRA Labs was approved.
+          This email was sent to ${email} because your application to AiRA Lab was approved.
         </p>
       </div>
 
@@ -455,39 +444,42 @@ export function generateWelcomeEmailText({
     name,
     email,
     password,
+    setupToken,
     portalUrl = PORTAL_URL,
 }: {
     name: string;
     email: string;
     password?: string;
+    setupToken?: string;
     portalUrl?: string;
     role?: string;
 }) {
-    return `Welcome to AiRA Labs!
+    const setupUrl = setupToken ? `https://www.aira-lab.in/portal/setup-password?token=${setupToken}` : portalUrl;
+
+    return `Welcome to AiRA Lab!
 
 Hi ${name},
 
-Your application to join AiRA Labs has been ACCEPTED. Here are your portal login credentials:
+Your application to join AiRA Lab has been ACCEPTED.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Your Portal Login Credentials:
+Your Portal Login Details:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Portal URL: ${portalUrl}
 Login ID:   ${email}
 ${password ? `Password:   ${password}` : ""}
 
-${password ? "⚠️  Please log in and change your password from Portal → Settings immediately." : ""}
+${setupToken ? `Want to set your own password? Use this link (valid 24hrs):\n${setupUrl}` : ""}
 
-First Steps:
-1. Visit: ${portalUrl}
-2. Log in with your email and password above.
-3. Go to Settings to change your password.
-4. Explore your dashboard, tasks, and team projects.
+How to get started:
+1. Log in at ${portalUrl} with the password above.
+${setupToken ? `   OR click the link above to set your own custom password first.` : ""}
+2. Explore your dashboard, tasks, and team projects.
 
 Questions? Email us at ${AIRA_OFFICIAL_EMAIL}
 
 Best regards,
-The AiRA Labs Leadership Team
+The AiRA Lab Leadership Team
 ${AIRA_OFFICIAL_EMAIL} | https://www.aira-lab.in
 `.trim();
 }
@@ -499,6 +491,7 @@ export async function sendWelcomeEmail({
     to,
     name,
     password,
+    setupToken,
     portalUrl = PORTAL_URL,
     role = "Team Member",
 }: WelcomeEmailParams): Promise<{
@@ -510,9 +503,9 @@ export async function sendWelcomeEmail({
     text: string;
     mailtoUrl?: string;
 }> {
-    const subject = `🎉 Welcome to AiRA Labs, ${name}! — Your Portal Login Credentials`;
-    const html = generateWelcomeEmailHtml({ name, email: to, password, portalUrl, role });
-    const text = generateWelcomeEmailText({ name, email: to, password, portalUrl, role });
+    const subject = `🎉 Welcome to AiRA Lab, ${name}! — Your Portal Login Credentials`;
+    const html = generateWelcomeEmailHtml({ name, email: to, password, setupToken, portalUrl, role });
+    const text = generateWelcomeEmailText({ name, email: to, password, setupToken, portalUrl, role });
 
     const transporter = getEmailTransporter();
 
@@ -585,14 +578,13 @@ function generateApplicationConfirmationHtml({
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Application Received — AiRA Labs</title>
+  <title>Application Received — AiRA Lab</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background-color: #030712; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f3f4f6; }
     .wrapper { width: 100%; background-color: #030712; padding: 32px 16px; }
     .container { max-width: 580px; margin: 0 auto; background: #0B0F19; border: 1px solid rgba(0, 212, 255, 0.25); border-radius: 24px; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 60px rgba(0,212,255,0.08); }
     .header { background: linear-gradient(135deg, #0a0e1a 0%, #0f172a 100%); padding: 40px 32px 32px; text-align: center; border-bottom: 1px solid rgba(0,212,255,0.15); }
-    .logo-badge { display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: linear-gradient(135deg, #00D4FF 0%, #7C3AED 100%); border-radius: 18px; margin-bottom: 18px; font-weight: 900; font-size: 18px; color: #fff; letter-spacing: 1px; }
     .header-label { font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #00D4FF; margin-bottom: 10px; }
     .header-title { font-size: 26px; font-weight: 800; color: #fff; letter-spacing: -0.5px; line-height: 1.2; }
     .header-title span { background: linear-gradient(135deg, #00D4FF 0%, #7C3AED 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
@@ -613,7 +605,6 @@ function generateApplicationConfirmationHtml({
   <div class="wrapper">
     <div class="container">
       <div class="header">
-        <div class="logo-badge">AL</div>
         <div class="header-label">Application Status</div>
         <h1 class="header-title">Application <span>Received</span></h1>
       </div>
@@ -621,7 +612,7 @@ function generateApplicationConfirmationHtml({
       <div class="content">
         <div class="greeting">Hi ${firstName}! 👋</div>
         <p class="text">
-          Thank you for applying to <strong style="color:#e2e8f0;">AiRA Labs</strong> — Artificial Intelligence &amp; Robotics Association.
+          Thank you for applying to <strong style="color:#e2e8f0;">AiRA Lab</strong> — Advanced Innovation Research and analysis Lab.
           Your application is now in our review queue. Our team will evaluate it and get back to you as soon as possible.
         </p>
         <div class="info-box">
@@ -636,14 +627,14 @@ function generateApplicationConfirmationHtml({
         </p>
       </div>
       <div class="footer">
-        <div class="footer-logo">AiRA Labs</div>
-        <p class="footer-sub">Artificial Intelligence &amp; Robotics Association</p>
+        <div class="footer-logo">AiRA Lab</div>
+        <p class="footer-sub">Advanced Innovation Research and analysis Lab</p>
         <p class="footer-sub">
           <a href="mailto:${AIRA_OFFICIAL_EMAIL}">${AIRA_OFFICIAL_EMAIL}</a> &nbsp;•&nbsp;
           <a href="https://www.aira-lab.in">www.aira-lab.in</a>
         </p>
         <div class="divider"></div>
-        <p class="footer-sub" style="font-size:11px;color:#334155;">You received this because you submitted an application to AiRA Labs.</p>
+        <p class="footer-sub" style="font-size:11px;color:#334155;">You received this because you submitted an application to AiRA Lab.</p>
       </div>
     </div>
   </div>
@@ -661,11 +652,11 @@ function generateApplicationConfirmationText({
     name: string;
     interest?: string | null;
 }) {
-    return `Application Received — AiRA Labs
+    return `Application Received — AiRA Lab
 
 Hi ${name},
 
-Thank you for applying to AiRA Labs (Artificial Intelligence & Robotics Association)!
+Thank you for applying to AiRA Lab (Advanced Innovation Research and analysis Lab)!
 
 We've received your application${interest ? ` for ${interest}` : ""} and our team will review it shortly.
 
@@ -677,7 +668,7 @@ What happens next:
 Questions? Email us at ${AIRA_OFFICIAL_EMAIL}
 
 Best regards,
-The AiRA Labs Leadership Team
+The AiRA Lab Leadership Team
 ${AIRA_OFFICIAL_EMAIL} | https://www.aira-lab.in
 `.trim();
 }
@@ -697,7 +688,7 @@ export async function sendApplicationConfirmationEmail({
     subject: string;
     text: string;
 }> {
-    const subject = `✅ We've received your AiRA Labs application, ${name}!`;
+    const subject = `✅ We've received your AiRA Lab application, ${name}!`;
     const html = generateApplicationConfirmationHtml({ name, interest });
     const text = generateApplicationConfirmationText({ name, interest });
 
