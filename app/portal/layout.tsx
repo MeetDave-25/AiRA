@@ -18,7 +18,8 @@ import {
     X,
     Radio,
     ShieldCheck,
-    Briefcase
+    Briefcase,
+    MessageSquare
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { NotificationBell } from "@/components/ui/NotificationBell";
