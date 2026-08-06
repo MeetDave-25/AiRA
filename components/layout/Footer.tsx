@@ -96,9 +96,11 @@ export default function Footer() {
                 </div>
 
                 <div className="mt-12 pt-6 border-t border-aira-border/30 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <p className="text-slate-500 text-xs">
-                        © 2024 AIRA Labs. All rights reserved.
-                    </p>
+                    <div className="text-center md:text-left mb-4 md:mb-0">
+                        <p className="text-slate-400 text-sm">
+                            © {new Date().getFullYear()} AIRA Labs. All rights reserved.
+                        </p>
+                    </div>
                     <div className="flex items-center gap-2">
                         <span className="text-slate-500 text-xs">Powered by</span>
                         <span className="text-aira-cyan text-xs font-medium font-orbitron">AIRA Labs</span>
