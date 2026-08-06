@@ -35,11 +35,14 @@ export default function PortalLayout({
     const pathname = usePathname();
     const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
+    // Define public routes that don't require authentication
+    const isPublicRoute = pathname === "/portal/login" || pathname === "/portal/setup-password";
+
     useEffect(() => {
-        if (status === "unauthenticated" && pathname !== "/portal/login") {
+        if (status === "unauthenticated" && !isPublicRoute) {
             router.push("/portal/login");
         }
-    }, [status, pathname, router]);
+    }, [status, pathname, router, isPublicRoute]);
 
     if (status === "loading") {
         return (
@@ -49,8 +52,8 @@ export default function PortalLayout({
         );
     }
 
-    // If on login page and unauthenticated, just show login page
-    if (pathname === "/portal/login") {
+    // If on a public page and unauthenticated, just show that page (no sidebar)
+    if (isPublicRoute) {
         return <div className="min-h-screen bg-aira-bg">{children}</div>;
     }
 
