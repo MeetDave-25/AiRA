@@ -558,3 +558,189 @@ export async function sendWelcomeEmail({
         text,
     };
 }
+
+// ─── Application Confirmation Email ──────────────────────────────────────────
+
+interface ApplicationConfirmationParams {
+    to: string;
+    name: string;
+    interest?: string | null;
+}
+
+/**
+ * Generate HTML confirmation email for a new applicant
+ */
+function generateApplicationConfirmationHtml({
+    name,
+    interest,
+}: {
+    name: string;
+    interest?: string | null;
+}) {
+    const firstName = name.split(" ")[0];
+    const interestLine = interest ? `<p style="margin:0 0 8px;font-size:14px;color:#94a3b8;">Area of interest: <strong style="color:#e2e8f0;">${interest}</strong></p>` : "";
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application Received — AiRA Labs</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #030712; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f3f4f6; }
+    .wrapper { width: 100%; background-color: #030712; padding: 32px 16px; }
+    .container { max-width: 580px; margin: 0 auto; background: #0B0F19; border: 1px solid rgba(0, 212, 255, 0.25); border-radius: 24px; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 60px rgba(0,212,255,0.08); }
+    .header { background: linear-gradient(135deg, #0a0e1a 0%, #0f172a 100%); padding: 40px 32px 32px; text-align: center; border-bottom: 1px solid rgba(0,212,255,0.15); }
+    .logo-badge { display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: linear-gradient(135deg, #00D4FF 0%, #7C3AED 100%); border-radius: 18px; margin-bottom: 18px; font-weight: 900; font-size: 18px; color: #fff; letter-spacing: 1px; }
+    .header-label { font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #00D4FF; margin-bottom: 10px; }
+    .header-title { font-size: 26px; font-weight: 800; color: #fff; letter-spacing: -0.5px; line-height: 1.2; }
+    .header-title span { background: linear-gradient(135deg, #00D4FF 0%, #7C3AED 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .banner { background: linear-gradient(135deg, rgba(0,212,255,0.1) 0%, rgba(124,58,237,0.1) 100%); border-top: 1px solid rgba(0,212,255,0.2); border-bottom: 1px solid rgba(0,212,255,0.2); padding: 16px 32px; text-align: center; font-size: 14px; font-weight: 600; color: #e2e8f0; }
+    .content { padding: 32px; }
+    .greeting { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+    .text { font-size: 14px; color: #94a3b8; line-height: 1.75; margin-bottom: 24px; }
+    .info-box { background: #060b14; border: 1px solid rgba(0,212,255,0.2); border-radius: 14px; padding: 20px 24px; margin-bottom: 24px; }
+    .info-box-title { font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #00D4FF; margin-bottom: 14px; }
+    .footer { background: #060913; border-top: 1px solid rgba(255,255,255,0.06); padding: 24px 32px; text-align: center; }
+    .footer-logo { font-size: 14px; font-weight: 800; color: #e2e8f0; margin-bottom: 6px; }
+    .footer-sub { font-size: 12px; color: #475569; line-height: 1.6; margin-bottom: 4px; }
+    .footer a { color: #00D4FF; text-decoration: none; }
+    .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 16px 0; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <div class="header">
+        <div class="logo-badge">AL</div>
+        <div class="header-label">Application Status</div>
+        <h1 class="header-title">Application <span>Received</span></h1>
+      </div>
+      <div class="banner">✅ We've received your application and will review it shortly.</div>
+      <div class="content">
+        <div class="greeting">Hi ${firstName}! 👋</div>
+        <p class="text">
+          Thank you for applying to <strong style="color:#e2e8f0;">AiRA Labs</strong> — Artificial Intelligence &amp; Robotics Association.
+          Your application is now in our review queue. Our team will evaluate it and get back to you as soon as possible.
+        </p>
+        <div class="info-box">
+          <div class="info-box-title">📋 What Happens Next</div>
+          <p style="font-size:13px;color:#94a3b8;line-height:1.7;margin-bottom:10px;">1. Our team will review your application.</p>
+          <p style="font-size:13px;color:#94a3b8;line-height:1.7;margin-bottom:10px;">2. If accepted, you'll receive a welcome email with your portal credentials.</p>
+          <p style="font-size:13px;color:#94a3b8;line-height:1.7;margin-bottom:0;">3. You can reach out to us anytime at <a href="mailto:${AIRA_OFFICIAL_EMAIL}" style="color:#00D4FF;">${AIRA_OFFICIAL_EMAIL}</a>.</p>
+        </div>
+        ${interestLine}
+        <p class="text" style="margin-bottom:0;font-size:13px;">
+          Questions? Reply to this email or contact us at <a href="mailto:${AIRA_OFFICIAL_EMAIL}" style="color:#00D4FF;">${AIRA_OFFICIAL_EMAIL}</a>.
+        </p>
+      </div>
+      <div class="footer">
+        <div class="footer-logo">AiRA Labs</div>
+        <p class="footer-sub">Artificial Intelligence &amp; Robotics Association</p>
+        <p class="footer-sub">
+          <a href="mailto:${AIRA_OFFICIAL_EMAIL}">${AIRA_OFFICIAL_EMAIL}</a> &nbsp;•&nbsp;
+          <a href="https://www.aira-lab.in">www.aira-lab.in</a>
+        </p>
+        <div class="divider"></div>
+        <p class="footer-sub" style="font-size:11px;color:#334155;">You received this because you submitted an application to AiRA Labs.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+/**
+ * Generate plain-text confirmation email for a new applicant
+ */
+function generateApplicationConfirmationText({
+    name,
+    interest,
+}: {
+    name: string;
+    interest?: string | null;
+}) {
+    return `Application Received — AiRA Labs
+
+Hi ${name},
+
+Thank you for applying to AiRA Labs (Artificial Intelligence & Robotics Association)!
+
+We've received your application${interest ? ` for ${interest}` : ""} and our team will review it shortly.
+
+What happens next:
+1. Our team will review your application.
+2. If accepted, you'll receive a welcome email with your portal login credentials.
+3. You can reach out to us anytime at ${AIRA_OFFICIAL_EMAIL}.
+
+Questions? Email us at ${AIRA_OFFICIAL_EMAIL}
+
+Best regards,
+The AiRA Labs Leadership Team
+${AIRA_OFFICIAL_EMAIL} | https://www.aira-lab.in
+`.trim();
+}
+
+/**
+ * Sends a confirmation email to a new applicant acknowledging receipt of their application
+ */
+export async function sendApplicationConfirmationEmail({
+    to,
+    name,
+    interest,
+}: ApplicationConfirmationParams): Promise<{
+    success: boolean;
+    status: string;
+    messageId?: string;
+    error?: string;
+    subject: string;
+    text: string;
+}> {
+    const subject = `✅ We've received your AiRA Labs application, ${name}!`;
+    const html = generateApplicationConfirmationHtml({ name, interest });
+    const text = generateApplicationConfirmationText({ name, interest });
+
+    const transporter = getEmailTransporter();
+
+    if (transporter) {
+        try {
+            const info = await transporter.sendMail({
+                from: AIRA_SENDER,
+                to,
+                replyTo: AIRA_OFFICIAL_EMAIL,
+                subject,
+                text,
+                html,
+            });
+
+            console.log(`[Email] Application confirmation sent to ${to} — MessageID: ${info.messageId}`);
+
+            return {
+                success: true,
+                messageId: info.messageId,
+                status: "sent",
+                subject,
+                text,
+            };
+        } catch (error: any) {
+            console.error("[Email] SMTP send failed:", error?.message || error);
+            return {
+                success: false,
+                error: error?.message || "SMTP send failed",
+                status: "smtp_failed",
+                subject,
+                text,
+            };
+        }
+    }
+
+    console.warn("[Email] No SMTP transporter configured. Set RESEND_API_KEY in .env to enable emails.");
+    return {
+        success: false,
+        status: "no_smtp_configured",
+        error: "RESEND_API_KEY not set in environment variables",
+        subject,
+        text,
+    };
+}
