@@ -6,6 +6,7 @@ import { Calendar, MapPin, Users, User, Target, FileText, Star, ArrowLeft, Chevr
 import Link from "next/link";
 import { isVideoMedia } from "@/lib/media";
 import { formatDate } from "@/lib/utils";
+import EventRegistrationForm from "@/components/EventRegistrationForm";
 
 function ImageCarousel({
     images,
@@ -217,6 +218,11 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                             </h2>
                             <p className="text-slate-300 leading-relaxed">{event.outcome}</p>
                         </div>
+                    )}
+
+                    {/* Registration Form (Only if Upcoming) */}
+                    {isUpcoming && (
+                        <EventRegistrationForm eventId={event.id} />
                     )}
                 </div>
 

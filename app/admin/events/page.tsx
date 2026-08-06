@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, Edit2, Film, ImagePlus, Plus, Star, Trash2 } from "lucide-react";
+import { Calendar, Edit2, Film, ImagePlus, Plus, Star, Trash2, ClipboardList } from "lucide-react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import AnimatedModal from "@/components/ui/AnimatedModal";
@@ -524,6 +525,9 @@ export default function AdminEventsPage() {
                                 <td className="p-4 text-slate-400 flex items-center gap-2"><Calendar size={14} className="text-aira-cyan" /> {new Date(event.date).toLocaleDateString()}</td>
                                 <td className="p-4">{new Date(event.date) > new Date() ? <span className="badge-upcoming">Upcoming</span> : <span className="badge-completed">Completed</span>}</td>
                                 <td className="p-4 flex gap-2 justify-end">
+                                    <Link href={`/admin/events/${event.id}/form`} className="p-2 glass rounded text-aira-purple hover:bg-aira-purple/20" title="Registration Form">
+                                        <ClipboardList size={14} />
+                                    </Link>
                                     <button onClick={() => openEditModal(event)} className="p-2 glass rounded text-aira-cyan hover:bg-aira-cyan/20"><Edit2 size={14} /></button>
                                     <button onClick={() => setDeletingEventId(event.id)} className="p-2 glass rounded text-aira-magenta hover:bg-aira-magenta/20"><Trash2 size={14} /></button>
                                 </td>
