@@ -508,8 +508,8 @@ export default function AdminEventsPage() {
                 </button>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="glass rounded-2xl border border-white/5 overflow-hidden card-3d">
-                <table className="w-full text-left border-collapse">
+            <motion.div variants={itemVariants} className="glass rounded-2xl border border-white/5 overflow-x-auto card-3d">
+                <table className="w-full text-left border-collapse min-w-[700px]">
                     <thead className="bg-white/5 text-xs uppercase text-slate-400">
                         <tr>
                             <th className="p-4 font-medium">Event</th>
