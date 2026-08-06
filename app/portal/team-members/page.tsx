@@ -67,7 +67,6 @@ export default function TeamMembersPage() {
         <div className="space-y-6 max-w-6xl mx-auto">
             <TeamSubNav teamName={teamData?.name} />
 
-            <div className="flex justify-between items-end mb-6">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
