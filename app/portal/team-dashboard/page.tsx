@@ -7,6 +7,7 @@ import { Users, CheckCircle2, Clock3, AlertCircle, Plus, MessageSquare, FileText
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import AnimatedModal from "@/components/ui/AnimatedModal";
+import { TeamSubNav } from "@/components/ui/TeamSubNav";
 
 type TeamTaskUpdate = {
     taskId: string;
@@ -344,8 +345,10 @@ export default function TeamDashboardPage() {
     }
 
     return (
-        <div className="space-y-6">
-            {/* Team Header */}
+        <div className="space-y-6 max-w-6xl mx-auto">
+            <TeamSubNav teamName={teamData?.name} />
+
+            {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Users, Mail, Phone, Badge, Briefcase, Calendar } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
+import { TeamSubNav } from "@/components/ui/TeamSubNav";
 
 export default function TeamMembersPage() {
     const { data: session } = useSession();
@@ -63,8 +64,10 @@ export default function TeamMembersPage() {
     }
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
+        <div className="space-y-6 max-w-6xl mx-auto">
+            <TeamSubNav teamName={teamData?.name} />
+
+            <div className="flex justify-between items-end mb-6">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

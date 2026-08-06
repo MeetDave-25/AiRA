@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { MessageSquare, Send, Trash2, Clock } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
+import { TeamSubNav } from "@/components/ui/TeamSubNav";
 
 interface TaskUpdate {
     id: string;
@@ -130,7 +131,9 @@ export default function TeamUpdatesPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 max-w-6xl mx-auto">
+            <TeamSubNav teamName={teamData?.name} />
+
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
