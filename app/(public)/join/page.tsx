@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Send, CheckCircle, Mail, Phone, User, MessageSquare, Zap, UploadCloud, Camera, X, Loader2, Image as ImageIcon } from "lucide-react";
+import { Send, CheckCircle, Mail, Phone, User, MessageSquare, Zap, UploadCloud, Camera, X, Loader2, Image as ImageIcon, Linkedin, Github } from "lucide-react";
 import toast from "react-hot-toast";
 
 const interests = [
@@ -11,7 +11,7 @@ const interests = [
 ];
 
 export default function JoinPage() {
-    const [form, setForm] = useState({ name: "", email: "", phone: "", interest: "", message: "", photo: "" });
+    const [form, setForm] = useState({ name: "", email: "", phone: "", interest: "", message: "", photo: "", linkedin: "", github: "" });
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
@@ -110,7 +110,7 @@ export default function JoinPage() {
                         We&apos;ll review it and reach out to you at <span className="text-aira-cyan">{form.email}</span> soon.
                     </p>
                     <button
-                        onClick={() => { setSubmitted(false); setForm({ name: "", email: "", phone: "", interest: "", message: "", photo: "" }); }}
+                        onClick={() => { setSubmitted(false); setForm({ name: "", email: "", phone: "", interest: "", message: "", photo: "", linkedin: "", github: "" }); }}
                         className="px-6 py-3 rounded-xl glass border border-aira-cyan/30 text-aira-cyan text-sm hover:bg-aira-cyan/10 transition-all"
                     >
                         Submit Another
@@ -317,6 +317,35 @@ export default function JoinPage() {
                                 <option value="">Select your interest</option>
                                 {interests.map(i => <option key={i} value={i}>{i}</option>)}
                             </select>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div>
+                                <label className="text-xs text-slate-400 mb-1.5 block font-medium">LinkedIn Profile (Optional)</label>
+                                <div className="relative">
+                                    <Linkedin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                                    <input
+                                        type="url"
+                                        placeholder="linkedin.com/in/..."
+                                        value={form.linkedin}
+                                        onChange={(e) => setForm(f => ({ ...f, linkedin: e.target.value }))}
+                                        className="w-full pl-9 pr-4 py-3 rounded-xl glass border border-aira-border/50 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-aira-cyan/50 bg-transparent"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-400 mb-1.5 block font-medium">GitHub Profile (Optional)</label>
+                                <div className="relative">
+                                    <Github size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                                    <input
+                                        type="url"
+                                        placeholder="github.com/..."
+                                        value={form.github}
+                                        onChange={(e) => setForm(f => ({ ...f, github: e.target.value }))}
+                                        className="w-full pl-9 pr-4 py-3 rounded-xl glass border border-aira-border/50 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-aira-cyan/50 bg-transparent"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         <div>

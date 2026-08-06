@@ -131,7 +131,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                     const profileId = uuidv4();
                     const memberRole = app.interest ? `${app.interest} Member` : "Team Member";
                     const teamGroup = app.interest || "Core Team";
-                    const bio = app.message ? app.message.slice(0, 200) : "AiRA Lab Team Member";
+                    const bio = app.message || "AiRA Lab Team Member";
 
                     const { data: createdProfile } = await db
                         .from("TeamMemberProfile")
@@ -142,6 +142,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                             teamGroup: teamGroup,
                             bio: bio,
                             photo: app.photo || "",
+                            linkedin: app.linkedin || null,
+                            github: app.github || null,
                             sortOrder: 10,
                             isPresident: false,
                             updatedAt: new Date().toISOString(),

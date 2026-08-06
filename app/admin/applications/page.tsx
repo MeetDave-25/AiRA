@@ -25,7 +25,9 @@ import {
     CheckSquare,
     Square,
     User,
-    Camera
+    Camera,
+    Linkedin,
+    Github
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -425,6 +427,16 @@ export default function ApplicationsPage() {
                                             {app.phone && (
                                                 <a href={`tel:${app.phone}`} className="flex items-center gap-1.5 hover:text-aira-cyan text-slate-300">
                                                     <Phone size={13} className="text-emerald-400" /> {app.phone}
+                                                </a>
+                                            )}
+                                            {app.linkedin && (
+                                                <a href={app.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-[#0A66C2] text-slate-300">
+                                                    <Linkedin size={13} className="text-[#0A66C2]" /> LinkedIn
+                                                </a>
+                                            )}
+                                            {app.github && (
+                                                <a href={app.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-white text-slate-300">
+                                                    <Github size={13} className="text-slate-400" /> GitHub
                                                 </a>
                                             )}
                                             <span className="text-slate-500">

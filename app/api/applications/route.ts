@@ -15,7 +15,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { name, email, phone, interest, message, photo } = body;
+        const { name, email, phone, interest, message, photo, linkedin, github } = body;
         const { data, error } = await db
             .from("Application")
             .insert({
@@ -26,6 +26,8 @@ export async function POST(req: NextRequest) {
                 interest: interest || null,
                 message: message || null,
                 photo: photo || null,
+                linkedin: linkedin || null,
+                github: github || null,
                 updatedAt: new Date().toISOString()
             })
             .select()
