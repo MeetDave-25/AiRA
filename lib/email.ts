@@ -555,5 +555,6 @@ export async function sendWelcomeEmail({
         status: "no_smtp_configured",
         error: "RESEND_API_KEY not set in environment variables",
         subject,
-    }
-        
+        text,
+    };
+}
