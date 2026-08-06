@@ -70,6 +70,8 @@ export default function PortalLayout({
         { href: "/admin/events", label: "Events Manager", icon: Calendar, roles: ["ADMIN", "CONTENT_MANAGER"] },
         { href: "/portal/events", label: "My Events", icon: Calendar, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
         { href: "/portal/team-dashboard", label: "Team Hub", icon: Briefcase, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
+        { href: "/portal/team-members", label: "Team Members", icon: Users, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
+        { href: "/portal/team-updates", label: "Team Updates", icon: MessageSquare, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
         { href: "/admin/reports", label: "Team Reports", icon: FileText, roles: ["ADMIN"] },
         { href: "/admin/applications", label: "Applications", icon: FileText, roles: ["ADMIN"] },
         { href: "/admin/achievements", label: "Achievements", icon: Award, roles: ["ADMIN", "CONTENT_MANAGER"] },
