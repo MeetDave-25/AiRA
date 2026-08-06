@@ -424,7 +424,7 @@ export default function PortalSettingsPage() {
                                         <div className="flex items-center justify-center gap-3 text-[11px] text-slate-500">
                                             <QuotaDots />
                                             <span>
-                                                {remaining} of {MAX_CHANGES} change{MAX_CHANGES !== 1 ? "s" : ""} remaining
+                                                {remaining} of {MAX_CHANGES} changes remaining
                                             </span>
                                         </div>
                                     )}
