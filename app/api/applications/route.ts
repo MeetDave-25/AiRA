@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
 import { v4 as uuidv4 } from "uuid";
+import { sendApplicationConfirmationEmail } from "@/lib/email";
 
 export async function GET() {
     const auth = await requireAdmin();
@@ -30,6 +31,18 @@ export async function POST(req: NextRequest) {
             .select()
             .single();
         if (error) throw error;
+
+        // Send confirmation email to applicant (non-blocking)
+        if (name && email) {
+            sendApplicationConfirmationEmail({
+                to: email.trim().toLowerCase(),
+                name: name.trim(),
+                interest: interest || null,
+            }).catch((err) => {
+                console.error("[Applications] Confirmation email failed:", err);
+            });
+        }
+
         return NextResponse.json(data, { status: 201 });
     } catch (error) {
         return NextResponse.json({ error: "Failed to submit application" }, { status: 500 });
