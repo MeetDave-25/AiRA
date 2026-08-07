@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
     X, Download, Copy, Sparkles, User, Layers, Calendar, Quote, 
     Rocket, Search, Code, Star, Globe, Check, Image as ImageIcon,
-    RefreshCw, Move, RotateCcw, ZoomIn, ZoomOut, Maximize2, Type, CheckCircle2
+    RefreshCw, Move, RotateCcw, ZoomIn, ZoomOut, Maximize2, Type, CheckCircle2,
+    Upload, Trash2
 } from "lucide-react";
 import toast from "react-hot-toast";
 import html2canvas from "html2canvas";
@@ -31,7 +32,10 @@ type AspectRatioType = "1:1" | "4:5" | "9:16" | "16:9";
 
 export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPosterModalProps) {
     const exportRef = useRef<HTMLDivElement>(null);
-    const previewBoxRef = useRef<HTMLDivElement>(null);
+    const previewContainerRef = useRef<HTMLDivElement>(null);
+    const logoInputRef = useRef<HTMLInputElement>(null);
+    const photoInputRef = useRef<HTMLInputElement>(null);
+
     const [downloading, setDownloading] = useState(false);
     const [copiedCaption, setCopiedCaption] = useState(false);
 
@@ -39,7 +43,8 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
     const [aspectRatio, setAspectRatio] = useState<AspectRatioType>("1:1");
     const [previewScale, setPreviewScale] = useState(0.33);
 
-    // Dynamic poster text state
+    // Dynamic poster text & logo state
+    const [customLogoUrl, setCustomLogoUrl] = useState<string>("" );
     const [welcomeText, setWelcomeText] = useState("WELCOME");
     const [taglineText, setTaglineText] = useState("A NEW MIND. A NEW ENERGY. A NEW IMPACT.");
     const [topQuoteText, setTopQuoteText] = useState("THE FUTURE IS CREATED BY THOSE WHO DARE TO BUILD IT.");
@@ -88,18 +93,21 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
 
     useEffect(() => {
         const updateScale = () => {
-            if (previewBoxRef.current) {
-                const boxWidth = previewBoxRef.current.clientWidth;
+            if (previewContainerRef.current) {
+                const boxWidth = previewContainerRef.current.clientWidth;
                 if (boxWidth > 0) {
                     setPreviewScale(boxWidth / currentDim.width);
                 }
             }
         };
 
-        updateScale();
+        const timer = setTimeout(updateScale, 100);
         window.addEventListener("resize", updateScale);
-        return () => window.removeEventListener("resize", updateScale);
-    }, [aspectRatio, currentDim.width]);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener("resize", updateScale);
+        };
+    }, [aspectRatio, currentDim.width, open]);
 
     useEffect(() => {
         if (applicant) {
@@ -131,6 +139,34 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
         setPhotoScale(1);
         setPhotoY(0);
         toast.success("Element positions & zoom reset to default!");
+    };
+
+    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                if (event.target?.result) {
+                    setCustomLogoUrl(event.target.result as string);
+                    toast.success("Custom logo loaded!");
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                if (event.target?.result) {
+                    setPhotoUrl(event.target.result as string);
+                    toast.success("Candidate photo uploaded!");
+                }
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     const handleDownloadPoster = async () => {
@@ -244,9 +280,17 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                 >
                     <div className="flex items-center gap-8">
                         <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 via-purple-700 to-indigo-950 border border-purple-400/60 shadow-[0_0_25px_rgba(168,85,247,0.4)] flex items-center justify-center text-white font-orbitron font-extrabold text-3xl tracking-tighter">
-                                ▲
-                            </div>
+                            {customLogoUrl ? (
+                                <img
+                                    src={customLogoUrl}
+                                    alt="Logo"
+                                    className="w-16 h-16 object-contain rounded-2xl border border-purple-400/60 shadow-[0_0_25px_rgba(168,85,247,0.4)] bg-[#0d0b1f]"
+                                />
+                            ) : (
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 via-purple-700 to-indigo-950 border border-purple-400/60 shadow-[0_0_25px_rgba(168,85,247,0.4)] flex items-center justify-center text-white font-orbitron font-extrabold text-3xl tracking-tighter">
+                                    ▲
+                                </div>
+                            )}
                             <div className="leading-tight">
                                 <div className="font-orbitron font-black text-3xl tracking-widest text-white">AIRA</div>
                                 <div className="font-orbitron font-bold text-sm tracking-[0.35em] text-purple-400">LAB</div>
@@ -562,6 +606,22 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                     }
                 `}</style>
 
+                {/* Hidden File Upload Inputs */}
+                <input 
+                    ref={logoInputRef}
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={handleLogoUpload} 
+                />
+                <input 
+                    ref={photoInputRef}
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={handlePhotoUpload} 
+                />
+
                 {/* Hidden offscreen node for 1536×1536 html2canvas export */}
                 <div 
                     style={{
@@ -595,7 +655,7 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                                     Onboarding Welcome Poster Studio
                                 </h2>
                                 <p className="text-xs text-slate-400">
-                                    1536×1536 px Instagram Export, Click-to-Edit & Free Dragging
+                                    1536×1536 px Instagram Export, Custom Logo Upload & Free Element Dragging
                                 </p>
                             </div>
                         </div>
@@ -643,6 +703,45 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                                                 </div>
                                             </button>
                                         ))}
+                                    </div>
+                                </div>
+
+                                {/* Custom Logo Upload */}
+                                <div className="p-3 bg-slate-900/90 border border-white/10 rounded-xl space-y-2">
+                                    <span className="text-xs font-semibold text-purple-300 block flex items-center gap-1.5">
+                                        <Sparkles size={14} /> Custom Logo
+                                    </span>
+                                    <div className="flex items-center gap-3">
+                                        {customLogoUrl ? (
+                                            <img
+                                                src={customLogoUrl}
+                                                alt="Custom Logo"
+                                                className="w-10 h-10 object-contain rounded-lg border border-purple-400/40 bg-slate-950 p-0.5"
+                                            />
+                                        ) : (
+                                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-950 border border-purple-400/40 flex items-center justify-center text-white font-orbitron font-bold text-lg">
+                                                ▲
+                                            </div>
+                                        )}
+
+                                        <div className="flex-1 flex gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => logoInputRef.current?.click()}
+                                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 rounded-lg text-xs font-semibold text-purple-200 transition-colors"
+                                            >
+                                                <Upload size={12} /> Upload Logo
+                                            </button>
+                                            {customLogoUrl && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCustomLogoUrl("")}
+                                                    className="p-1.5 bg-slate-900 hover:bg-rose-950/40 border border-white/10 text-rose-400 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -758,7 +857,16 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                                 </div>
 
                                 <div>
-                                    <label className="text-xs text-slate-400 font-medium mb-1 block">Photo Image URL</label>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="text-xs text-slate-400 font-medium">Photo Image URL or File</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => photoInputRef.current?.click()}
+                                            className="text-[10px] text-aira-cyan hover:underline flex items-center gap-1"
+                                        >
+                                            <Upload size={10} /> Upload Photo
+                                        </button>
+                                    </div>
                                     <input
                                         type="text"
                                         value={photoUrl}
@@ -812,7 +920,7 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                             </span>
 
                             <div 
-                                ref={previewBoxRef}
+                                ref={previewContainerRef}
                                 style={{
                                     width: "100%",
                                     maxWidth: aspectRatio === "16:9" ? "600px" : "440px",
@@ -821,10 +929,13 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                                     overflow: "hidden",
                                     borderRadius: "1rem",
                                 }}
-                                className="shadow-2xl border border-purple-500/30 bg-[#06050e] relative flex items-center justify-center"
+                                className="shadow-2xl border border-purple-500/30 bg-[#06050e] relative"
                             >
                                 <div
                                     style={{
+                                        position: "absolute",
+                                        top: 0,
+                                        left: 0,
                                         width: `${currentDim.width}px`,
                                         height: `${currentDim.height}px`,
                                         transform: `scale(${previewScale})`,

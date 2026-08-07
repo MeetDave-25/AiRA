@@ -5,7 +5,8 @@ import { motion } from "framer-motion";
 import { 
     Sparkles, Download, Copy, RefreshCw, User, Layers, Calendar, 
     Rocket, Search, Code, Star, Globe, Check, Image as ImageIcon,
-    UserCheck, Move, RotateCcw, ZoomIn, ZoomOut, Maximize2, Type, CheckCircle2
+    UserCheck, Move, RotateCcw, ZoomIn, ZoomOut, Maximize2, Type, CheckCircle2,
+    Upload, Trash2
 } from "lucide-react";
 import toast from "react-hot-toast";
 import html2canvas from "html2canvas";
@@ -29,7 +30,10 @@ type AspectRatioType = "1:1" | "4:5" | "9:16" | "16:9";
 
 export default function PostersPage() {
     const exportRef = useRef<HTMLDivElement>(null);
-    const previewBoxRef = useRef<HTMLDivElement>(null);
+    const previewContainerRef = useRef<HTMLDivElement>(null);
+    const logoInputRef = useRef<HTMLInputElement>(null);
+    const photoInputRef = useRef<HTMLInputElement>(null);
+
     const [candidates, setCandidates] = useState<Candidate[]>([]);
     const [selectedId, setSelectedId] = useState<string>("");
     const [isLoading, setIsLoading] = useState(true);
@@ -39,19 +43,20 @@ export default function PostersPage() {
 
     // Aspect Ratio & Dimensions State (Default: 1:1 Square 1536x1536)
     const [aspectRatio, setAspectRatio] = useState<AspectRatioType>("1:1");
-    const [previewScale, setPreviewScale] = useState(0.33);
+    const [previewScale, setPreviewScale] = useState(0.35);
 
-    // Dynamic poster text state
+    // Dynamic poster text & logo state
+    const [customLogoUrl, setCustomLogoUrl] = useState<string>("");
     const [welcomeText, setWelcomeText] = useState("WELCOME");
     const [taglineText, setTaglineText] = useState("A NEW MIND. A NEW ENERGY. A NEW IMPACT.");
     const [topQuoteText, setTopQuoteText] = useState("THE FUTURE IS CREATED BY THOSE WHO DARE TO BUILD IT.");
-    const [name, setName] = useState("");
-    const [role, setRole] = useState("");
+    const [name, setName] = useState("Team Member");
+    const [role, setRole] = useState("Chief Technical Officer");
     const [department, setDepartment] = useState("Technical Wing");
-    const [joinedDate, setJoinedDate] = useState("");
-    const [quote, setQuote] = useState("");
+    const [joinedDate, setJoinedDate] = useState("March 2026");
+    const [quote, setQuote] = useState("Building robust systems, scalable solutions and smarter tomorrows.");
     const [photoUrl, setPhotoUrl] = useState("");
-    const [signatureName, setSignatureName] = useState("");
+    const [signatureName, setSignatureName] = useState("Meet Dave");
     const [footerUrl, setFooterUrl] = useState("www.aira-lab.in");
 
     // Interactive Drag & Photo Zoom Controls State
@@ -89,20 +94,24 @@ export default function PostersPage() {
 
     const currentDim = getDimensions(aspectRatio);
 
-    // Dynamically adjust preview scale
+    // Dynamically adjust preview scale to fit container width accurately
     useEffect(() => {
         const updateScale = () => {
-            if (previewBoxRef.current) {
-                const boxWidth = previewBoxRef.current.clientWidth;
+            if (previewContainerRef.current) {
+                const boxWidth = previewContainerRef.current.clientWidth;
                 if (boxWidth > 0) {
-                    setPreviewScale(boxWidth / currentDim.width);
+                    const newScale = boxWidth / currentDim.width;
+                    setPreviewScale(newScale);
                 }
             }
         };
 
-        updateScale();
+        const timer = setTimeout(updateScale, 100);
         window.addEventListener("resize", updateScale);
-        return () => window.removeEventListener("resize", updateScale);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener("resize", updateScale);
+        };
     }, [aspectRatio, currentDim.width]);
 
     // Load candidates - ONLY APPROVED / ACCEPTED MEMBERS (Exclude Pending / Rejected)
@@ -199,6 +208,36 @@ export default function PostersPage() {
         toast.success("Element positions & zoom reset to default!");
     };
 
+    // Custom Logo File Upload Handler
+    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                if (event.target?.result) {
+                    setCustomLogoUrl(event.target.result as string);
+                    toast.success("Custom logo loaded!");
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // Custom Photo File Upload Handler
+    const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                if (event.target?.result) {
+                    setPhotoUrl(event.target.result as string);
+                    toast.success("Candidate photo uploaded!");
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     // Export 1536x1536 PNG cleanly without cutoff
     const handleDownloadPoster = async () => {
         if (!exportRef.current) return;
@@ -280,7 +319,7 @@ export default function PostersPage() {
         setTimeout(() => setCopiedCaption(false), 3000);
     };
 
-    // Poster Layout Template JSX - 1536×1536 HIGH-RES CANVAS
+    // Poster Layout Template JSX - 1536×1536 HIGH-RES CANVAS WITH DYNAMIC LOGO & ALL ELEMENTS
     const PosterContent = () => (
         <div 
             style={{ 
@@ -315,12 +354,20 @@ export default function PostersPage() {
                     dragElastic={0}
                     className={`space-y-4 ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-2xl p-2" : ""}`}
                 >
-                    {/* Logo and Proud to Welcome line */}
+                    {/* Dynamic Logo + Proud to Welcome line */}
                     <div className="flex items-center gap-8">
                         <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 via-purple-700 to-indigo-950 border border-purple-400/60 shadow-[0_0_25px_rgba(168,85,247,0.4)] flex items-center justify-center text-white font-orbitron font-extrabold text-3xl tracking-tighter">
-                                ▲
-                            </div>
+                            {customLogoUrl ? (
+                                <img
+                                    src={customLogoUrl}
+                                    alt="Logo"
+                                    className="w-16 h-16 object-contain rounded-2xl border border-purple-400/60 shadow-[0_0_25px_rgba(168,85,247,0.4)] bg-[#0d0b1f]"
+                                />
+                            ) : (
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 via-purple-700 to-indigo-950 border border-purple-400/60 shadow-[0_0_25px_rgba(168,85,247,0.4)] flex items-center justify-center text-white font-orbitron font-extrabold text-3xl tracking-tighter">
+                                    ▲
+                                </div>
+                            )}
                             <div className="leading-tight">
                                 <div className="font-orbitron font-black text-3xl tracking-widest text-white">AIRA</div>
                                 <div className="font-orbitron font-bold text-sm tracking-[0.35em] text-purple-400">LAB</div>
@@ -653,6 +700,22 @@ export default function PostersPage() {
                 }
             `}</style>
 
+            {/* Hidden File Upload Inputs */}
+            <input 
+                ref={logoInputRef}
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                onChange={handleLogoUpload} 
+            />
+            <input 
+                ref={photoInputRef}
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                onChange={handlePhotoUpload} 
+            />
+
             {/* ══ HIDDEN OFFSCREEN UNTRANSFORMED DOM NODE FOR EXACT 1536×1536 HTML2CANVAS CAPTURE ══ */}
             <div 
                 style={{
@@ -681,7 +744,7 @@ export default function PostersPage() {
                             Onboarding Poster Studio
                         </h1>
                         <p className="text-xs text-slate-400">
-                            1536×1536 px Instagram & LinkedIn resolution, Approved Members only, Click-to-Edit & Drag
+                            1536×1536 px Instagram & LinkedIn Resolution, Custom Logo Upload & Approved Candidates Only
                         </p>
                     </div>
                 </div>
@@ -713,7 +776,7 @@ export default function PostersPage() {
             {/* Main Studio Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
-                {/* ══ LEFT COLUMN: ASPECT RATIO, CANDIDATE PICKER & CONTROLS ══ */}
+                {/* ══ LEFT COLUMN: ASPECT RATIO, CANDIDATE PICKER, LOGO UPLOAD & CONTROLS ══ */}
                 <div className="lg:col-span-5 space-y-6">
                     
                     {/* Aspect Ratio Selector Card */}
@@ -746,11 +809,52 @@ export default function PostersPage() {
                         </div>
                     </div>
 
+                    {/* Custom Logo & Brand Controls */}
+                    <div className="glass rounded-2xl p-5 border border-white/5 space-y-3">
+                        <h2 className="font-orbitron font-bold text-sm text-white flex items-center gap-2">
+                            <Sparkles size={16} className="text-aira-cyan" /> 2. Upload Logo & Brand
+                        </h2>
+                        
+                        <div className="flex items-center gap-3">
+                            {customLogoUrl ? (
+                                <img
+                                    src={customLogoUrl}
+                                    alt="Custom Logo"
+                                    className="w-12 h-12 object-contain rounded-xl border border-purple-400/40 bg-slate-950 p-1"
+                                />
+                            ) : (
+                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-950 border border-purple-400/40 flex items-center justify-center text-white font-orbitron font-bold text-xl">
+                                    ▲
+                                </div>
+                            )}
+
+                            <div className="flex-1 flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => logoInputRef.current?.click()}
+                                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 rounded-xl text-xs font-semibold text-purple-200 transition-colors"
+                                >
+                                    <Upload size={14} /> Upload Custom Logo
+                                </button>
+                                {customLogoUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setCustomLogoUrl("")}
+                                        className="p-2 bg-slate-900 hover:bg-rose-950/40 border border-white/10 text-rose-400 rounded-xl transition-colors"
+                                        title="Reset to default AiRA logo"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Candidate Picker Box - APPROVED MEMBERS ONLY */}
                     <div className="glass rounded-2xl p-5 border border-white/5 space-y-4">
                         <div className="flex items-center justify-between">
                             <h2 className="font-orbitron font-bold text-sm text-white flex items-center gap-2">
-                                <UserCheck size={16} className="text-aira-cyan" /> 2. Select Approved Candidate
+                                <UserCheck size={16} className="text-aira-cyan" /> 3. Select Approved Candidate
                             </h2>
                             <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                 Approved Only
@@ -768,7 +872,7 @@ export default function PostersPage() {
                             />
                         </div>
 
-                        <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
+                        <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1">
                             {isLoading ? (
                                 <div className="p-4 text-center text-slate-500 text-xs flex items-center justify-center gap-2">
                                     <RefreshCw size={14} className="animate-spin text-aira-cyan" /> Loading approved members...
@@ -826,7 +930,7 @@ export default function PostersPage() {
                     {/* Edit Form Fields & Photo Adjust */}
                     <div className="glass rounded-2xl p-5 border border-white/5 space-y-4">
                         <h2 className="font-orbitron font-bold text-sm text-white flex items-center gap-2">
-                            <Type size={16} className="text-purple-400" /> 3. Edit Details & Direct Click-to-Edit
+                            <Type size={16} className="text-purple-400" /> 4. Edit Details & Direct Click-to-Edit
                         </h2>
 
                         <div className="p-3 bg-purple-950/30 border border-purple-500/20 rounded-xl space-y-2">
@@ -941,7 +1045,16 @@ export default function PostersPage() {
                         </div>
 
                         <div>
-                            <label className="text-xs text-slate-400 font-medium mb-1 block">Photo Image URL</label>
+                            <div className="flex items-center justify-between mb-1">
+                                <label className="text-xs text-slate-400 font-medium">Photo Image URL or File</label>
+                                <button
+                                    type="button"
+                                    onClick={() => photoInputRef.current?.click()}
+                                    className="text-[10px] text-aira-cyan hover:underline flex items-center gap-1"
+                                >
+                                    <Upload size={10} /> Upload Photo File
+                                </button>
+                            </div>
                             <input
                                 type="text"
                                 value={photoUrl}
@@ -957,7 +1070,7 @@ export default function PostersPage() {
                         <button
                             disabled={downloading}
                             onClick={handleDownloadPoster}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-aira-cyan via-purple-600 to-aira-magenta text-white font-bold rounded-xl text-sm hover:opacity-95 transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50"
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-gradient-to-r from-aira-cyan via-purple-600 to-aira-magenta text-white font-bold rounded-xl text-sm hover:opacity-95 transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50"
                         >
                             {downloading ? (
                                 <>
@@ -1001,21 +1114,24 @@ export default function PostersPage() {
                         </span>
                     </div>
 
-                    {/* Dynamic Aspect Ratio Box */}
+                    {/* Dynamic Aspect Ratio Viewport Box */}
                     <div 
-                        ref={previewBoxRef}
+                        ref={previewContainerRef}
                         style={{
                             width: "100%",
                             maxWidth: aspectRatio === "16:9" ? "640px" : "480px",
                             aspectRatio: `${currentDim.width} / ${currentDim.height}`,
                             position: "relative",
                             overflow: "hidden",
-                            borderRadius: "1rem",
+                            borderRadius: "1.25rem",
                         }}
-                        className="shadow-2xl border border-purple-500/40 bg-[#06050e] relative flex items-center justify-center"
+                        className="shadow-2xl border border-purple-500/40 bg-[#06050e] relative"
                     >
                         <div
                             style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
                                 width: `${currentDim.width}px`,
                                 height: `${currentDim.height}px`,
                                 transform: `scale(${previewScale})`,
