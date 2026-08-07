@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { 
     Sparkles, Download, Copy, RefreshCw, User, Layers, Calendar, 
     Rocket, Search, Code, Star, Globe, Check, Image as ImageIcon,
-    UserCheck, Move, RotateCcw, ZoomIn, ZoomOut, Maximize2, Type, Layout
+    UserCheck, Move, RotateCcw, ZoomIn, ZoomOut, Maximize2, Type
 } from "lucide-react";
 import toast from "react-hot-toast";
 import html2canvas from "html2canvas";
@@ -28,6 +28,7 @@ type AspectRatioType = "1:1" | "4:5" | "9:16" | "16:9";
 
 export default function PostersPage() {
     const exportRef = useRef<HTMLDivElement>(null);
+    const previewBoxRef = useRef<HTMLDivElement>(null);
     const [candidates, setCandidates] = useState<Candidate[]>([]);
     const [selectedId, setSelectedId] = useState<string>("");
     const [isLoading, setIsLoading] = useState(true);
@@ -37,6 +38,7 @@ export default function PostersPage() {
 
     // Aspect Ratio & Dimensions State
     const [aspectRatio, setAspectRatio] = useState<AspectRatioType>("1:1");
+    const [previewScale, setPreviewScale] = useState(0.44);
 
     // Dynamic poster text state
     const [welcomeText, setWelcomeText] = useState("WELCOME");
@@ -68,12 +70,12 @@ export default function PostersPage() {
 
     const aspectRatios = [
         { label: "1:1 Square (1080×1080)", value: "1:1" as AspectRatioType, desc: "IG Feed & LinkedIn" },
-        { label: "4:5 Portrait (1080×1350)", value: "4:5" as AspectRatioType, desc: "IG Portrait Feed" },
-        { label: "9:16 Story (1080×1920)", value: "9:16" as AspectRatioType, desc: "IG Stories & Reels" },
-        { label: "16:9 Landscape (1920×1080)", value: "16:9" as AspectRatioType, desc: "X / Web Banner" }
+        { label: "4:5 Portrait (1080×1350)", value: "4:5" as AspectRatioType, desc: "Best IG Portrait Post" },
+        { label: "9:16 Story (1080×1920)", value: "9:16" as AspectRatioType, desc: "IG Story & Reels" },
+        { label: "16:9 Landscape (1920×1080)", value: "16:9" as AspectRatioType, desc: "LinkedIn & X Banner" }
     ];
 
-    // Compute dimensions
+    // Compute dimensions based on selected aspect ratio
     const getDimensions = (ratio: AspectRatioType) => {
         switch (ratio) {
             case "4:5": return { width: 1080, height: 1350 };
@@ -85,6 +87,22 @@ export default function PostersPage() {
     };
 
     const currentDim = getDimensions(aspectRatio);
+
+    // Dynamically adjust preview scale when preview container resizes or aspect ratio changes
+    useEffect(() => {
+        const updateScale = () => {
+            if (previewBoxRef.current) {
+                const boxWidth = previewBoxRef.current.clientWidth;
+                if (boxWidth > 0) {
+                    setPreviewScale(boxWidth / currentDim.width);
+                }
+            }
+        };
+
+        updateScale();
+        window.addEventListener("resize", updateScale);
+        return () => window.removeEventListener("resize", updateScale);
+    }, [aspectRatio, currentDim.width]);
 
     // Load candidates (applications + registered users)
     useEffect(() => {
@@ -166,7 +184,6 @@ export default function PostersPage() {
         (c.interest && c.interest.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
-    // Reset element positions
     const handleResetPositions = () => {
         setResetKey((prev) => prev + 1);
         setPhotoScale(1);
@@ -174,14 +191,13 @@ export default function PostersPage() {
         toast.success("Element positions & zoom reset to default!");
     };
 
-    // Export poster PNG using active aspect ratio dimensions
+    // Export poster PNG using active aspect ratio dimensions cleanly
     const handleDownloadPoster = async () => {
         if (!exportRef.current) return;
         setDownloading(true);
         const toastId = toast.loading(`Exporting ${currentDim.width}×${currentDim.height} HD poster...`);
 
         try {
-            // Blur active focus element to prevent focus rings on export
             if (document.activeElement instanceof HTMLElement) {
                 document.activeElement.blur();
             }
@@ -192,7 +208,7 @@ export default function PostersPage() {
             const canvas = await html2canvas(exportRef.current, {
                 width: currentDim.width,
                 height: currentDim.height,
-                scale: 2, // 2x ultra sharp output
+                scale: 2, // 2x ultra crisp output
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: "#06050e",
@@ -220,7 +236,6 @@ export default function PostersPage() {
         }
     };
 
-    // Download raw photo
     const handleDownloadRawPhoto = async () => {
         if (!photoUrl) {
             toast.error("No candidate photo available to download");
@@ -241,7 +256,6 @@ export default function PostersPage() {
         }
     };
 
-    // Copy IG caption
     const handleCopyCaption = () => {
         const captionText = `✨ PROUD TO WELCOME TO AIRA LAB ✨\n\n` +
             `Please join us in giving a warm welcome to ${name}! 🎉🚀\n\n` +
@@ -258,7 +272,7 @@ export default function PostersPage() {
         setTimeout(() => setCopiedCaption(false), 3000);
     };
 
-    // Poster Layout Template JSX - INLINE EDITABLE & DRAGGABLE & CUSTOM ASPECT RATIO READY
+    // Poster Layout Template JSX - PERFECT ASPECT RATIO & INLINE EDITING
     const PosterContent = () => (
         <div 
             style={{ 
@@ -367,7 +381,7 @@ export default function PostersPage() {
             </div>
 
             {/* ══ MIDDLE BODY: TIMELINE & PORTRAIT ══ */}
-            <div className="relative z-10 grid grid-cols-12 gap-8 items-center py-2 flex-1">
+            <div className={`relative z-10 grid grid-cols-12 gap-8 items-center py-4 flex-1 ${aspectRatio === "9:16" ? "my-6 space-y-6" : "my-2"}`}>
                 
                 {/* Left Side: 3 Connected Timeline Circle Nodes + Quote Card Draggable & Inline Editable */}
                 <motion.div 
@@ -375,7 +389,7 @@ export default function PostersPage() {
                     drag={enableDrag}
                     dragMomentum={false}
                     dragElastic={0}
-                    className={`col-span-6 space-y-4 relative ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-2xl p-2" : ""}`}
+                    className={`col-span-6 space-y-5 relative ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-2xl p-2" : ""}`}
                 >
                     {/* Vertical Line */}
                     <div className="absolute top-7 bottom-24 left-9 w-[2px] bg-gradient-to-b from-purple-500/60 via-purple-500/40 to-transparent z-0" />
@@ -471,7 +485,7 @@ export default function PostersPage() {
                     dragElastic={0}
                     className={`col-span-6 relative flex justify-center ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-3xl p-1" : ""}`}
                 >
-                    <div className="relative w-full aspect-[4/5] rounded-3xl p-2 bg-gradient-to-b from-purple-500/50 via-indigo-600/30 to-purple-900/60 shadow-[0_0_30px_rgba(168,85,247,0.3)] overflow-hidden border border-purple-400/50">
+                    <div className={`relative w-full ${aspectRatio === "4:5" ? "aspect-[4/5.4]" : "aspect-[4/5]"} rounded-3xl p-2 bg-gradient-to-b from-purple-500/50 via-indigo-600/30 to-purple-900/60 shadow-[0_0_30px_rgba(168,85,247,0.3)] overflow-hidden border border-purple-400/50`}>
                         
                         {/* Top Right Pill Badge */}
                         <div className="absolute top-4 right-4 z-20 px-3.5 py-1.5 rounded-full bg-slate-950/90 border border-purple-400/50 text-[10px] font-orbitron font-bold text-white tracking-wider flex items-center gap-1.5 shadow-xl">
@@ -709,11 +723,11 @@ export default function PostersPage() {
                                         onClick={() => setAspectRatio(ratio.value)}
                                         className={`p-3 rounded-xl border text-left transition-all ${
                                             isSel
-                                                ? "bg-purple-600/30 border-purple-400 text-white shadow-md shadow-purple-600/20"
+                                                ? "bg-purple-600/30 border-purple-400 text-white shadow-md shadow-purple-600/20 font-bold"
                                                 : "bg-slate-900/60 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
                                         }`}
                                     >
-                                        <span className="font-orbitron font-bold text-xs block text-white">{ratio.label}</span>
+                                        <span className="font-orbitron text-xs block text-white">{ratio.label}</span>
                                         <span className="text-[10px] text-purple-300/80 block pt-0.5">{ratio.desc}</span>
                                     </button>
                                 );
@@ -968,7 +982,7 @@ export default function PostersPage() {
                 <div className="lg:col-span-7 flex flex-col items-center justify-start bg-slate-950/60 p-6 rounded-2xl border border-white/5">
                     <div className="w-full flex items-center justify-between mb-4">
                         <span className="text-xs font-orbitron font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <Sparkles size={14} className="text-aira-cyan" /> Live Interactive Studio ({aspectRatio} - {currentDim.width}×{currentDim.height}px)
+                            <Sparkles size={14} className="text-aira-cyan" /> Live Preview ({aspectRatio} - {currentDim.width}×{currentDim.height}px)
                         </span>
                         <span className="text-[11px] text-purple-300 font-mono">
                             ✍️ Click text directly to edit & drag blocks
@@ -977,16 +991,22 @@ export default function PostersPage() {
 
                     {/* Dynamic Aspect Ratio Box */}
                     <div 
+                        ref={previewBoxRef}
                         style={{
+                            width: "100%",
+                            maxWidth: aspectRatio === "16:9" ? "640px" : "480px",
                             aspectRatio: `${currentDim.width} / ${currentDim.height}`,
+                            position: "relative",
+                            overflow: "hidden",
+                            borderRadius: "1rem",
                         }}
-                        className="w-full max-w-[540px] overflow-hidden shadow-2xl rounded-2xl border border-purple-500/40 relative bg-[#06050e] flex items-center justify-center"
+                        className="shadow-2xl border border-purple-500/40 bg-[#06050e] relative flex items-center justify-center"
                     >
                         <div
                             style={{
                                 width: `${currentDim.width}px`,
                                 height: `${currentDim.height}px`,
-                                transform: `scale(${540 / currentDim.width})`,
+                                transform: `scale(${previewScale})`,
                                 transformOrigin: "top left",
                             }}
                         >

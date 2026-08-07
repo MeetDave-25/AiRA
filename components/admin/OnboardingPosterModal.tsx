@@ -30,11 +30,13 @@ type AspectRatioType = "1:1" | "4:5" | "9:16" | "16:9";
 
 export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPosterModalProps) {
     const exportRef = useRef<HTMLDivElement>(null);
+    const previewBoxRef = useRef<HTMLDivElement>(null);
     const [downloading, setDownloading] = useState(false);
     const [copiedCaption, setCopiedCaption] = useState(false);
 
     // Aspect Ratio & Dimensions State
     const [aspectRatio, setAspectRatio] = useState<AspectRatioType>("1:1");
+    const [previewScale, setPreviewScale] = useState(0.44);
 
     // Dynamic poster text state
     const [welcomeText, setWelcomeText] = useState("WELCOME");
@@ -66,9 +68,9 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
 
     const aspectRatios = [
         { label: "1:1 Square (1080×1080)", value: "1:1" as AspectRatioType, desc: "IG Feed & LinkedIn" },
-        { label: "4:5 Portrait (1080×1350)", value: "4:5" as AspectRatioType, desc: "IG Portrait Feed" },
-        { label: "9:16 Story (1080×1920)", value: "9:16" as AspectRatioType, desc: "IG Stories & Reels" },
-        { label: "16:9 Landscape (1920×1080)", value: "16:9" as AspectRatioType, desc: "X / Web Banner" }
+        { label: "4:5 Portrait (1080×1350)", value: "4:5" as AspectRatioType, desc: "Best IG Portrait Post" },
+        { label: "9:16 Story (1080×1920)", value: "9:16" as AspectRatioType, desc: "IG Story & Reels" },
+        { label: "16:9 Landscape (1920×1080)", value: "16:9" as AspectRatioType, desc: "LinkedIn & X Banner" }
     ];
 
     const getDimensions = (ratio: AspectRatioType) => {
@@ -82,6 +84,21 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
     };
 
     const currentDim = getDimensions(aspectRatio);
+
+    useEffect(() => {
+        const updateScale = () => {
+            if (previewBoxRef.current) {
+                const boxWidth = previewBoxRef.current.clientWidth;
+                if (boxWidth > 0) {
+                    setPreviewScale(boxWidth / currentDim.width);
+                }
+            }
+        };
+
+        updateScale();
+        window.addEventListener("resize", updateScale);
+        return () => window.removeEventListener("resize", updateScale);
+    }, [aspectRatio, currentDim.width]);
 
     useEffect(() => {
         if (applicant) {
@@ -294,13 +311,13 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                 </motion.div>
             </div>
 
-            <div className="relative z-10 grid grid-cols-12 gap-8 items-center py-2 flex-1">
+            <div className={`relative z-10 grid grid-cols-12 gap-8 items-center py-4 flex-1 ${aspectRatio === "9:16" ? "my-6 space-y-6" : "my-2"}`}>
                 <motion.div 
                     key={`lefttimeline_${resetKey}`}
                     drag={enableDrag}
                     dragMomentum={false}
                     dragElastic={0}
-                    className={`col-span-6 space-y-4 relative ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-2xl p-2" : ""}`}
+                    className={`col-span-6 space-y-5 relative ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-2xl p-2" : ""}`}
                 >
                     <div className="absolute top-7 bottom-24 left-9 w-[2px] bg-gradient-to-b from-purple-500/60 via-purple-500/40 to-transparent z-0" />
 
@@ -390,7 +407,7 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                     dragElastic={0}
                     className={`col-span-6 relative flex justify-center ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-3xl p-1" : ""}`}
                 >
-                    <div className="relative w-full aspect-[4/5] rounded-3xl p-2 bg-gradient-to-b from-purple-500/50 via-indigo-600/30 to-purple-900/60 shadow-[0_0_30px_rgba(168,85,247,0.3)] overflow-hidden border border-purple-400/50">
+                    <div className={`relative w-full ${aspectRatio === "4:5" ? "aspect-[4/5.4]" : "aspect-[4/5]"} rounded-3xl p-2 bg-gradient-to-b from-purple-500/50 via-indigo-600/30 to-purple-900/60 shadow-[0_0_30px_rgba(168,85,247,0.3)] overflow-hidden border border-purple-400/50`}>
                         <div className="absolute top-4 right-4 z-20 px-3.5 py-1.5 rounded-full bg-slate-950/90 border border-purple-400/50 text-[10px] font-orbitron font-bold text-white tracking-wider flex items-center gap-1.5 shadow-xl">
                             <span>OFFICIAL MEMBER</span>
                             <span className="w-4 h-4 rounded-full bg-purple-500 text-white flex items-center justify-center text-[10px] font-bold">✓</span>
@@ -791,16 +808,22 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                             </span>
 
                             <div 
+                                ref={previewBoxRef}
                                 style={{
+                                    width: "100%",
+                                    maxWidth: aspectRatio === "16:9" ? "600px" : "440px",
                                     aspectRatio: `${currentDim.width} / ${currentDim.height}`,
+                                    position: "relative",
+                                    overflow: "hidden",
+                                    borderRadius: "1rem",
                                 }}
-                                className="w-full max-w-[500px] overflow-hidden shadow-2xl rounded-xl border border-purple-500/30 relative bg-[#06050e] flex items-center justify-center"
+                                className="shadow-2xl border border-purple-500/30 bg-[#06050e] relative flex items-center justify-center"
                             >
                                 <div
                                     style={{
                                         width: `${currentDim.width}px`,
                                         height: `${currentDim.height}px`,
-                                        transform: `scale(${500 / currentDim.width})`,
+                                        transform: `scale(${previewScale})`,
                                         transformOrigin: "top left",
                                     }}
                                 >
