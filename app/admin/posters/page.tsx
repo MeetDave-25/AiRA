@@ -136,7 +136,6 @@ export default function PostersPage() {
         const toastId = toast.loading("Exporting pixel-perfect 1080×1080 PNG...");
 
         try {
-            // Ensure fonts and images are ready
             await document.fonts.ready;
             await new Promise((resolve) => setTimeout(resolve, 400));
 
@@ -146,7 +145,7 @@ export default function PostersPage() {
                 scale: 2, // 2160x2160 ultra sharp output
                 useCORS: true,
                 allowTaint: true,
-                backgroundColor: "#080711",
+                backgroundColor: "#06050e",
                 logging: false,
                 windowWidth: 1080,
                 windowHeight: 1080,
@@ -207,83 +206,92 @@ export default function PostersPage() {
         setTimeout(() => setCopiedCaption(false), 3000);
     };
 
-    // Poster Layout Template JSX
+    // Poster Layout Template JSX - EXACT 100% REPLICA OF USER REFERENCE IMAGE
     const PosterContent = () => (
-        <div className="w-[1080px] h-[1080px] bg-[#080711] text-white p-12 select-none flex flex-col justify-between relative overflow-hidden font-sans">
+        <div className="w-[1080px] h-[1080px] bg-[#06050e] text-white p-10 select-none flex flex-col justify-between relative overflow-hidden font-sans">
             {/* Background glowing effects */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-violet-900/40 via-[#0a0918] to-[#05040b] pointer-events-none" />
-            <div className="absolute top-1/3 right-1/4 w-[400px] h-[400px] bg-purple-600/30 rounded-full blur-[110px] pointer-events-none" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,_var(--tw-gradient-stops))] from-purple-900/30 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute top-1/3 right-1/4 w-[450px] h-[450px] bg-purple-600/35 rounded-full blur-[110px] pointer-events-none" />
             <div className="absolute top-10 left-10 w-[350px] h-[350px] bg-indigo-900/20 rounded-full blur-[100px] pointer-events-none" />
             
             {/* Dot grid pattern */}
             <div 
-                className="absolute inset-0 opacity-[0.08] pointer-events-none"
+                className="absolute inset-0 opacity-[0.06] pointer-events-none"
                 style={{
                     backgroundImage: `radial-gradient(circle, #ffffff 1px, transparent 1px)`,
                     backgroundSize: "28px 28px",
                 }}
             />
 
-            {/* Tech line accents */}
-            <div className="absolute top-10 left-12 right-12 h-[1px] bg-gradient-to-r from-transparent via-purple-500/40 to-transparent pointer-events-none" />
-
-            {/* ══ TOP ROW: LOGO & HEADLINE ══ */}
+            {/* ══ TOP ROW: LOGO & HEADLINE & QUOTE ══ */}
             <div className="relative z-10 flex items-start justify-between">
                 <div className="space-y-3">
-                    {/* Logo */}
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-950 border border-purple-400/50 shadow-lg shadow-purple-600/40 flex items-center justify-center text-white font-orbitron font-extrabold text-xl tracking-wider">
-                            ▲
-                        </div>
+                    {/* Logo and Proud to Welcome line */}
+                    <div className="flex items-center gap-6">
                         <div className="flex items-center gap-3">
-                            <div className="font-orbitron font-extrabold text-3xl tracking-widest text-white leading-none">
-                                AIRA <span className="text-purple-400">LAB</span>
+                            {/* 3D Purple Delta Triangle Logo */}
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 via-purple-700 to-indigo-950 border border-purple-400/60 shadow-[0_0_20px_rgba(168,85,247,0.4)] flex items-center justify-center text-white font-orbitron font-extrabold text-2xl tracking-tighter">
+                                ▲
                             </div>
-                            <div className="flex items-center gap-2 text-purple-300/80 font-orbitron text-xs tracking-[0.2em]">
-                                <span>—</span>
-                                <span>PROUD TO WELCOME</span>
-                                <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                            <div className="leading-tight">
+                                <div className="font-orbitron font-black text-2xl tracking-widest text-white">AIRA</div>
+                                <div className="font-orbitron font-bold text-xs tracking-[0.35em] text-purple-400">LAB</div>
                             </div>
+                        </div>
+
+                        {/* Line accent: ——— PROUD TO WELCOME ——— */}
+                        <div className="flex items-center gap-3 text-slate-400/80 font-orbitron text-[11px] tracking-[0.25em] uppercase">
+                            <div className="w-12 h-[1px] bg-gradient-to-r from-purple-500/80 to-purple-500/20" />
+                            <span>PROUD TO WELCOME</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_8px_#a855f7]" />
                         </div>
                     </div>
 
                     {/* Main Title */}
-                    <div className="pt-2">
-                        <h1 className="font-orbitron font-black text-6xl text-white tracking-tight leading-none">
+                    <div className="pt-1">
+                        <h1 className="font-orbitron font-black text-6xl text-white tracking-tight leading-none uppercase">
                             WELCOME
                         </h1>
-                        <div className="flex items-center gap-3 my-1">
-                            <span className="font-script text-5xl text-purple-400 -rotate-6 font-bold tracking-wide">
+                        <div className="flex items-center gap-2 my-0.5 relative">
+                            <span className="font-script text-5xl text-purple-400 -rotate-6 font-bold tracking-wide -mt-2 -mb-2 z-10 drop-shadow-[0_2px_8px_rgba(168,85,247,0.8)]">
                                 to
                             </span>
-                            <span className="font-orbitron font-black text-6xl text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-purple-400 tracking-tight">
+                            <span className="font-orbitron font-black text-6xl text-white tracking-tight leading-none uppercase">
                                 AIRA LAB
                             </span>
                         </div>
-                        <p className="text-xs font-orbitron tracking-[0.3em] text-slate-400 pt-1.5 uppercase font-medium">
+                        <p className="text-[11px] font-orbitron tracking-[0.3em] text-purple-300/90 pt-2 uppercase font-medium">
                             A NEW MIND. A NEW ENERGY. A NEW IMPACT.
                         </p>
                     </div>
                 </div>
 
                 {/* Top Right Quote Box */}
-                <div className="relative p-5 rounded-2xl bg-[#0d0b1f]/90 border border-purple-500/30 backdrop-blur-md max-w-[300px] shadow-xl">
+                <div className="relative p-5 rounded-2xl bg-[#0c0a1b]/90 border border-purple-500/30 backdrop-blur-md max-w-[310px] shadow-2xl">
                     <div className="text-purple-400 font-serif text-3xl leading-none mb-1">“</div>
-                    <p className="text-[11px] font-orbitron font-semibold text-slate-200 tracking-wider leading-relaxed uppercase">
+                    <p className="text-[11px] font-orbitron font-bold text-slate-200 tracking-widest leading-relaxed uppercase">
                         THE FUTURE IS CREATED BY THOSE WHO DARE TO BUILD IT.
                     </p>
+                    <div className="absolute bottom-2 right-2 flex gap-1 opacity-40">
+                        <div className="w-1 h-1 rounded-full bg-purple-400" />
+                        <div className="w-1 h-1 rounded-full bg-purple-400" />
+                        <div className="w-1 h-1 rounded-full bg-purple-400" />
+                    </div>
                 </div>
             </div>
 
             {/* ══ MIDDLE BODY: TIMELINE & PORTRAIT ══ */}
             <div className="relative z-10 grid grid-cols-12 gap-8 items-center py-2 flex-1">
                 
-                {/* Left Side: 3 Timeline Items + Quote Box */}
+                {/* Left Side: 3 Connected Timeline Circle Nodes + Quote Card */}
                 <div className="col-span-6 space-y-4 relative">
                     
-                    {/* Item 1: ROLE */}
+                    {/* Vertical Connecting Line behind nodes */}
+                    <div className="absolute top-7 bottom-24 left-7 w-[2px] bg-gradient-to-b from-purple-500/60 via-purple-500/40 to-transparent z-0" />
+
+                    {/* Node 1: ROLE */}
                     <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-indigo-900 to-slate-950 border-2 border-purple-400/60 shadow-lg shadow-purple-600/50 flex items-center justify-center text-white shrink-0">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-600 via-purple-800 to-slate-950 border-2 border-purple-400/70 shadow-[0_0_15px_rgba(168,85,247,0.4)] flex items-center justify-center text-white shrink-0">
                             <User size={24} className="text-purple-200" />
                         </div>
                         <div className="min-w-0">
@@ -296,9 +304,9 @@ export default function PostersPage() {
                         </div>
                     </div>
 
-                    {/* Item 2: DEPARTMENT */}
+                    {/* Node 2: DEPARTMENT */}
                     <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-indigo-900 to-slate-950 border-2 border-purple-400/60 shadow-lg shadow-purple-600/50 flex items-center justify-center text-white shrink-0">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-600 via-purple-800 to-slate-950 border-2 border-purple-400/70 shadow-[0_0_15px_rgba(168,85,247,0.4)] flex items-center justify-center text-white shrink-0">
                             <Layers size={24} className="text-purple-200" />
                         </div>
                         <div className="min-w-0">
@@ -311,9 +319,9 @@ export default function PostersPage() {
                         </div>
                     </div>
 
-                    {/* Item 3: JOINED IN */}
+                    {/* Node 3: JOINED IN */}
                     <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-indigo-900 to-slate-950 border-2 border-purple-400/60 shadow-lg shadow-purple-600/50 flex items-center justify-center text-white shrink-0">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-600 via-purple-800 to-slate-950 border-2 border-purple-400/70 shadow-[0_0_15px_rgba(168,85,247,0.4)] flex items-center justify-center text-white shrink-0">
                             <Calendar size={24} className="text-purple-200" />
                         </div>
                         <div className="min-w-0">
@@ -326,27 +334,35 @@ export default function PostersPage() {
                         </div>
                     </div>
 
-                    {/* Quote Box */}
-                    <div className="mt-4 p-5 rounded-2xl bg-[#0d0b1f]/90 border border-purple-500/30 backdrop-blur-md relative shadow-xl">
-                        <span className="text-purple-400 font-serif text-3xl font-bold leading-none">“</span>
-                        <p className="text-sm text-slate-200 italic leading-relaxed px-2 py-1 font-sans">
-                            {quote}
-                        </p>
-                        <span className="text-purple-400 font-serif text-3xl font-bold leading-none block text-right">”</span>
+                    {/* Quote Card with Dot Grid Accent */}
+                    <div className="mt-4 p-5 rounded-2xl bg-[#0c0a1b]/90 border border-purple-500/30 backdrop-blur-md relative shadow-xl flex gap-3">
+                        <div className="w-6 shrink-0 grid grid-cols-2 gap-1.5 opacity-30 self-center">
+                            {[...Array(8)].map((_, i) => (
+                                <div key={i} className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                            ))}
+                        </div>
+
+                        <div className="flex-1">
+                            <span className="text-purple-400 font-serif text-3xl font-bold leading-none">“</span>
+                            <p className="text-xs text-slate-200 italic leading-relaxed px-1 py-1 font-sans">
+                                {quote}
+                            </p>
+                            <span className="text-purple-400 font-serif text-3xl font-bold leading-none block text-right">”</span>
+                        </div>
                     </div>
                 </div>
 
-                {/* Right Side: Portrait Frame */}
+                {/* Right Side: Member Portrait Frame */}
                 <div className="col-span-6 relative flex justify-center">
-                    <div className="relative w-full aspect-[4/5] rounded-3xl p-2 bg-gradient-to-b from-purple-500/50 via-indigo-600/30 to-purple-900/60 shadow-2xl overflow-hidden border border-purple-400/50">
+                    <div className="relative w-full aspect-[4/5] rounded-3xl p-2 bg-gradient-to-b from-purple-500/50 via-indigo-600/30 to-purple-900/60 shadow-[0_0_30px_rgba(168,85,247,0.3)] overflow-hidden border border-purple-400/50">
                         
-                        {/* Badge */}
+                        {/* Top Right Pill Badge */}
                         <div className="absolute top-4 right-4 z-20 px-3.5 py-1.5 rounded-full bg-slate-950/90 border border-purple-400/50 text-[10px] font-orbitron font-bold text-white tracking-wider flex items-center gap-1.5 shadow-xl">
                             <span>OFFICIAL MEMBER</span>
                             <span className="w-4 h-4 rounded-full bg-purple-500 text-white flex items-center justify-center text-[10px] font-bold">✓</span>
                         </div>
 
-                        {/* Vertical Text */}
+                        {/* Vertical Accent Text */}
                         <div 
                             className="absolute top-1/2 left-2 z-20 text-[10px] font-orbitron tracking-[0.3em] text-slate-400/90 uppercase font-semibold pointer-events-none"
                             style={{
@@ -358,25 +374,30 @@ export default function PostersPage() {
                             WELCOME ABOARD, INNOVATOR!
                         </div>
 
-                        {/* Portrait Image */}
+                        {/* Photo Container with Halo Glow */}
                         <div className="relative w-full h-full rounded-2xl overflow-hidden bg-gradient-to-b from-purple-950 via-slate-950 to-black flex items-center justify-center">
+                            <div className="absolute top-1/4 w-72 h-72 bg-purple-600/40 rounded-full blur-3xl pointer-events-none" />
+
                             {photoUrl ? (
                                 <img
                                     src={photoUrl}
                                     alt={name}
-                                    className="w-full h-full object-cover object-center"
+                                    className="w-full h-full object-cover object-center relative z-10"
                                     crossOrigin="anonymous"
                                 />
                             ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 bg-slate-900">
+                                <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 bg-slate-900 relative z-10">
                                     <User size={64} className="mb-2 text-purple-400/40" />
                                     <span className="text-xs font-orbitron">No Photo Provided</span>
                                 </div>
                             )}
 
-                            {/* Cursive Signature Overlay */}
-                            <div className="absolute bottom-0 right-0 left-0 h-32 bg-gradient-to-t from-black via-black/85 to-transparent flex items-end justify-end p-5 z-10">
-                                <div className="text-right">
+                            {/* Bottom Corner Overlay with Signature */}
+                            <div className="absolute bottom-0 right-0 left-0 h-36 bg-gradient-to-t from-black via-black/85 to-transparent flex items-end justify-end p-5 z-20">
+                                <div className="absolute bottom-4 right-4 text-purple-900/30 text-7xl font-orbitron font-black pointer-events-none">
+                                    ▲
+                                </div>
+                                <div className="text-right relative z-10">
                                     <div className="font-script text-5xl text-purple-300 font-bold drop-shadow-[0_2px_12px_rgba(168,85,247,0.9)] -rotate-3 tracking-wide">
                                         {signatureName}
                                     </div>
@@ -389,10 +410,8 @@ export default function PostersPage() {
 
             {/* ══ BOTTOM SECTION: 4 PILLAR CARDS & FOOTER BAR ══ */}
             <div className="relative z-10 space-y-3 pt-2">
-                
-                {/* 4 Pillar Cards */}
-                <div className="grid grid-cols-4 gap-4">
-                    <div className="p-3.5 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
+                <div className="grid grid-cols-4 gap-4 p-1 rounded-2xl bg-[#0c0a1b]/60 border border-purple-500/20 backdrop-blur-md">
+                    <div className="p-3 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
                         <div className="w-9 h-9 rounded-lg bg-purple-900/40 text-purple-300 flex items-center justify-center mb-1.5 border border-purple-500/30">
                             <Rocket size={18} />
                         </div>
@@ -727,7 +746,7 @@ export default function PostersPage() {
                     </div>
 
                     {/* Display preview box */}
-                    <div className="w-full max-w-[540px] aspect-square overflow-hidden shadow-2xl rounded-2xl border border-purple-500/40 relative bg-[#080711]">
+                    <div className="w-full max-w-[540px] aspect-square overflow-hidden shadow-2xl rounded-2xl border border-purple-500/40 relative bg-[#06050e]">
                         <div
                             style={{
                                 width: "1080px",
