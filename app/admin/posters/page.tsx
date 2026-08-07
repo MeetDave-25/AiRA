@@ -24,7 +24,7 @@ interface Candidate {
 }
 
 export default function PostersPage() {
-    const posterRef = useRef<HTMLDivElement>(null);
+    const exportRef = useRef<HTMLDivElement>(null);
     const [candidates, setCandidates] = useState<Candidate[]>([]);
     const [selectedId, setSelectedId] = useState<string>("");
     const [isLoading, setIsLoading] = useState(true);
@@ -129,21 +129,27 @@ export default function PostersPage() {
         (c.interest && c.interest.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
-    // Export 1080x1080 PNG
+    // Export 1080x1080 PNG using offscreen unscaled DOM node
     const handleDownloadPoster = async () => {
-        if (!posterRef.current) return;
+        if (!exportRef.current) return;
         setDownloading(true);
-        const toastId = toast.loading("Generating 1080×1080 high-res poster PNG...");
+        const toastId = toast.loading("Exporting pixel-perfect 1080×1080 PNG...");
 
         try {
-            await new Promise((resolve) => setTimeout(resolve, 300));
+            // Ensure fonts and images are ready
+            await document.fonts.ready;
+            await new Promise((resolve) => setTimeout(resolve, 400));
 
-            const canvas = await html2canvas(posterRef.current, {
-                scale: 2, // 2160x2160 ultra crisp
+            const canvas = await html2canvas(exportRef.current, {
+                width: 1080,
+                height: 1080,
+                scale: 2, // 2160x2160 ultra sharp output
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: "#080711",
                 logging: false,
+                windowWidth: 1080,
+                windowHeight: 1080,
             });
 
             canvas.toBlob((blob) => {
@@ -201,6 +207,261 @@ export default function PostersPage() {
         setTimeout(() => setCopiedCaption(false), 3000);
     };
 
+    // Poster Layout Template JSX
+    const PosterContent = () => (
+        <div className="w-[1080px] h-[1080px] bg-[#080711] text-white p-12 select-none flex flex-col justify-between relative overflow-hidden font-sans">
+            {/* Background glowing effects */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-violet-900/40 via-[#0a0918] to-[#05040b] pointer-events-none" />
+            <div className="absolute top-1/3 right-1/4 w-[400px] h-[400px] bg-purple-600/30 rounded-full blur-[110px] pointer-events-none" />
+            <div className="absolute top-10 left-10 w-[350px] h-[350px] bg-indigo-900/20 rounded-full blur-[100px] pointer-events-none" />
+            
+            {/* Dot grid pattern */}
+            <div 
+                className="absolute inset-0 opacity-[0.08] pointer-events-none"
+                style={{
+                    backgroundImage: `radial-gradient(circle, #ffffff 1px, transparent 1px)`,
+                    backgroundSize: "28px 28px",
+                }}
+            />
+
+            {/* Tech line accents */}
+            <div className="absolute top-10 left-12 right-12 h-[1px] bg-gradient-to-r from-transparent via-purple-500/40 to-transparent pointer-events-none" />
+
+            {/* ══ TOP ROW: LOGO & HEADLINE ══ */}
+            <div className="relative z-10 flex items-start justify-between">
+                <div className="space-y-3">
+                    {/* Logo */}
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-950 border border-purple-400/50 shadow-lg shadow-purple-600/40 flex items-center justify-center text-white font-orbitron font-extrabold text-xl tracking-wider">
+                            ▲
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="font-orbitron font-extrabold text-3xl tracking-widest text-white leading-none">
+                                AIRA <span className="text-purple-400">LAB</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-purple-300/80 font-orbitron text-xs tracking-[0.2em]">
+                                <span>—</span>
+                                <span>PROUD TO WELCOME</span>
+                                <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Title */}
+                    <div className="pt-2">
+                        <h1 className="font-orbitron font-black text-6xl text-white tracking-tight leading-none">
+                            WELCOME
+                        </h1>
+                        <div className="flex items-center gap-3 my-1">
+                            <span className="font-script text-5xl text-purple-400 -rotate-6 font-bold tracking-wide">
+                                to
+                            </span>
+                            <span className="font-orbitron font-black text-6xl text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-purple-400 tracking-tight">
+                                AIRA LAB
+                            </span>
+                        </div>
+                        <p className="text-xs font-orbitron tracking-[0.3em] text-slate-400 pt-1.5 uppercase font-medium">
+                            A NEW MIND. A NEW ENERGY. A NEW IMPACT.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Top Right Quote Box */}
+                <div className="relative p-5 rounded-2xl bg-[#0d0b1f]/90 border border-purple-500/30 backdrop-blur-md max-w-[300px] shadow-xl">
+                    <div className="text-purple-400 font-serif text-3xl leading-none mb-1">“</div>
+                    <p className="text-[11px] font-orbitron font-semibold text-slate-200 tracking-wider leading-relaxed uppercase">
+                        THE FUTURE IS CREATED BY THOSE WHO DARE TO BUILD IT.
+                    </p>
+                </div>
+            </div>
+
+            {/* ══ MIDDLE BODY: TIMELINE & PORTRAIT ══ */}
+            <div className="relative z-10 grid grid-cols-12 gap-8 items-center py-2 flex-1">
+                
+                {/* Left Side: 3 Timeline Items + Quote Box */}
+                <div className="col-span-6 space-y-4 relative">
+                    
+                    {/* Item 1: ROLE */}
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-indigo-900 to-slate-950 border-2 border-purple-400/60 shadow-lg shadow-purple-600/50 flex items-center justify-center text-white shrink-0">
+                            <User size={24} className="text-purple-200" />
+                        </div>
+                        <div className="min-w-0">
+                            <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
+                                ROLE
+                            </span>
+                            <span className="font-bold text-xl text-white truncate block tracking-wide">
+                                {role || "Chief Technical Officer"}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Item 2: DEPARTMENT */}
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-indigo-900 to-slate-950 border-2 border-purple-400/60 shadow-lg shadow-purple-600/50 flex items-center justify-center text-white shrink-0">
+                            <Layers size={24} className="text-purple-200" />
+                        </div>
+                        <div className="min-w-0">
+                            <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
+                                DEPARTMENT
+                            </span>
+                            <span className="font-bold text-xl text-white truncate block tracking-wide">
+                                {department || "Technical Wing"}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Item 3: JOINED IN */}
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-indigo-900 to-slate-950 border-2 border-purple-400/60 shadow-lg shadow-purple-600/50 flex items-center justify-center text-white shrink-0">
+                            <Calendar size={24} className="text-purple-200" />
+                        </div>
+                        <div className="min-w-0">
+                            <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
+                                JOINED IN
+                            </span>
+                            <span className="font-bold text-xl text-white truncate block tracking-wide">
+                                {joinedDate || "March 2026"}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Quote Box */}
+                    <div className="mt-4 p-5 rounded-2xl bg-[#0d0b1f]/90 border border-purple-500/30 backdrop-blur-md relative shadow-xl">
+                        <span className="text-purple-400 font-serif text-3xl font-bold leading-none">“</span>
+                        <p className="text-sm text-slate-200 italic leading-relaxed px-2 py-1 font-sans">
+                            {quote}
+                        </p>
+                        <span className="text-purple-400 font-serif text-3xl font-bold leading-none block text-right">”</span>
+                    </div>
+                </div>
+
+                {/* Right Side: Portrait Frame */}
+                <div className="col-span-6 relative flex justify-center">
+                    <div className="relative w-full aspect-[4/5] rounded-3xl p-2 bg-gradient-to-b from-purple-500/50 via-indigo-600/30 to-purple-900/60 shadow-2xl overflow-hidden border border-purple-400/50">
+                        
+                        {/* Badge */}
+                        <div className="absolute top-4 right-4 z-20 px-3.5 py-1.5 rounded-full bg-slate-950/90 border border-purple-400/50 text-[10px] font-orbitron font-bold text-white tracking-wider flex items-center gap-1.5 shadow-xl">
+                            <span>OFFICIAL MEMBER</span>
+                            <span className="w-4 h-4 rounded-full bg-purple-500 text-white flex items-center justify-center text-[10px] font-bold">✓</span>
+                        </div>
+
+                        {/* Vertical Text */}
+                        <div 
+                            className="absolute top-1/2 left-2 z-20 text-[10px] font-orbitron tracking-[0.3em] text-slate-400/90 uppercase font-semibold pointer-events-none"
+                            style={{
+                                transform: "translateY(-50%) rotate(-90deg)",
+                                transformOrigin: "center center",
+                                whiteSpace: "nowrap"
+                            }}
+                        >
+                            WELCOME ABOARD, INNOVATOR!
+                        </div>
+
+                        {/* Portrait Image */}
+                        <div className="relative w-full h-full rounded-2xl overflow-hidden bg-gradient-to-b from-purple-950 via-slate-950 to-black flex items-center justify-center">
+                            {photoUrl ? (
+                                <img
+                                    src={photoUrl}
+                                    alt={name}
+                                    className="w-full h-full object-cover object-center"
+                                    crossOrigin="anonymous"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 bg-slate-900">
+                                    <User size={64} className="mb-2 text-purple-400/40" />
+                                    <span className="text-xs font-orbitron">No Photo Provided</span>
+                                </div>
+                            )}
+
+                            {/* Cursive Signature Overlay */}
+                            <div className="absolute bottom-0 right-0 left-0 h-32 bg-gradient-to-t from-black via-black/85 to-transparent flex items-end justify-end p-5 z-10">
+                                <div className="text-right">
+                                    <div className="font-script text-5xl text-purple-300 font-bold drop-shadow-[0_2px_12px_rgba(168,85,247,0.9)] -rotate-3 tracking-wide">
+                                        {signatureName}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* ══ BOTTOM SECTION: 4 PILLAR CARDS & FOOTER BAR ══ */}
+            <div className="relative z-10 space-y-3 pt-2">
+                
+                {/* 4 Pillar Cards */}
+                <div className="grid grid-cols-4 gap-4">
+                    <div className="p-3.5 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
+                        <div className="w-9 h-9 rounded-lg bg-purple-900/40 text-purple-300 flex items-center justify-center mb-1.5 border border-purple-500/30">
+                            <Rocket size={18} />
+                        </div>
+                        <span className="text-xs font-orbitron font-bold text-white tracking-wider block">
+                            INNOVATE
+                        </span>
+                        <span className="text-[10px] text-slate-400 block pt-0.5">
+                            Ideas into Impact
+                        </span>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
+                        <div className="w-9 h-9 rounded-lg bg-indigo-900/40 text-indigo-300 flex items-center justify-center mb-1.5 border border-indigo-500/30">
+                            <Search size={18} />
+                        </div>
+                        <span className="text-xs font-orbitron font-bold text-white tracking-wider block">
+                            RESEARCH
+                        </span>
+                        <span className="text-[10px] text-slate-400 block pt-0.5">
+                            Explore. Learn. Grow
+                        </span>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
+                        <div className="w-9 h-9 rounded-lg bg-purple-900/40 text-purple-300 flex items-center justify-center mb-1.5 border border-purple-500/30">
+                            <Code size={18} />
+                        </div>
+                        <span className="text-xs font-orbitron font-bold text-white tracking-wider block">
+                            COLLABORATE
+                        </span>
+                        <span className="text-[10px] text-slate-400 block pt-0.5">
+                            Together We Build
+                        </span>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
+                        <div className="w-9 h-9 rounded-lg bg-indigo-900/40 text-indigo-300 flex items-center justify-center mb-1.5 border border-indigo-500/30">
+                            <Star size={18} />
+                        </div>
+                        <span className="text-xs font-orbitron font-bold text-white tracking-wider block">
+                            EXCEL
+                        </span>
+                        <span className="text-[10px] text-slate-400 block pt-0.5">
+                            Excellence is Habit
+                        </span>
+                    </div>
+                </div>
+
+                {/* Footer Bar */}
+                <div className="pt-3 border-t border-purple-500/30 flex items-center justify-between text-xs font-orbitron text-slate-400 tracking-wider">
+                    <div className="flex items-center gap-2 text-purple-300 font-semibold">
+                        <Globe size={14} /> www.aira-lab.in
+                    </div>
+
+                    <div className="tracking-[0.25em] text-slate-300 font-medium">
+                        INNOVATION  •  RESEARCH  •  EXCELLENCE
+                    </div>
+
+                    <div className="flex items-center gap-3 text-slate-300 font-bold text-xs">
+                        <span>[IG]</span>
+                        <span>[in]</span>
+                        <span>[X]</span>
+                        <span>[YT]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
     return (
         <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-8">
             <style jsx global>{`
@@ -210,6 +471,23 @@ export default function PostersPage() {
                     font-family: 'Dancing Script', 'Caveat', cursive;
                 }
             `}</style>
+
+            {/* ══ HIDDEN OFFSCREEN UNTRANSFORMED DOM NODE FOR 1:1 EXACT HTML2CANVAS CAPTURE ══ */}
+            <div 
+                style={{
+                    position: "fixed",
+                    left: "-9999px",
+                    top: "-9999px",
+                    width: "1080px",
+                    height: "1080px",
+                    overflow: "hidden",
+                    zIndex: -9999,
+                }}
+            >
+                <div ref={exportRef}>
+                    <PosterContent />
+                </div>
+            </div>
 
             {/* Top Bar */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass rounded-2xl p-6 border border-white/5">
@@ -240,7 +518,6 @@ export default function PostersPage() {
                             <UserCheck size={16} className="text-aira-cyan" /> Select Candidate
                         </h2>
 
-                        {/* Search input */}
                         <div className="relative">
                             <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                             <input
@@ -252,7 +529,6 @@ export default function PostersPage() {
                             />
                         </div>
 
-                        {/* Candidate Dropdown List */}
                         <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
                             {isLoading ? (
                                 <div className="p-4 text-center text-slate-500 text-xs flex items-center justify-center gap-2">
@@ -439,282 +715,28 @@ export default function PostersPage() {
                     </div>
                 </div>
 
-                {/* ══ RIGHT COLUMN: EXACT MATCH 1080x1080 POSTER CANVAS PREVIEW ══ */}
+                {/* ══ RIGHT COLUMN: LIVE PREVIEW CONTAINER ══ */}
                 <div className="lg:col-span-7 flex flex-col items-center justify-start bg-slate-950/60 p-6 rounded-2xl border border-white/5">
                     <div className="w-full flex items-center justify-between mb-4">
                         <span className="text-xs font-orbitron font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <Sparkles size={14} className="text-aira-cyan" /> Exact-Match 1080×1080 Instagram Poster
+                            <Sparkles size={14} className="text-aira-cyan" /> Live Poster Preview
                         </span>
                         <span className="text-[11px] text-slate-400 font-mono">
                             Square 1:1 Aspect Ratio
                         </span>
                     </div>
 
-                    {/* Outer Box Container */}
+                    {/* Display preview box */}
                     <div className="w-full max-w-[540px] aspect-square overflow-hidden shadow-2xl rounded-2xl border border-purple-500/40 relative bg-[#080711]">
-                        
-                        {/* ══ 1080x1080 DOM CANVAS DOM NODE TO CAPTURE ══ */}
                         <div
-                            id="onboarding-poster-canvas"
-                            ref={posterRef}
                             style={{
                                 width: "1080px",
                                 height: "1080px",
-                                transform: "scale(0.5)", // 540 / 1080 exact ratio
+                                transform: "scale(0.5)",
                                 transformOrigin: "top left",
                             }}
-                            className="relative bg-[#080711] text-white p-12 select-none flex flex-col justify-between overflow-hidden font-sans"
                         >
-                            {/* Deep cosmic background with starry texture */}
-                            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-violet-900/40 via-[#0a0918] to-[#05040b] pointer-events-none" />
-                            <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600/30 rounded-full blur-[110px] pointer-events-none" />
-                            <div className="absolute top-10 left-10 w-80 h-80 bg-indigo-900/20 rounded-full blur-[100px] pointer-events-none" />
-                            
-                            {/* Dot matrix grid overlay */}
-                            <div 
-                                className="absolute inset-0 opacity-[0.08] pointer-events-none"
-                                style={{
-                                    backgroundImage: `radial-gradient(circle, #ffffff 1px, transparent 1px)`,
-                                    backgroundSize: "28px 28px",
-                                }}
-                            />
-
-                            {/* Tech line graphic accents */}
-                            <div className="absolute top-10 left-12 right-12 h-[1px] bg-gradient-to-r from-transparent via-purple-500/40 to-transparent pointer-events-none" />
-
-                            {/* ══ TOP ROW: HEADER & LOGO ══ */}
-                            <div className="relative z-10 flex items-start justify-between">
-                                {/* Left Header */}
-                                <div className="space-y-3">
-                                    {/* Logo */}
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-950 border border-purple-400/50 shadow-lg shadow-purple-600/40 flex items-center justify-center text-white font-orbitron font-extrabold text-xl tracking-wider">
-                                            ▲
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="font-orbitron font-extrabold text-3xl tracking-widest text-white leading-none">
-                                                AIRA <span className="text-purple-400">LAB</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-purple-300/80 font-orbitron text-xs tracking-[0.2em]">
-                                                <span>—</span>
-                                                <span>PROUD TO WELCOME</span>
-                                                <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Headline Title */}
-                                    <div className="pt-2">
-                                        <h1 className="font-orbitron font-black text-6xl text-white tracking-tight leading-none">
-                                            WELCOME
-                                        </h1>
-                                        <div className="flex items-center gap-3 my-1">
-                                            <span className="font-script text-5xl text-purple-400 -rotate-6 font-bold tracking-wide">
-                                                to
-                                            </span>
-                                            <span className="font-orbitron font-black text-6xl text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-purple-400 tracking-tight">
-                                                AIRA LAB
-                                            </span>
-                                        </div>
-                                        <p className="text-xs font-orbitron tracking-[0.3em] text-slate-400 pt-1.5 uppercase font-medium">
-                                            A NEW MIND. A NEW ENERGY. A NEW IMPACT.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Top Right Quote Box */}
-                                <div className="relative p-5 rounded-2xl bg-[#0d0b1f]/90 border border-purple-500/30 backdrop-blur-md max-w-[300px] shadow-xl">
-                                    <div className="text-purple-400 font-serif text-3xl leading-none mb-1">“</div>
-                                    <p className="text-[11px] font-orbitron font-semibold text-slate-200 tracking-wider leading-relaxed uppercase">
-                                        THE FUTURE IS CREATED BY THOSE WHO DARE TO BUILD IT.
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* ══ MIDDLE BODY: COMPACT 2 COLUMNS (PILLS & PORTRAIT) ══ */}
-                            <div className="relative z-10 grid grid-cols-12 gap-8 items-center py-2 flex-1">
-                                
-                                {/* Left Column: 3 Timeline Items + Quote Card */}
-                                <div className="col-span-6 space-y-3 relative">
-                                    
-                                    {/* Timeline Item 1: ROLE */}
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-indigo-900 to-slate-950 border-2 border-purple-400/60 shadow-lg shadow-purple-600/50 flex items-center justify-center text-white shrink-0">
-                                            <User size={24} className="text-purple-200" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
-                                                ROLE
-                                            </span>
-                                            <span className="font-bold text-xl text-white truncate block tracking-wide">
-                                                {role || "Chief Technical Officer"}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Timeline Item 2: DEPARTMENT */}
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-indigo-900 to-slate-950 border-2 border-purple-400/60 shadow-lg shadow-purple-600/50 flex items-center justify-center text-white shrink-0">
-                                            <Layers size={24} className="text-purple-200" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
-                                                DEPARTMENT
-                                            </span>
-                                            <span className="font-bold text-xl text-white truncate block tracking-wide">
-                                                {department || "Technical Wing"}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Timeline Item 3: JOINED IN */}
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-indigo-900 to-slate-950 border-2 border-purple-400/60 shadow-lg shadow-purple-600/50 flex items-center justify-center text-white shrink-0">
-                                            <Calendar size={24} className="text-purple-200" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
-                                                JOINED IN
-                                            </span>
-                                            <span className="font-bold text-xl text-white truncate block tracking-wide">
-                                                {joinedDate || "March 2026"}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Quote Box */}
-                                    <div className="mt-4 p-5 rounded-2xl bg-[#0d0b1f]/90 border border-purple-500/30 backdrop-blur-md relative shadow-xl">
-                                        <span className="text-purple-400 font-serif text-3xl font-bold leading-none">“</span>
-                                        <p className="text-sm text-slate-200 italic leading-relaxed px-2 py-1 font-sans">
-                                            {quote}
-                                        </p>
-                                        <span className="text-purple-400 font-serif text-3xl font-bold leading-none block text-right">”</span>
-                                    </div>
-                                </div>
-
-                                {/* Right Column: Member Portrait Frame */}
-                                <div className="col-span-6 relative flex justify-center">
-                                    
-                                    {/* Outer Frame Container */}
-                                    <div className="relative w-full aspect-[4/5] rounded-3xl p-2 bg-gradient-to-b from-purple-500/50 via-indigo-600/30 to-purple-900/60 shadow-2xl overflow-hidden border border-purple-400/50">
-                                        
-                                        {/* Official Member Badge */}
-                                        <div className="absolute top-4 right-4 z-20 px-3.5 py-1.5 rounded-full bg-slate-950/90 border border-purple-400/50 text-[10px] font-orbitron font-bold text-white tracking-wider flex items-center gap-1.5 shadow-xl">
-                                            <span>OFFICIAL MEMBER</span>
-                                            <span className="w-4 h-4 rounded-full bg-purple-500 text-white flex items-center justify-center text-[10px] font-bold">✓</span>
-                                        </div>
-
-                                        {/* Vertical Writing Text on Left */}
-                                        <div className="absolute top-16 left-3 z-20 text-[10px] font-orbitron tracking-[0.3em] text-slate-400/80 uppercase [writing-mode:vertical-lr] rotate-180 font-semibold">
-                                            WELCOME ABOARD, INNOVATOR!
-                                        </div>
-
-                                        {/* Image Container with starry glow halo */}
-                                        <div className="relative w-full h-full rounded-2xl overflow-hidden bg-gradient-to-b from-purple-950 via-slate-950 to-black flex items-center justify-center">
-                                            {photoUrl ? (
-                                                <img
-                                                    src={photoUrl}
-                                                    alt={name}
-                                                    className="w-full h-full object-cover object-center"
-                                                    crossOrigin="anonymous"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 bg-slate-900">
-                                                    <User size={64} className="mb-2 text-purple-400/40" />
-                                                    <span className="text-xs font-orbitron">No Photo Provided</span>
-                                                </div>
-                                            )}
-
-                                            {/* Bottom Corner Overlay with Cursive Signature */}
-                                            <div className="absolute bottom-0 right-0 left-0 h-32 bg-gradient-to-t from-black via-black/85 to-transparent flex items-end justify-end p-5 z-10">
-                                                <div className="text-right">
-                                                    <div className="font-script text-5xl text-purple-300 font-bold drop-shadow-[0_2px_12px_rgba(168,85,247,0.9)] -rotate-3 tracking-wide">
-                                                        {signatureName}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* ══ BOTTOM SECTION: 4 PILLAR CARDS & FOOTER BAR ══ */}
-                            <div className="relative z-10 space-y-3 pt-2">
-                                
-                                {/* 4 Pillar Cards */}
-                                <div className="grid grid-cols-4 gap-4">
-                                    
-                                    {/* Pillar 1 */}
-                                    <div className="p-3.5 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
-                                        <div className="w-9 h-9 rounded-lg bg-purple-900/40 text-purple-300 flex items-center justify-center mb-1.5 border border-purple-500/30">
-                                            <Rocket size={18} />
-                                        </div>
-                                        <span className="text-xs font-orbitron font-bold text-white tracking-wider block">
-                                            INNOVATE
-                                        </span>
-                                        <span className="text-[10px] text-slate-400 block pt-0.5">
-                                            Ideas into Impact
-                                        </span>
-                                    </div>
-
-                                    {/* Pillar 2 */}
-                                    <div className="p-3.5 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
-                                        <div className="w-9 h-9 rounded-lg bg-indigo-900/40 text-indigo-300 flex items-center justify-center mb-1.5 border border-indigo-500/30">
-                                            <Search size={18} />
-                                        </div>
-                                        <span className="text-xs font-orbitron font-bold text-white tracking-wider block">
-                                            RESEARCH
-                                        </span>
-                                        <span className="text-[10px] text-slate-400 block pt-0.5">
-                                            Explore. Learn. Grow
-                                        </span>
-                                    </div>
-
-                                    {/* Pillar 3 */}
-                                    <div className="p-3.5 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
-                                        <div className="w-9 h-9 rounded-lg bg-purple-900/40 text-purple-300 flex items-center justify-center mb-1.5 border border-purple-500/30">
-                                            <Code size={18} />
-                                        </div>
-                                        <span className="text-xs font-orbitron font-bold text-white tracking-wider block">
-                                            COLLABORATE
-                                        </span>
-                                        <span className="text-[10px] text-slate-400 block pt-0.5">
-                                            Together We Build
-                                        </span>
-                                    </div>
-
-                                    {/* Pillar 4 */}
-                                    <div className="p-3.5 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
-                                        <div className="w-9 h-9 rounded-lg bg-indigo-900/40 text-indigo-300 flex items-center justify-center mb-1.5 border border-indigo-500/30">
-                                            <Star size={18} />
-                                        </div>
-                                        <span className="text-xs font-orbitron font-bold text-white tracking-wider block">
-                                            EXCEL
-                                        </span>
-                                        <span className="text-[10px] text-slate-400 block pt-0.5">
-                                            Excellence is Habit
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Footer Bar */}
-                                <div className="pt-3 border-t border-purple-500/30 flex items-center justify-between text-xs font-orbitron text-slate-400 tracking-wider">
-                                    <div className="flex items-center gap-2 text-purple-300 font-semibold">
-                                        <Globe size={14} /> www.aira-lab.in
-                                    </div>
-
-                                    <div className="tracking-[0.25em] text-slate-300 font-medium">
-                                        INNOVATION  •  RESEARCH  •  EXCELLENCE
-                                    </div>
-
-                                    <div className="flex items-center gap-3 text-slate-300 font-bold text-xs">
-                                        <span>[IG]</span>
-                                        <span>[in]</span>
-                                        <span>[X]</span>
-                                        <span>[YT]</span>
-                                    </div>
-                                </div>
-                            </div>
+                            <PosterContent />
                         </div>
                     </div>
                 </div>
