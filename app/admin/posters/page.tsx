@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { 
     Sparkles, Download, Copy, RefreshCw, User, Layers, Calendar, 
-    Quote, Rocket, Search, Code, Star, Globe, Check, Image as ImageIcon,
-    UserCheck, FileText, ChevronDown, CheckCircle2
+    Rocket, Search, Code, Star, Globe, Check, Image as ImageIcon,
+    UserCheck
 } from "lucide-react";
 import toast from "react-hot-toast";
 import html2canvas from "html2canvas";
@@ -87,7 +87,6 @@ export default function PostersPage() {
 
                 setCandidates(combined);
 
-                // Auto select first candidate if available
                 if (combined.length > 0) {
                     selectCandidate(combined[0]);
                 }
@@ -107,10 +106,10 @@ export default function PostersPage() {
         setSelectedId(cand.id);
         setName(cand.name || "Team Member");
         setSignatureName(cand.name || "Team Member");
-        setRole(cand.interest || cand.role || "Core Developer");
+        setRole(cand.interest || cand.role || "Chief Technical Officer");
         setPhotoUrl(cand.photo || cand.avatar || "");
 
-        // Format joined date: e.g. "March 2026" based on application or registration date
+        // Format joined date: e.g. "March 2026"
         const dateObj = cand.createdAt ? new Date(cand.createdAt) : new Date();
         const formattedDate = dateObj.toLocaleDateString("en-US", { month: "long", year: "numeric" });
         setJoinedDate(formattedDate);
@@ -124,27 +123,26 @@ export default function PostersPage() {
         setQuote(defaultQuote);
     };
 
-    // Filter candidates by search query
     const filteredCandidates = candidates.filter((c) => 
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (c.email && c.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (c.interest && c.interest.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
-    // Download poster PNG
+    // Export 1080x1080 PNG
     const handleDownloadPoster = async () => {
         if (!posterRef.current) return;
         setDownloading(true);
-        const toastId = toast.loading("Exporting 1080×1080 high-res PNG...");
+        const toastId = toast.loading("Generating 1080×1080 high-res poster PNG...");
 
         try {
             await new Promise((resolve) => setTimeout(resolve, 300));
 
             const canvas = await html2canvas(posterRef.current, {
-                scale: 2,
+                scale: 2, // 2160x2160 ultra crisp
                 useCORS: true,
                 allowTaint: true,
-                backgroundColor: "#06050C",
+                backgroundColor: "#080711",
                 logging: false,
             });
 
@@ -213,21 +211,19 @@ export default function PostersPage() {
                 }
             `}</style>
 
-            {/* Header */}
+            {/* Top Bar */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass rounded-2xl p-6 border border-white/5">
-                <div>
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-900 border border-purple-500/40 flex items-center justify-center text-aira-cyan shadow-lg shadow-purple-600/30">
-                            <Sparkles size={22} />
-                        </div>
-                        <div>
-                            <h1 className="font-orbitron font-bold text-2xl text-white">
-                                Onboarding Poster Studio
-                            </h1>
-                            <p className="text-xs text-slate-400">
-                                Select a candidate to auto-populate their photo, role & join date for Instagram welcome cards
-                            </p>
-                        </div>
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-900 border border-purple-500/40 flex items-center justify-center text-aira-cyan shadow-lg shadow-purple-600/30">
+                        <Sparkles size={22} />
+                    </div>
+                    <div>
+                        <h1 className="font-orbitron font-bold text-2xl text-white">
+                            Onboarding Poster Studio
+                        </h1>
+                        <p className="text-xs text-slate-400">
+                            Create exact-match Instagram welcome graphics with dynamic Role, Department & Join Date
+                        </p>
                     </div>
                 </div>
             </div>
@@ -235,13 +231,13 @@ export default function PostersPage() {
             {/* Main Studio Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
-                {/* ══ LEFT COLUMN: CANDIDATE SELECTOR & EDIT CONTROLS ══ */}
+                {/* ══ LEFT COLUMN: CANDIDATE PICKER & CONTROLS ══ */}
                 <div className="lg:col-span-5 space-y-6">
                     
                     {/* Candidate Picker Box */}
                     <div className="glass rounded-2xl p-5 border border-white/5 space-y-4">
                         <h2 className="font-orbitron font-bold text-sm text-white flex items-center gap-2">
-                            <UserCheck size={16} className="text-aira-cyan" /> 1. Select Person
+                            <UserCheck size={16} className="text-aira-cyan" /> Select Candidate
                         </h2>
 
                         {/* Search input */}
@@ -249,14 +245,14 @@ export default function PostersPage() {
                             <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                             <input
                                 type="text"
-                                placeholder="Search by name, email, or role..."
+                                placeholder="Search candidate..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full pl-9 pr-4 py-2 bg-slate-900/90 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-aira-cyan/50"
                             />
                         </div>
 
-                        {/* Candidate Dropdown / Select List */}
+                        {/* Candidate Dropdown List */}
                         <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
                             {isLoading ? (
                                 <div className="p-4 text-center text-slate-500 text-xs flex items-center justify-center gap-2">
@@ -280,7 +276,6 @@ export default function PostersPage() {
                                                     : "bg-slate-950/40 border-white/5 text-slate-300 hover:bg-slate-900/60"
                                             }`}
                                         >
-                                            {/* Avatar */}
                                             {cand.photo || cand.avatar ? (
                                                 <img
                                                     src={cand.photo || cand.avatar || ""}
@@ -317,13 +312,12 @@ export default function PostersPage() {
                         </div>
                     </div>
 
-                    {/* Edit Poster Form Fields */}
+                    {/* Edit Form Fields */}
                     <div className="glass rounded-2xl p-5 border border-white/5 space-y-4">
                         <h2 className="font-orbitron font-bold text-sm text-white flex items-center gap-2">
-                            <Sparkles size={16} className="text-purple-400" /> 2. Customize Poster Fields
+                            <Sparkles size={16} className="text-purple-400" /> Edit Dynamic Poster Text
                         </h2>
 
-                        {/* Name */}
                         <div>
                             <label className="text-xs text-slate-400 font-medium mb-1 block">Full Name</label>
                             <input
@@ -337,7 +331,6 @@ export default function PostersPage() {
                             />
                         </div>
 
-                        {/* Role */}
                         <div>
                             <label className="text-xs text-slate-400 font-medium mb-1 block">Role / Designation</label>
                             <input
@@ -349,7 +342,6 @@ export default function PostersPage() {
                             />
                         </div>
 
-                        {/* Department */}
                         <div>
                             <label className="text-xs text-slate-400 font-medium mb-1 block">Department / Wing</label>
                             <input
@@ -376,7 +368,6 @@ export default function PostersPage() {
                             </div>
                         </div>
 
-                        {/* Joined Date */}
                         <div>
                             <label className="text-xs text-slate-400 font-medium mb-1 block">Joined Date (Auto-Filled)</label>
                             <input
@@ -388,9 +379,8 @@ export default function PostersPage() {
                             />
                         </div>
 
-                        {/* Quote */}
                         <div>
-                            <label className="text-xs text-slate-400 font-medium mb-1 block">Welcome Quote / Bio</label>
+                            <label className="text-xs text-slate-400 font-medium mb-1 block">Welcome Quote / Statement</label>
                             <textarea
                                 rows={2}
                                 value={quote}
@@ -399,7 +389,6 @@ export default function PostersPage() {
                             />
                         </div>
 
-                        {/* Photo URL */}
                         <div>
                             <label className="text-xs text-slate-400 font-medium mb-1 block">Photo Image URL</label>
                             <input
@@ -450,181 +439,177 @@ export default function PostersPage() {
                     </div>
                 </div>
 
-                {/* ══ RIGHT COLUMN: LIVE 1080x1080 POSTER CANVAS PREVIEW ══ */}
+                {/* ══ RIGHT COLUMN: EXACT MATCH 1080x1080 POSTER CANVAS PREVIEW ══ */}
                 <div className="lg:col-span-7 flex flex-col items-center justify-start bg-slate-950/60 p-6 rounded-2xl border border-white/5">
                     <div className="w-full flex items-center justify-between mb-4">
                         <span className="text-xs font-orbitron font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <Sparkles size={14} className="text-aira-cyan" /> Live 1080×1080 Instagram Poster Preview
+                            <Sparkles size={14} className="text-aira-cyan" /> Exact-Match 1080×1080 Instagram Poster
                         </span>
                         <span className="text-[11px] text-slate-400 font-mono">
-                            Aspect Ratio 1:1
+                            Square 1:1 Aspect Ratio
                         </span>
                     </div>
 
                     {/* Outer Box Container */}
-                    <div className="w-full max-w-[540px] aspect-square overflow-hidden shadow-2xl rounded-2xl border border-purple-500/30 relative bg-[#06050C]">
+                    <div className="w-full max-w-[540px] aspect-square overflow-hidden shadow-2xl rounded-2xl border border-purple-500/40 relative bg-[#080711]">
                         
-                        {/* ══ 1080x1080 DOM CANVAS TO EXPORT ══ */}
+                        {/* ══ 1080x1080 DOM CANVAS DOM NODE TO CAPTURE ══ */}
                         <div
                             id="onboarding-poster-canvas"
                             ref={posterRef}
                             style={{
                                 width: "1080px",
                                 height: "1080px",
-                                transform: "scale(0.5)", // 540 / 1080 scale for crisp preview box
+                                transform: "scale(0.5)", // 540 / 1080 exact ratio
                                 transformOrigin: "top left",
                             }}
-                            className="relative bg-[#06050C] text-white p-12 select-none flex flex-col justify-between overflow-hidden font-sans"
+                            className="relative bg-[#080711] text-white p-12 select-none flex flex-col justify-between overflow-hidden font-sans"
                         >
-                            {/* Cosmic background effects */}
-                            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-violet-900/40 via-[#070614] to-[#040308] pointer-events-none" />
-                            <div className="absolute -top-32 -right-32 w-96 h-96 bg-purple-600/30 rounded-full blur-[100px] pointer-events-none" />
-                            <div className="absolute top-1/2 -left-32 w-80 h-80 bg-aira-cyan/20 rounded-full blur-[100px] pointer-events-none" />
+                            {/* Deep cosmic background with starry texture */}
+                            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-violet-900/40 via-[#0a0918] to-[#05040b] pointer-events-none" />
+                            <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-600/30 rounded-full blur-[110px] pointer-events-none" />
+                            <div className="absolute top-10 left-10 w-80 h-80 bg-indigo-900/20 rounded-full blur-[100px] pointer-events-none" />
                             
-                            {/* Dot grid accent overlay */}
+                            {/* Dot matrix grid overlay */}
                             <div 
-                                className="absolute inset-0 opacity-[0.07] pointer-events-none"
+                                className="absolute inset-0 opacity-[0.08] pointer-events-none"
                                 style={{
                                     backgroundImage: `radial-gradient(circle, #ffffff 1px, transparent 1px)`,
-                                    backgroundSize: "24px 24px",
+                                    backgroundSize: "28px 28px",
                                 }}
                             />
 
                             {/* Tech line graphic accents */}
-                            <div className="absolute top-8 left-1/2 -translate-x-1/2 w-[90%] h-[1px] bg-gradient-to-r from-transparent via-purple-500/30 to-transparent pointer-events-none" />
+                            <div className="absolute top-10 left-12 right-12 h-[1px] bg-gradient-to-r from-transparent via-purple-500/40 to-transparent pointer-events-none" />
 
-                            {/* ══ TOP ROW: LOGO & HEADER ══ */}
+                            {/* ══ TOP ROW: HEADER & LOGO ══ */}
                             <div className="relative z-10 flex items-start justify-between">
                                 {/* Left Header */}
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                     {/* Logo */}
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-900 border border-purple-400/40 shadow-lg shadow-purple-600/40 flex items-center justify-center text-white font-orbitron font-extrabold text-xl tracking-wider">
+                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-950 border border-purple-400/50 shadow-lg shadow-purple-600/40 flex items-center justify-center text-white font-orbitron font-extrabold text-xl tracking-wider">
                                             ▲
                                         </div>
-                                        <div>
-                                            <div className="font-orbitron font-extrabold text-2xl tracking-widest text-white leading-none">
+                                        <div className="flex items-center gap-3">
+                                            <div className="font-orbitron font-extrabold text-3xl tracking-widest text-white leading-none">
                                                 AIRA <span className="text-purple-400">LAB</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-purple-300/80 font-orbitron text-xs tracking-[0.2em]">
+                                                <span>—</span>
+                                                <span>PROUD TO WELCOME</span>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Proud to Welcome */}
-                                    <div className="flex items-center gap-3 pt-3">
-                                        <div className="w-8 h-[2px] bg-purple-500/60" />
-                                        <span className="text-xs font-orbitron font-semibold text-purple-300 tracking-[0.25em] uppercase">
-                                            PROUD TO WELCOME
-                                        </span>
-                                        <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                                    </div>
-
-                                    {/* Big Title */}
-                                    <div className="pt-1">
-                                        <h1 className="font-orbitron font-extrabold text-5xl text-white tracking-wide leading-none">
+                                    {/* Headline Title */}
+                                    <div className="pt-2">
+                                        <h1 className="font-orbitron font-black text-6xl text-white tracking-tight leading-none">
                                             WELCOME
                                         </h1>
-                                        <div className="flex items-center gap-3 my-0.5">
-                                            <span className="font-script text-4xl text-purple-400 -rotate-6 font-bold tracking-wide">
+                                        <div className="flex items-center gap-3 my-1">
+                                            <span className="font-script text-5xl text-purple-400 -rotate-6 font-bold tracking-wide">
                                                 to
                                             </span>
-                                            <span className="font-orbitron font-extrabold text-5xl text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-white to-aira-cyan tracking-wide">
+                                            <span className="font-orbitron font-black text-6xl text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-purple-400 tracking-tight">
                                                 AIRA LAB
                                             </span>
                                         </div>
-                                        <p className="text-[11px] font-orbitron tracking-[0.25em] text-slate-400 pt-1 uppercase">
+                                        <p className="text-xs font-orbitron tracking-[0.3em] text-slate-400 pt-1.5 uppercase font-medium">
                                             A NEW MIND. A NEW ENERGY. A NEW IMPACT.
                                         </p>
                                     </div>
                                 </div>
 
                                 {/* Top Right Quote Box */}
-                                <div className="relative p-4 rounded-xl bg-slate-950/70 border border-purple-500/20 backdrop-blur-md max-w-[280px]">
+                                <div className="relative p-5 rounded-2xl bg-[#0d0b1f]/90 border border-purple-500/30 backdrop-blur-md max-w-[300px] shadow-xl">
                                     <div className="text-purple-400 font-serif text-3xl leading-none mb-1">“</div>
-                                    <p className="text-[11px] font-orbitron font-medium text-slate-300 tracking-wider leading-relaxed uppercase">
+                                    <p className="text-[11px] font-orbitron font-semibold text-slate-200 tracking-wider leading-relaxed uppercase">
                                         THE FUTURE IS CREATED BY THOSE WHO DARE TO BUILD IT.
                                     </p>
                                 </div>
                             </div>
 
-                            {/* ══ MIDDLE BODY: DYNAMIC FIELDS & PORTRAIT ══ */}
-                            <div className="relative z-10 grid grid-cols-12 gap-8 items-center py-4">
+                            {/* ══ MIDDLE BODY: COMPACT 2 COLUMNS (PILLS & PORTRAIT) ══ */}
+                            <div className="relative z-10 grid grid-cols-12 gap-8 items-center py-2 flex-1">
                                 
-                                {/* Left Side: 3 Pills + Quote */}
-                                <div className="col-span-6 space-y-4">
+                                {/* Left Column: 3 Timeline Items + Quote Card */}
+                                <div className="col-span-6 space-y-3 relative">
                                     
-                                    {/* Pill 1: Role */}
-                                    <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-950/80 border border-purple-500/30 backdrop-blur-md shadow-md">
-                                        <div className="w-12 h-12 rounded-xl bg-purple-900/40 border border-purple-500/40 flex items-center justify-center text-purple-300 shrink-0">
-                                            <User size={22} />
+                                    {/* Timeline Item 1: ROLE */}
+                                    <div className="flex items-center gap-4 relative z-10">
+                                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-indigo-900 to-slate-950 border-2 border-purple-400/60 shadow-lg shadow-purple-600/50 flex items-center justify-center text-white shrink-0">
+                                            <User size={24} className="text-purple-200" />
                                         </div>
                                         <div className="min-w-0">
-                                            <span className="text-[10px] font-orbitron tracking-widest text-purple-400 uppercase block">
+                                            <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
                                                 ROLE
                                             </span>
-                                            <span className="font-bold text-lg text-white truncate block">
-                                                {role || "Team Member"}
+                                            <span className="font-bold text-xl text-white truncate block tracking-wide">
+                                                {role || "Chief Technical Officer"}
                                             </span>
                                         </div>
                                     </div>
 
-                                    {/* Pill 2: Department */}
-                                    <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-950/80 border border-purple-500/30 backdrop-blur-md shadow-md">
-                                        <div className="w-12 h-12 rounded-xl bg-indigo-900/40 border border-indigo-500/40 flex items-center justify-center text-indigo-300 shrink-0">
-                                            <Layers size={22} />
+                                    {/* Timeline Item 2: DEPARTMENT */}
+                                    <div className="flex items-center gap-4 relative z-10">
+                                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-indigo-900 to-slate-950 border-2 border-purple-400/60 shadow-lg shadow-purple-600/50 flex items-center justify-center text-white shrink-0">
+                                            <Layers size={24} className="text-purple-200" />
                                         </div>
                                         <div className="min-w-0">
-                                            <span className="text-[10px] font-orbitron tracking-widest text-purple-400 uppercase block">
+                                            <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
                                                 DEPARTMENT
                                             </span>
-                                            <span className="font-bold text-lg text-white truncate block">
+                                            <span className="font-bold text-xl text-white truncate block tracking-wide">
                                                 {department || "Technical Wing"}
                                             </span>
                                         </div>
                                     </div>
 
-                                    {/* Pill 3: Joined Date */}
-                                    <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-950/80 border border-purple-500/30 backdrop-blur-md shadow-md">
-                                        <div className="w-12 h-12 rounded-xl bg-purple-900/40 border border-purple-500/40 flex items-center justify-center text-purple-300 shrink-0">
-                                            <Calendar size={22} />
+                                    {/* Timeline Item 3: JOINED IN */}
+                                    <div className="flex items-center gap-4 relative z-10">
+                                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-indigo-900 to-slate-950 border-2 border-purple-400/60 shadow-lg shadow-purple-600/50 flex items-center justify-center text-white shrink-0">
+                                            <Calendar size={24} className="text-purple-200" />
                                         </div>
                                         <div className="min-w-0">
-                                            <span className="text-[10px] font-orbitron tracking-widest text-purple-400 uppercase block">
+                                            <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
                                                 JOINED IN
                                             </span>
-                                            <span className="font-bold text-lg text-white truncate block">
+                                            <span className="font-bold text-xl text-white truncate block tracking-wide">
                                                 {joinedDate || "March 2026"}
                                             </span>
                                         </div>
                                     </div>
 
                                     {/* Quote Box */}
-                                    <div className="p-4 rounded-2xl bg-slate-950/80 border border-purple-500/20 backdrop-blur-md relative">
-                                        <span className="text-purple-400 font-serif text-2xl font-bold leading-none">“</span>
-                                        <p className="text-xs text-slate-300 italic leading-relaxed px-2">
+                                    <div className="mt-4 p-5 rounded-2xl bg-[#0d0b1f]/90 border border-purple-500/30 backdrop-blur-md relative shadow-xl">
+                                        <span className="text-purple-400 font-serif text-3xl font-bold leading-none">“</span>
+                                        <p className="text-sm text-slate-200 italic leading-relaxed px-2 py-1 font-sans">
                                             {quote}
                                         </p>
-                                        <span className="text-purple-400 font-serif text-2xl font-bold leading-none block text-right">”</span>
+                                        <span className="text-purple-400 font-serif text-3xl font-bold leading-none block text-right">”</span>
                                     </div>
                                 </div>
 
-                                {/* Right Side: Portrait Frame */}
+                                {/* Right Column: Member Portrait Frame */}
                                 <div className="col-span-6 relative flex justify-center">
                                     
-                                    {/* Frame Box */}
-                                    <div className="relative w-full aspect-[4/5] rounded-3xl p-1.5 bg-gradient-to-b from-purple-500/50 via-indigo-500/30 to-purple-900/60 shadow-2xl overflow-hidden border border-purple-400/40">
+                                    {/* Outer Frame Container */}
+                                    <div className="relative w-full aspect-[4/5] rounded-3xl p-2 bg-gradient-to-b from-purple-500/50 via-indigo-600/30 to-purple-900/60 shadow-2xl overflow-hidden border border-purple-400/50">
                                         
                                         {/* Official Member Badge */}
-                                        <div className="absolute top-4 right-4 z-20 px-3 py-1 rounded-full bg-slate-950/80 border border-purple-400/40 text-[10px] font-orbitron font-semibold text-white tracking-wider flex items-center gap-1.5 shadow-lg">
+                                        <div className="absolute top-4 right-4 z-20 px-3.5 py-1.5 rounded-full bg-slate-950/90 border border-purple-400/50 text-[10px] font-orbitron font-bold text-white tracking-wider flex items-center gap-1.5 shadow-xl">
                                             <span>OFFICIAL MEMBER</span>
-                                            <span className="w-4 h-4 rounded-full bg-purple-500 text-white flex items-center justify-center text-[9px] font-bold">✓</span>
+                                            <span className="w-4 h-4 rounded-full bg-purple-500 text-white flex items-center justify-center text-[10px] font-bold">✓</span>
                                         </div>
 
-                                        {/* Vertical Accent Text */}
-                                        <div className="absolute top-12 left-3 z-20 text-[9px] font-orbitron tracking-[0.3em] text-slate-400/80 uppercase [writing-mode:vertical-lr] rotate-180">
+                                        {/* Vertical Writing Text on Left */}
+                                        <div className="absolute top-16 left-3 z-20 text-[10px] font-orbitron tracking-[0.3em] text-slate-400/80 uppercase [writing-mode:vertical-lr] rotate-180 font-semibold">
                                             WELCOME ABOARD, INNOVATOR!
                                         </div>
 
-                                        {/* Image Container with starry glow */}
+                                        {/* Image Container with starry glow halo */}
                                         <div className="relative w-full h-full rounded-2xl overflow-hidden bg-gradient-to-b from-purple-950 via-slate-950 to-black flex items-center justify-center">
                                             {photoUrl ? (
                                                 <img
@@ -641,9 +626,9 @@ export default function PostersPage() {
                                             )}
 
                                             {/* Bottom Corner Overlay with Cursive Signature */}
-                                            <div className="absolute bottom-0 right-0 left-0 h-28 bg-gradient-to-t from-black via-black/80 to-transparent flex items-end justify-end p-4 z-10">
+                                            <div className="absolute bottom-0 right-0 left-0 h-32 bg-gradient-to-t from-black via-black/85 to-transparent flex items-end justify-end p-5 z-10">
                                                 <div className="text-right">
-                                                    <div className="font-script text-4xl text-purple-300 font-bold drop-shadow-[0_2px_10px_rgba(168,85,247,0.8)] -rotate-3">
+                                                    <div className="font-script text-5xl text-purple-300 font-bold drop-shadow-[0_2px_12px_rgba(168,85,247,0.9)] -rotate-3 tracking-wide">
                                                         {signatureName}
                                                     </div>
                                                 </div>
@@ -653,76 +638,76 @@ export default function PostersPage() {
                                 </div>
                             </div>
 
-                            {/* ══ BOTTOM SECTION: 4 PILLAR CARDS & FOOTER ══ */}
-                            <div className="relative z-10 space-y-4 pt-2">
+                            {/* ══ BOTTOM SECTION: 4 PILLAR CARDS & FOOTER BAR ══ */}
+                            <div className="relative z-10 space-y-3 pt-2">
                                 
                                 {/* 4 Pillar Cards */}
-                                <div className="grid grid-cols-4 gap-3">
+                                <div className="grid grid-cols-4 gap-4">
                                     
                                     {/* Pillar 1 */}
-                                    <div className="p-3 rounded-xl bg-slate-950/80 border border-purple-500/20 text-center flex flex-col items-center justify-center">
-                                        <div className="w-8 h-8 rounded-lg bg-purple-900/30 text-purple-300 flex items-center justify-center mb-1.5">
-                                            <Rocket size={16} />
+                                    <div className="p-3.5 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
+                                        <div className="w-9 h-9 rounded-lg bg-purple-900/40 text-purple-300 flex items-center justify-center mb-1.5 border border-purple-500/30">
+                                            <Rocket size={18} />
                                         </div>
-                                        <span className="text-[11px] font-orbitron font-bold text-white tracking-wider block">
+                                        <span className="text-xs font-orbitron font-bold text-white tracking-wider block">
                                             INNOVATE
                                         </span>
-                                        <span className="text-[9px] text-slate-400 block pt-0.5">
+                                        <span className="text-[10px] text-slate-400 block pt-0.5">
                                             Ideas into Impact
                                         </span>
                                     </div>
 
                                     {/* Pillar 2 */}
-                                    <div className="p-3 rounded-xl bg-slate-950/80 border border-purple-500/20 text-center flex flex-col items-center justify-center">
-                                        <div className="w-8 h-8 rounded-lg bg-indigo-900/30 text-indigo-300 flex items-center justify-center mb-1.5">
-                                            <Search size={16} />
+                                    <div className="p-3.5 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
+                                        <div className="w-9 h-9 rounded-lg bg-indigo-900/40 text-indigo-300 flex items-center justify-center mb-1.5 border border-indigo-500/30">
+                                            <Search size={18} />
                                         </div>
-                                        <span className="text-[11px] font-orbitron font-bold text-white tracking-wider block">
+                                        <span className="text-xs font-orbitron font-bold text-white tracking-wider block">
                                             RESEARCH
                                         </span>
-                                        <span className="text-[9px] text-slate-400 block pt-0.5">
+                                        <span className="text-[10px] text-slate-400 block pt-0.5">
                                             Explore. Learn. Grow
                                         </span>
                                     </div>
 
                                     {/* Pillar 3 */}
-                                    <div className="p-3 rounded-xl bg-slate-950/80 border border-purple-500/20 text-center flex flex-col items-center justify-center">
-                                        <div className="w-8 h-8 rounded-lg bg-purple-900/30 text-purple-300 flex items-center justify-center mb-1.5">
-                                            <Code size={16} />
+                                    <div className="p-3.5 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
+                                        <div className="w-9 h-9 rounded-lg bg-purple-900/40 text-purple-300 flex items-center justify-center mb-1.5 border border-purple-500/30">
+                                            <Code size={18} />
                                         </div>
-                                        <span className="text-[11px] font-orbitron font-bold text-white tracking-wider block">
+                                        <span className="text-xs font-orbitron font-bold text-white tracking-wider block">
                                             COLLABORATE
                                         </span>
-                                        <span className="text-[9px] text-slate-400 block pt-0.5">
+                                        <span className="text-[10px] text-slate-400 block pt-0.5">
                                             Together We Build
                                         </span>
                                     </div>
 
                                     {/* Pillar 4 */}
-                                    <div className="p-3 rounded-xl bg-slate-950/80 border border-purple-500/20 text-center flex flex-col items-center justify-center">
-                                        <div className="w-8 h-8 rounded-lg bg-indigo-900/30 text-indigo-300 flex items-center justify-center mb-1.5">
-                                            <Star size={16} />
+                                    <div className="p-3.5 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
+                                        <div className="w-9 h-9 rounded-lg bg-indigo-900/40 text-indigo-300 flex items-center justify-center mb-1.5 border border-indigo-500/30">
+                                            <Star size={18} />
                                         </div>
-                                        <span className="text-[11px] font-orbitron font-bold text-white tracking-wider block">
+                                        <span className="text-xs font-orbitron font-bold text-white tracking-wider block">
                                             EXCEL
                                         </span>
-                                        <span className="text-[9px] text-slate-400 block pt-0.5">
+                                        <span className="text-[10px] text-slate-400 block pt-0.5">
                                             Excellence is Habit
                                         </span>
                                     </div>
                                 </div>
 
                                 {/* Footer Bar */}
-                                <div className="pt-2 border-t border-purple-500/20 flex items-center justify-between text-[11px] font-orbitron text-slate-400 tracking-wider">
-                                    <div className="flex items-center gap-1.5 text-purple-300">
-                                        <Globe size={13} /> www.aira-lab.in
+                                <div className="pt-3 border-t border-purple-500/30 flex items-center justify-between text-xs font-orbitron text-slate-400 tracking-wider">
+                                    <div className="flex items-center gap-2 text-purple-300 font-semibold">
+                                        <Globe size={14} /> www.aira-lab.in
                                     </div>
 
-                                    <div className="tracking-[0.2em] text-slate-400">
+                                    <div className="tracking-[0.25em] text-slate-300 font-medium">
                                         INNOVATION  •  RESEARCH  •  EXCELLENCE
                                     </div>
 
-                                    <div className="flex items-center gap-3 text-slate-300 font-bold">
+                                    <div className="flex items-center gap-3 text-slate-300 font-bold text-xs">
                                         <span>[IG]</span>
                                         <span>[in]</span>
                                         <span>[X]</span>
