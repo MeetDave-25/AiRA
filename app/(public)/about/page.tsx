@@ -328,15 +328,30 @@ export default function AboutPage() {
                     onMouseEnter={() => setIsOrbitPaused(true)}
                     onMouseLeave={() => setIsOrbitPaused(false)}
                 >
-                    {/* Orbit Ring */}
+                    {/* Dual Concentric Orbit Rings */}
+                    {/* Orbit 1 Ring */}
                     <div 
-                        className="absolute rounded-full border border-aira-cyan/20 pointer-events-none animate-pulse"
+                        className="absolute rounded-full border border-aira-cyan/25 pointer-events-none animate-pulse"
                         style={{ width: orbitRadius * 2, height: orbitRadius * 2 }}
                     />
                     <div 
                         className="absolute rounded-full border border-white/5 pointer-events-none"
-                        style={{ width: orbitRadius * 2 + 40, height: orbitRadius * 2 + 40 }}
+                        style={{ width: orbitRadius * 2 + 30, height: orbitRadius * 2 + 30 }}
                     />
+
+                    {/* Orbit 2 Ring (Outer Orbit for expanding team members) */}
+                    {nonPresidents.length > 6 && (
+                        <>
+                            <div 
+                                className="absolute rounded-full border border-dashed border-purple-500/30 pointer-events-none shadow-[0_0_25px_rgba(168,85,247,0.15)]"
+                                style={{ width: orbitRadius * 2.8, height: orbitRadius * 2.8 }}
+                            />
+                            <div 
+                                className="absolute rounded-full border border-white/5 pointer-events-none"
+                                style={{ width: orbitRadius * 2.8 + 35, height: orbitRadius * 2.8 + 35 }}
+                            />
+                        </>
+                    )}
 
                     {/* Central Hero Card / President */}
                     <motion.div
@@ -365,7 +380,7 @@ export default function AboutPage() {
                         </div>
                     </motion.div>
 
-                    {/* Orbiting Members Container */}
+                    {/* ══ Orbit 1: Inner Orbit (First 6 Members) ══ */}
                     {nonPresidents.length > 0 && (
                         <div 
                             className="absolute inset-0 z-20 pointer-events-none"
@@ -373,8 +388,8 @@ export default function AboutPage() {
                                 animation: isOrbitPaused ? "none" : "spin 32s linear infinite" 
                             }}
                         >
-                            {nonPresidents.map((member, i) => {
-                                const angle = (360 / nonPresidents.length) * i;
+                            {(nonPresidents.length <= 6 ? nonPresidents : nonPresidents.slice(0, 6)).map((member, i, arr) => {
+                                const angle = (360 / arr.length) * i;
                                 return (
                                     <div
                                         key={member.id}
@@ -394,12 +409,48 @@ export default function AboutPage() {
                             })}
                         </div>
                     )}
+
+                    {/* ══ Orbit 2: Outer Orbit (Members 7+ Beyond Orbit 1 Limit) ══ */}
+                    {nonPresidents.length > 6 && (
+                        <div 
+                            className="absolute inset-0 z-20 pointer-events-none"
+                            style={{ 
+                                animation: isOrbitPaused ? "none" : "counterspin 50s linear infinite" 
+                            }}
+                        >
+                            {nonPresidents.slice(6).map((member, i, arr) => {
+                                const angle = (360 / arr.length) * i;
+                                const radius2 = orbitRadius * 1.4;
+                                return (
+                                    <div
+                                        key={member.id}
+                                        className="absolute left-1/2 top-1/2 -ml-6 -mt-6 sm:-ml-8 sm:-mt-8 pointer-events-auto"
+                                        style={{ 
+                                            transform: `rotate(${angle}deg) translate(${radius2}px) rotate(-${angle}deg)` 
+                                        }}
+                                    >
+                                        <div style={{ animation: isOrbitPaused ? "none" : "spin 50s linear infinite" }}>
+                                            <OrbitCard
+                                                member={member}
+                                                onClick={() => setSelectedMember(member)}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
-                <div className="mt-8 text-center z-10">
+                <div className="mt-8 text-center z-10 flex items-center justify-center gap-3">
                     <span className="text-xs text-slate-400 px-3 py-1 rounded-full glass border border-white/10 inline-flex items-center gap-1.5">
-                        <Sparkles size={12} className="text-aira-cyan" /> Hover to pause orbit • Click any profile to view bio
+                        <Sparkles size={12} className="text-aira-cyan" /> Hover to pause orbits • Click profile for bio
                     </span>
+                    {nonPresidents.length > 6 && (
+                        <span className="text-xs text-purple-300 px-2.5 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 inline-flex items-center gap-1 font-mono">
+                            ⚡ 2 Orbits Active ({nonPresidents.length} Members)
+                        </span>
+                    )}
                 </div>
             </section>
 
