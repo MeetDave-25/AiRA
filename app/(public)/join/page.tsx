@@ -7,7 +7,8 @@ import toast from "react-hot-toast";
 
 const interests = [
     "Web Development", "App Development", "AI/ML", "Cybersecurity",
-    "Data Science", "Robotics", "Design", "Content Creation", "Management", "Other"
+    "Data Science", "Robotics", "Design", "Content Creation", "Management",
+    "Events", "Hackathons", "Courses", "Other"
 ];
 
 export default function JoinPage() {
