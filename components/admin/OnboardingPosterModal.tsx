@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
     X, Download, Copy, Sparkles, User, Layers, Calendar, Quote, 
     Rocket, Search, Code, Star, Globe, Check, Image as ImageIcon,
-    RefreshCw
+    RefreshCw, Move, RotateCcw, ZoomIn, ZoomOut
 } from "lucide-react";
 import toast from "react-hot-toast";
 import html2canvas from "html2canvas";
@@ -40,6 +40,12 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
     const [photoUrl, setPhotoUrl] = useState("");
     const [signatureName, setSignatureName] = useState("");
 
+    // Interactive Drag & Photo Zoom Controls State
+    const [enableDrag, setEnableDrag] = useState(true);
+    const [resetKey, setResetKey] = useState(0);
+    const [photoScale, setPhotoScale] = useState(1);
+    const [photoY, setPhotoY] = useState(0);
+
     const departmentOptions = [
         "Technical Wing",
         "Design & Media Wing",
@@ -66,10 +72,20 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                     : applicant.message
                 : "Building robust systems, scalable solutions and smarter tomorrows.";
             setQuote(defaultQuote);
+
+            setPhotoScale(1);
+            setPhotoY(0);
         }
     }, [applicant, open]);
 
     if (!open || !applicant) return null;
+
+    const handleResetPositions = () => {
+        setResetKey((prev) => prev + 1);
+        setPhotoScale(1);
+        setPhotoY(0);
+        toast.success("Element positions & zoom reset to default!");
+    };
 
     const handleDownloadPoster = async () => {
         if (!exportRef.current) return;
@@ -88,6 +104,8 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                 allowTaint: true,
                 backgroundColor: "#06050e",
                 logging: false,
+                scrollX: 0,
+                scrollY: 0,
                 windowWidth: 1080,
                 windowHeight: 1080,
             });
@@ -146,7 +164,10 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
     };
 
     const PosterContent = () => (
-        <div className="w-[1080px] h-[1080px] bg-[#06050e] text-white p-10 select-none flex flex-col justify-between relative overflow-hidden font-sans">
+        <div 
+            style={{ width: "1080px", height: "1080px", boxSizing: "border-box" }}
+            className="bg-[#06050e] text-white p-10 select-none flex flex-col justify-between relative overflow-hidden font-sans"
+        >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,_var(--tw-gradient-stops))] from-purple-900/30 via-transparent to-transparent pointer-events-none" />
             <div className="absolute top-1/3 right-1/4 w-[450px] h-[450px] bg-purple-600/35 rounded-full blur-[110px] pointer-events-none" />
             <div className="absolute top-10 left-10 w-[350px] h-[350px] bg-indigo-900/20 rounded-full blur-[100px] pointer-events-none" />
@@ -160,7 +181,13 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
             />
 
             <div className="relative z-10 flex items-start justify-between">
-                <div className="space-y-3">
+                <motion.div 
+                    key={`header_${resetKey}`}
+                    drag={enableDrag}
+                    dragMomentum={false}
+                    dragElastic={0}
+                    className={`space-y-3 ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-2xl p-1" : ""}`}
+                >
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 via-purple-700 to-indigo-950 border border-purple-400/60 shadow-[0_0_20px_rgba(168,85,247,0.4)] flex items-center justify-center text-white font-orbitron font-extrabold text-2xl tracking-tighter">
@@ -195,9 +222,15 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                             A NEW MIND. A NEW ENERGY. A NEW IMPACT.
                         </p>
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="relative p-5 rounded-2xl bg-[#0c0a1b]/90 border border-purple-500/30 backdrop-blur-md max-w-[310px] shadow-2xl">
+                <motion.div 
+                    key={`topquote_${resetKey}`}
+                    drag={enableDrag}
+                    dragMomentum={false}
+                    dragElastic={0}
+                    className={`relative p-5 rounded-2xl bg-[#0c0a1b]/90 border border-purple-500/30 backdrop-blur-md max-w-[310px] shadow-2xl ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50" : ""}`}
+                >
                     <div className="text-purple-400 font-serif text-3xl leading-none mb-1">“</div>
                     <p className="text-[11px] font-orbitron font-bold text-slate-200 tracking-widest leading-relaxed uppercase">
                         THE FUTURE IS CREATED BY THOSE WHO DARE TO BUILD IT.
@@ -207,12 +240,18 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                         <div className="w-1 h-1 rounded-full bg-purple-400" />
                         <div className="w-1 h-1 rounded-full bg-purple-400" />
                     </div>
-                </div>
+                </motion.div>
             </div>
 
             <div className="relative z-10 grid grid-cols-12 gap-8 items-center py-2 flex-1">
-                <div className="col-span-6 space-y-4 relative">
-                    <div className="absolute top-7 bottom-24 left-7 w-[2px] bg-gradient-to-b from-purple-500/60 via-purple-500/40 to-transparent z-0" />
+                <motion.div 
+                    key={`lefttimeline_${resetKey}`}
+                    drag={enableDrag}
+                    dragMomentum={false}
+                    dragElastic={0}
+                    className={`col-span-6 space-y-4 relative ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-2xl p-2" : ""}`}
+                >
+                    <div className="absolute top-7 bottom-24 left-9 w-[2px] bg-gradient-to-b from-purple-500/60 via-purple-500/40 to-transparent z-0" />
 
                     <div className="flex items-center gap-4 relative z-10">
                         <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-600 via-purple-800 to-slate-950 border-2 border-purple-400/70 shadow-[0_0_15px_rgba(168,85,247,0.4)] flex items-center justify-center text-white shrink-0">
@@ -271,9 +310,15 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                             <span className="text-purple-400 font-serif text-3xl font-bold leading-none block text-right">”</span>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="col-span-6 relative flex justify-center">
+                <motion.div 
+                    key={`portrait_${resetKey}`}
+                    drag={enableDrag}
+                    dragMomentum={false}
+                    dragElastic={0}
+                    className={`col-span-6 relative flex justify-center ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-3xl p-1" : ""}`}
+                >
                     <div className="relative w-full aspect-[4/5] rounded-3xl p-2 bg-gradient-to-b from-purple-500/50 via-indigo-600/30 to-purple-900/60 shadow-[0_0_30px_rgba(168,85,247,0.3)] overflow-hidden border border-purple-400/50">
                         <div className="absolute top-4 right-4 z-20 px-3.5 py-1.5 rounded-full bg-slate-950/90 border border-purple-400/50 text-[10px] font-orbitron font-bold text-white tracking-wider flex items-center gap-1.5 shadow-xl">
                             <span>OFFICIAL MEMBER</span>
@@ -298,6 +343,10 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                                 <img
                                     src={photoUrl}
                                     alt={name}
+                                    style={{
+                                        transform: `scale(${photoScale}) translateY(${photoY}px)`,
+                                        transition: "transform 0.15s ease-out"
+                                    }}
                                     className="w-full h-full object-cover object-center relative z-10"
                                     crossOrigin="anonymous"
                                 />
@@ -320,10 +369,16 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                             </div>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             </div>
 
-            <div className="relative z-10 space-y-3 pt-2">
+            <motion.div 
+                key={`bottompillars_${resetKey}`}
+                drag={enableDrag}
+                dragMomentum={false}
+                dragElastic={0}
+                className={`relative z-10 space-y-3 pt-2 ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-2xl p-1" : ""}`}
+            >
                 <div className="grid grid-cols-4 gap-4 p-1 rounded-2xl bg-[#0c0a1b]/60 border border-purple-500/20 backdrop-blur-md">
                     <div className="p-3 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
                         <div className="w-9 h-9 rounded-lg bg-purple-900/40 text-purple-300 flex items-center justify-center mb-1.5 border border-purple-500/30">
@@ -390,7 +445,7 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                         <span>[YT]</span>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 
@@ -438,22 +493,72 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                                     Onboarding Welcome Poster Studio
                                 </h2>
                                 <p className="text-xs text-slate-400">
-                                    Customize fields and export exact-match 1080×1080 Instagram poster
+                                    Drag elements to move freely, zoom photo & export 1080×1080 poster
                                 </p>
                             </div>
                         </div>
 
-                        <button
-                            onClick={onClose}
-                            className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
-                        >
-                            <X size={20} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={handleResetPositions}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-white/10 text-slate-300 hover:bg-slate-800 text-xs font-semibold transition-all"
+                            >
+                                <RotateCcw size={13} /> Reset Layout
+                            </button>
+                            <button
+                                onClick={onClose}
+                                className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 overflow-y-auto flex-1 p-6 gap-6">
                         <div className="lg:col-span-5 space-y-4 flex flex-col justify-between">
                             <div className="space-y-4">
+                                {/* Photo Zoom & Position Sliders */}
+                                <div className="p-3 bg-purple-950/30 border border-purple-500/20 rounded-xl space-y-2">
+                                    <span className="text-xs font-semibold text-purple-300 block flex items-center justify-between">
+                                        <span>Adjust Photo Fit & Zoom</span>
+                                        <span className="text-[11px] text-slate-400">{Math.round(photoScale * 100)}%</span>
+                                    </span>
+                                    <div className="flex items-center gap-3">
+                                        <ZoomOut size={14} className="text-slate-400" />
+                                        <input
+                                            type="range"
+                                            min="0.8"
+                                            max="2.5"
+                                            step="0.05"
+                                            value={photoScale}
+                                            onChange={(e) => setPhotoScale(parseFloat(e.target.value))}
+                                            className="w-full accent-purple-500 cursor-pointer"
+                                        />
+                                        <ZoomIn size={14} className="text-slate-400" />
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-1">
+                                        <span className="text-[11px] text-slate-400">Vertical Offset (Nudge Up/Down)</span>
+                                        <div className="flex gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => setPhotoY((prev) => prev - 10)}
+                                                className="px-2 py-0.5 bg-slate-900 border border-white/10 rounded text-[10px] text-slate-300 hover:text-white"
+                                            >
+                                                ▲ Up
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setPhotoY((prev) => prev + 10)}
+                                                className="px-2 py-0.5 bg-slate-900 border border-white/10 rounded text-[10px] text-slate-300 hover:text-white"
+                                            >
+                                                ▼ Down
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div>
                                     <label className="text-xs text-slate-400 font-medium mb-1 block">Full Name</label>
                                     <input
@@ -576,7 +681,7 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
 
                         <div className="lg:col-span-7 flex flex-col items-center justify-center bg-black/50 p-4 rounded-xl border border-white/5">
                             <span className="text-[11px] text-slate-400 font-orbitron mb-3 uppercase tracking-wider flex items-center gap-1.5">
-                                <Sparkles size={12} className="text-aira-cyan" /> Live Preview
+                                <Sparkles size={12} className="text-aira-cyan" /> Live Interactive Drag Canvas
                             </span>
 
                             <div className="w-full max-w-[500px] aspect-square overflow-hidden shadow-2xl rounded-xl border border-purple-500/30 relative bg-[#06050e]">

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import { 
     Sparkles, Download, Copy, RefreshCw, User, Layers, Calendar, 
     Rocket, Search, Code, Star, Globe, Check, Image as ImageIcon,
-    UserCheck
+    UserCheck, Move, RotateCcw, ZoomIn, ZoomOut
 } from "lucide-react";
 import toast from "react-hot-toast";
 import html2canvas from "html2canvas";
@@ -32,7 +33,7 @@ export default function PostersPage() {
     const [copiedCaption, setCopiedCaption] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
-    // Dynamic poster fields state
+    // Dynamic poster text state
     const [name, setName] = useState("");
     const [role, setRole] = useState("");
     const [department, setDepartment] = useState("Technical Wing");
@@ -40,6 +41,12 @@ export default function PostersPage() {
     const [quote, setQuote] = useState("");
     const [photoUrl, setPhotoUrl] = useState("");
     const [signatureName, setSignatureName] = useState("");
+
+    // Interactive Drag & Photo Zoom Controls State
+    const [enableDrag, setEnableDrag] = useState(true);
+    const [resetKey, setResetKey] = useState(0);
+    const [photoScale, setPhotoScale] = useState(1);
+    const [photoY, setPhotoY] = useState(0);
 
     const departmentOptions = [
         "Technical Wing",
@@ -121,6 +128,10 @@ export default function PostersPage() {
                 : cand.message
             : "Building robust systems, scalable solutions and smarter tomorrows.";
         setQuote(defaultQuote);
+
+        // Reset photo zoom
+        setPhotoScale(1);
+        setPhotoY(0);
     };
 
     const filteredCandidates = candidates.filter((c) => 
@@ -129,11 +140,19 @@ export default function PostersPage() {
         (c.interest && c.interest.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
-    // Export 1080x1080 PNG using offscreen unscaled DOM node
+    // Reset element positions
+    const handleResetPositions = () => {
+        setResetKey((prev) => prev + 1);
+        setPhotoScale(1);
+        setPhotoY(0);
+        toast.success("Element positions & zoom reset to default!");
+    };
+
+    // Export 1080x1080 PNG cleanly without cutoff
     const handleDownloadPoster = async () => {
         if (!exportRef.current) return;
         setDownloading(true);
-        const toastId = toast.loading("Exporting pixel-perfect 1080×1080 PNG...");
+        const toastId = toast.loading("Exporting 1080×1080 HD poster...");
 
         try {
             await document.fonts.ready;
@@ -147,6 +166,8 @@ export default function PostersPage() {
                 allowTaint: true,
                 backgroundColor: "#06050e",
                 logging: false,
+                scrollX: 0,
+                scrollY: 0,
                 windowWidth: 1080,
                 windowHeight: 1080,
             });
@@ -155,7 +176,7 @@ export default function PostersPage() {
                 if (blob) {
                     const filename = `AiRA_Welcome_${name.replace(/\s+/g, "_")}.png`;
                     saveAs(blob, filename);
-                    toast.success("Onboarding Poster downloaded!", { id: toastId });
+                    toast.success("Poster PNG downloaded cleanly!", { id: toastId });
                 } else {
                     throw new Error("Failed to export image");
                 }
@@ -206,9 +227,12 @@ export default function PostersPage() {
         setTimeout(() => setCopiedCaption(false), 3000);
     };
 
-    // Poster Layout Template JSX - EXACT 100% REPLICA OF USER REFERENCE IMAGE
+    // Poster Layout Template JSX - DRAGGABLE & FREE POSITIONING READY
     const PosterContent = () => (
-        <div className="w-[1080px] h-[1080px] bg-[#06050e] text-white p-10 select-none flex flex-col justify-between relative overflow-hidden font-sans">
+        <div 
+            style={{ width: "1080px", height: "1080px", boxSizing: "border-box" }}
+            className="bg-[#06050e] text-white p-10 select-none flex flex-col justify-between relative overflow-hidden font-sans"
+        >
             {/* Background glowing effects */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,_var(--tw-gradient-stops))] from-purple-900/30 via-transparent to-transparent pointer-events-none" />
             <div className="absolute top-1/3 right-1/4 w-[450px] h-[450px] bg-purple-600/35 rounded-full blur-[110px] pointer-events-none" />
@@ -225,11 +249,18 @@ export default function PostersPage() {
 
             {/* ══ TOP ROW: LOGO & HEADLINE & QUOTE ══ */}
             <div className="relative z-10 flex items-start justify-between">
-                <div className="space-y-3">
+                
+                {/* Left Header Draggable */}
+                <motion.div 
+                    key={`header_${resetKey}`}
+                    drag={enableDrag}
+                    dragMomentum={false}
+                    dragElastic={0}
+                    className={`space-y-3 ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-2xl p-1 transition-shadow" : ""}`}
+                >
                     {/* Logo and Proud to Welcome line */}
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-3">
-                            {/* 3D Purple Delta Triangle Logo */}
                             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 via-purple-700 to-indigo-950 border border-purple-400/60 shadow-[0_0_20px_rgba(168,85,247,0.4)] flex items-center justify-center text-white font-orbitron font-extrabold text-2xl tracking-tighter">
                                 ▲
                             </div>
@@ -239,7 +270,6 @@ export default function PostersPage() {
                             </div>
                         </div>
 
-                        {/* Line accent: ——— PROUD TO WELCOME ——— */}
                         <div className="flex items-center gap-3 text-slate-400/80 font-orbitron text-[11px] tracking-[0.25em] uppercase">
                             <div className="w-12 h-[1px] bg-gradient-to-r from-purple-500/80 to-purple-500/20" />
                             <span>PROUD TO WELCOME</span>
@@ -264,10 +294,16 @@ export default function PostersPage() {
                             A NEW MIND. A NEW ENERGY. A NEW IMPACT.
                         </p>
                     </div>
-                </div>
+                </motion.div>
 
-                {/* Top Right Quote Box */}
-                <div className="relative p-5 rounded-2xl bg-[#0c0a1b]/90 border border-purple-500/30 backdrop-blur-md max-w-[310px] shadow-2xl">
+                {/* Top Right Quote Box Draggable */}
+                <motion.div 
+                    key={`topquote_${resetKey}`}
+                    drag={enableDrag}
+                    dragMomentum={false}
+                    dragElastic={0}
+                    className={`relative p-5 rounded-2xl bg-[#0c0a1b]/90 border border-purple-500/30 backdrop-blur-md max-w-[310px] shadow-2xl ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50" : ""}`}
+                >
                     <div className="text-purple-400 font-serif text-3xl leading-none mb-1">“</div>
                     <p className="text-[11px] font-orbitron font-bold text-slate-200 tracking-widest leading-relaxed uppercase">
                         THE FUTURE IS CREATED BY THOSE WHO DARE TO BUILD IT.
@@ -277,17 +313,22 @@ export default function PostersPage() {
                         <div className="w-1 h-1 rounded-full bg-purple-400" />
                         <div className="w-1 h-1 rounded-full bg-purple-400" />
                     </div>
-                </div>
+                </motion.div>
             </div>
 
             {/* ══ MIDDLE BODY: TIMELINE & PORTRAIT ══ */}
             <div className="relative z-10 grid grid-cols-12 gap-8 items-center py-2 flex-1">
                 
-                {/* Left Side: 3 Connected Timeline Circle Nodes + Quote Card */}
-                <div className="col-span-6 space-y-4 relative">
-                    
-                    {/* Vertical Connecting Line behind nodes */}
-                    <div className="absolute top-7 bottom-24 left-7 w-[2px] bg-gradient-to-b from-purple-500/60 via-purple-500/40 to-transparent z-0" />
+                {/* Left Side: 3 Connected Timeline Circle Nodes + Quote Card Draggable */}
+                <motion.div 
+                    key={`lefttimeline_${resetKey}`}
+                    drag={enableDrag}
+                    dragMomentum={false}
+                    dragElastic={0}
+                    className={`col-span-6 space-y-4 relative ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-2xl p-2" : ""}`}
+                >
+                    {/* Vertical Line */}
+                    <div className="absolute top-7 bottom-24 left-9 w-[2px] bg-gradient-to-b from-purple-500/60 via-purple-500/40 to-transparent z-0" />
 
                     {/* Node 1: ROLE */}
                     <div className="flex items-center gap-4 relative z-10">
@@ -334,7 +375,7 @@ export default function PostersPage() {
                         </div>
                     </div>
 
-                    {/* Quote Card with Dot Grid Accent */}
+                    {/* Quote Card */}
                     <div className="mt-4 p-5 rounded-2xl bg-[#0c0a1b]/90 border border-purple-500/30 backdrop-blur-md relative shadow-xl flex gap-3">
                         <div className="w-6 shrink-0 grid grid-cols-2 gap-1.5 opacity-30 self-center">
                             {[...Array(8)].map((_, i) => (
@@ -350,10 +391,16 @@ export default function PostersPage() {
                             <span className="text-purple-400 font-serif text-3xl font-bold leading-none block text-right">”</span>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
-                {/* Right Side: Member Portrait Frame */}
-                <div className="col-span-6 relative flex justify-center">
+                {/* Right Side: Member Portrait Frame Draggable */}
+                <motion.div 
+                    key={`portrait_${resetKey}`}
+                    drag={enableDrag}
+                    dragMomentum={false}
+                    dragElastic={0}
+                    className={`col-span-6 relative flex justify-center ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-3xl p-1" : ""}`}
+                >
                     <div className="relative w-full aspect-[4/5] rounded-3xl p-2 bg-gradient-to-b from-purple-500/50 via-indigo-600/30 to-purple-900/60 shadow-[0_0_30px_rgba(168,85,247,0.3)] overflow-hidden border border-purple-400/50">
                         
                         {/* Top Right Pill Badge */}
@@ -374,7 +421,7 @@ export default function PostersPage() {
                             WELCOME ABOARD, INNOVATOR!
                         </div>
 
-                        {/* Photo Container with Halo Glow */}
+                        {/* Photo Container with Photo Fit Scaling & Offset */}
                         <div className="relative w-full h-full rounded-2xl overflow-hidden bg-gradient-to-b from-purple-950 via-slate-950 to-black flex items-center justify-center">
                             <div className="absolute top-1/4 w-72 h-72 bg-purple-600/40 rounded-full blur-3xl pointer-events-none" />
 
@@ -382,6 +429,10 @@ export default function PostersPage() {
                                 <img
                                     src={photoUrl}
                                     alt={name}
+                                    style={{
+                                        transform: `scale(${photoScale}) translateY(${photoY}px)`,
+                                        transition: "transform 0.15s ease-out"
+                                    }}
                                     className="w-full h-full object-cover object-center relative z-10"
                                     crossOrigin="anonymous"
                                 />
@@ -405,11 +456,17 @@ export default function PostersPage() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             </div>
 
-            {/* ══ BOTTOM SECTION: 4 PILLAR CARDS & FOOTER BAR ══ */}
-            <div className="relative z-10 space-y-3 pt-2">
+            {/* ══ BOTTOM SECTION: 4 PILLAR CARDS & FOOTER BAR DRAGGABLE ══ */}
+            <motion.div 
+                key={`bottompillars_${resetKey}`}
+                drag={enableDrag}
+                dragMomentum={false}
+                dragElastic={0}
+                className={`relative z-10 space-y-3 pt-2 ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-2xl p-1" : ""}`}
+            >
                 <div className="grid grid-cols-4 gap-4 p-1 rounded-2xl bg-[#0c0a1b]/60 border border-purple-500/20 backdrop-blur-md">
                     <div className="p-3 rounded-xl bg-[#0d0b1f]/90 border border-purple-500/30 text-center flex flex-col items-center justify-center shadow-lg">
                         <div className="w-9 h-9 rounded-lg bg-purple-900/40 text-purple-300 flex items-center justify-center mb-1.5 border border-purple-500/30">
@@ -477,7 +534,7 @@ export default function PostersPage() {
                         <span>[YT]</span>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 
@@ -519,9 +576,32 @@ export default function PostersPage() {
                             Onboarding Poster Studio
                         </h1>
                         <p className="text-xs text-slate-400">
-                            Create exact-match Instagram welcome graphics with dynamic Role, Department & Join Date
+                            Drag any element to move it freely, zoom photo & export 1080×1080 PNG
                         </p>
                     </div>
+                </div>
+
+                {/* Reset Positions & Drag Toggle Buttons */}
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setEnableDrag(!enableDrag)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                            enableDrag 
+                                ? "bg-purple-600/30 border-purple-500 text-purple-200" 
+                                : "bg-slate-900 border-white/10 text-slate-400"
+                        }`}
+                    >
+                        <Move size={14} /> {enableDrag ? "Drag Mode Enabled" : "Drag Mode Disabled"}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleResetPositions}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-slate-300 hover:bg-slate-800 text-xs font-semibold transition-all"
+                        title="Reset all element positions"
+                    >
+                        <RotateCcw size={14} /> Reset Positions
+                    </button>
                 </div>
             </div>
 
@@ -534,7 +614,7 @@ export default function PostersPage() {
                     {/* Candidate Picker Box */}
                     <div className="glass rounded-2xl p-5 border border-white/5 space-y-4">
                         <h2 className="font-orbitron font-bold text-sm text-white flex items-center gap-2">
-                            <UserCheck size={16} className="text-aira-cyan" /> Select Candidate
+                            <UserCheck size={16} className="text-aira-cyan" /> 1. Select Candidate
                         </h2>
 
                         <div className="relative">
@@ -548,7 +628,7 @@ export default function PostersPage() {
                             />
                         </div>
 
-                        <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                        <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
                             {isLoading ? (
                                 <div className="p-4 text-center text-slate-500 text-xs flex items-center justify-center gap-2">
                                     <RefreshCw size={14} className="animate-spin text-aira-cyan" /> Loading candidates...
@@ -607,11 +687,52 @@ export default function PostersPage() {
                         </div>
                     </div>
 
-                    {/* Edit Form Fields */}
+                    {/* Edit Form Fields & Photo Adjust */}
                     <div className="glass rounded-2xl p-5 border border-white/5 space-y-4">
                         <h2 className="font-orbitron font-bold text-sm text-white flex items-center gap-2">
-                            <Sparkles size={16} className="text-purple-400" /> Edit Dynamic Poster Text
+                            <Sparkles size={16} className="text-purple-400" /> 2. Edit Text & Photo Zoom
                         </h2>
+
+                        {/* Photo Zoom & Position Sliders */}
+                        <div className="p-3 bg-purple-950/30 border border-purple-500/20 rounded-xl space-y-2">
+                            <span className="text-xs font-semibold text-purple-300 block flex items-center justify-between">
+                                <span>Adjust Photo Fit & Zoom</span>
+                                <span className="text-[11px] text-slate-400">{Math.round(photoScale * 100)}%</span>
+                            </span>
+                            <div className="flex items-center gap-3">
+                                <ZoomOut size={14} className="text-slate-400" />
+                                <input
+                                    type="range"
+                                    min="0.8"
+                                    max="2.5"
+                                    step="0.05"
+                                    value={photoScale}
+                                    onChange={(e) => setPhotoScale(parseFloat(e.target.value))}
+                                    className="w-full accent-purple-500 cursor-pointer"
+                                />
+                                <ZoomIn size={14} className="text-slate-400" />
+                            </div>
+
+                            <div className="flex items-center justify-between pt-1">
+                                <span className="text-[11px] text-slate-400">Vertical Offset (Nudge Up/Down)</span>
+                                <div className="flex gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPhotoY((prev) => prev - 10)}
+                                        className="px-2 py-0.5 bg-slate-900 border border-white/10 rounded text-[10px] text-slate-300 hover:text-white"
+                                    >
+                                        ▲ Up
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPhotoY((prev) => prev + 10)}
+                                        className="px-2 py-0.5 bg-slate-900 border border-white/10 rounded text-[10px] text-slate-300 hover:text-white"
+                                    >
+                                        ▼ Down
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
                         <div>
                             <label className="text-xs text-slate-400 font-medium mb-1 block">Full Name</label>
@@ -664,7 +785,7 @@ export default function PostersPage() {
                         </div>
 
                         <div>
-                            <label className="text-xs text-slate-400 font-medium mb-1 block">Joined Date (Auto-Filled)</label>
+                            <label className="text-xs text-slate-400 font-medium mb-1 block">Joined Date</label>
                             <input
                                 type="text"
                                 value={joinedDate}
@@ -675,7 +796,7 @@ export default function PostersPage() {
                         </div>
 
                         <div>
-                            <label className="text-xs text-slate-400 font-medium mb-1 block">Welcome Quote / Statement</label>
+                            <label className="text-xs text-slate-400 font-medium mb-1 block">Welcome Quote</label>
                             <textarea
                                 rows={2}
                                 value={quote}
@@ -734,14 +855,14 @@ export default function PostersPage() {
                     </div>
                 </div>
 
-                {/* ══ RIGHT COLUMN: LIVE PREVIEW CONTAINER ══ */}
+                {/* ══ RIGHT COLUMN: LIVE PREVIEW & DRAG CANVAS ══ */}
                 <div className="lg:col-span-7 flex flex-col items-center justify-start bg-slate-950/60 p-6 rounded-2xl border border-white/5">
                     <div className="w-full flex items-center justify-between mb-4">
                         <span className="text-xs font-orbitron font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <Sparkles size={14} className="text-aira-cyan" /> Live Poster Preview
+                            <Sparkles size={14} className="text-aira-cyan" /> Interactive Drag-and-Move Canvas
                         </span>
-                        <span className="text-[11px] text-slate-400 font-mono">
-                            Square 1:1 Aspect Ratio
+                        <span className="text-[11px] text-purple-300 font-mono">
+                            {enableDrag ? "✨ Drag any block on canvas below" : "Locked"}
                         </span>
                     </div>
 
