@@ -22,13 +22,15 @@ import {
     Globe,
     Radio,
     ChevronLeft,
-    Crown
+    Crown,
+    Sparkles
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const adminLinks = [
     { label: "Analytics", href: "/admin", icon: BarChart3 },
     { label: "Live Broadcast", href: "/admin/broadcast", icon: Radio, highlight: true },
+    { label: "Poster Studio", href: "/admin/posters", icon: Sparkles },
     { label: "Leadership & People", href: "/admin/team-members", icon: Crown },
     { label: "User Accounts", href: "/admin/users", icon: UserCheck },
     { label: "Teams", href: "/admin/teams", icon: UsersRound },

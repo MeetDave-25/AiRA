@@ -15,6 +15,7 @@ import {
     ShieldCheck,
     Trophy,
     CheckSquare,
+    Sparkles,
 } from "lucide-react";
 
 const adminLinks = [
@@ -24,6 +25,7 @@ const adminLinks = [
     { label: "Tasks", href: "/admin/tasks", icon: CheckSquare },
     { label: "Events", href: "/admin/events", icon: CalendarDays },
     { label: "Applications", href: "/admin/applications", icon: FileText },
+    { label: "Poster Studio", href: "/admin/posters", icon: Sparkles },
     { label: "Certificates", href: "/admin/certificates", icon: ClipboardList },
     { label: "Reports", href: "/admin/reports", icon: BarChart3 },
     { label: "Achievements", href: "/admin/achievements", icon: Trophy },
