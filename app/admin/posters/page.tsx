@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { 
     Sparkles, Download, Copy, RefreshCw, User, Layers, Calendar, 
     Rocket, Search, Code, Star, Globe, Check, Image as ImageIcon,
-    UserCheck, Move, RotateCcw, ZoomIn, ZoomOut
+    UserCheck, Move, RotateCcw, ZoomIn, ZoomOut, Maximize2, Type, Layout
 } from "lucide-react";
 import toast from "react-hot-toast";
 import html2canvas from "html2canvas";
@@ -24,6 +24,8 @@ interface Candidate {
     type: "APPLICATION" | "USER";
 }
 
+type AspectRatioType = "1:1" | "4:5" | "9:16" | "16:9";
+
 export default function PostersPage() {
     const exportRef = useRef<HTMLDivElement>(null);
     const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -33,7 +35,13 @@ export default function PostersPage() {
     const [copiedCaption, setCopiedCaption] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
+    // Aspect Ratio & Dimensions State
+    const [aspectRatio, setAspectRatio] = useState<AspectRatioType>("1:1");
+
     // Dynamic poster text state
+    const [welcomeText, setWelcomeText] = useState("WELCOME");
+    const [taglineText, setTaglineText] = useState("A NEW MIND. A NEW ENERGY. A NEW IMPACT.");
+    const [topQuoteText, setTopQuoteText] = useState("THE FUTURE IS CREATED BY THOSE WHO DARE TO BUILD IT.");
     const [name, setName] = useState("");
     const [role, setRole] = useState("");
     const [department, setDepartment] = useState("Technical Wing");
@@ -41,6 +49,7 @@ export default function PostersPage() {
     const [quote, setQuote] = useState("");
     const [photoUrl, setPhotoUrl] = useState("");
     const [signatureName, setSignatureName] = useState("");
+    const [footerUrl, setFooterUrl] = useState("www.aira-lab.in");
 
     // Interactive Drag & Photo Zoom Controls State
     const [enableDrag, setEnableDrag] = useState(true);
@@ -56,6 +65,26 @@ export default function PostersPage() {
         "Cybersecurity Wing",
         "Core Team"
     ];
+
+    const aspectRatios = [
+        { label: "1:1 Square (1080×1080)", value: "1:1" as AspectRatioType, desc: "IG Feed & LinkedIn" },
+        { label: "4:5 Portrait (1080×1350)", value: "4:5" as AspectRatioType, desc: "IG Portrait Feed" },
+        { label: "9:16 Story (1080×1920)", value: "9:16" as AspectRatioType, desc: "IG Stories & Reels" },
+        { label: "16:9 Landscape (1920×1080)", value: "16:9" as AspectRatioType, desc: "X / Web Banner" }
+    ];
+
+    // Compute dimensions
+    const getDimensions = (ratio: AspectRatioType) => {
+        switch (ratio) {
+            case "4:5": return { width: 1080, height: 1350 };
+            case "9:16": return { width: 1080, height: 1920 };
+            case "16:9": return { width: 1920, height: 1080 };
+            case "1:1":
+            default: return { width: 1080, height: 1080 };
+        }
+    };
+
+    const currentDim = getDimensions(aspectRatio);
 
     // Load candidates (applications + registered users)
     useEffect(() => {
@@ -116,12 +145,10 @@ export default function PostersPage() {
         setRole(cand.interest || cand.role || "Chief Technical Officer");
         setPhotoUrl(cand.photo || cand.avatar || "");
 
-        // Format joined date: e.g. "March 2026"
         const dateObj = cand.createdAt ? new Date(cand.createdAt) : new Date();
         const formattedDate = dateObj.toLocaleDateString("en-US", { month: "long", year: "numeric" });
         setJoinedDate(formattedDate);
 
-        // Quote
         const defaultQuote = cand.message && cand.message.length > 5
             ? cand.message.length > 90 
                 ? cand.message.substring(0, 87) + "..."
@@ -129,7 +156,6 @@ export default function PostersPage() {
             : "Building robust systems, scalable solutions and smarter tomorrows.";
         setQuote(defaultQuote);
 
-        // Reset photo zoom
         setPhotoScale(1);
         setPhotoY(0);
     };
@@ -148,33 +174,38 @@ export default function PostersPage() {
         toast.success("Element positions & zoom reset to default!");
     };
 
-    // Export 1080x1080 PNG cleanly without cutoff
+    // Export poster PNG using active aspect ratio dimensions
     const handleDownloadPoster = async () => {
         if (!exportRef.current) return;
         setDownloading(true);
-        const toastId = toast.loading("Exporting 1080×1080 HD poster...");
+        const toastId = toast.loading(`Exporting ${currentDim.width}×${currentDim.height} HD poster...`);
 
         try {
+            // Blur active focus element to prevent focus rings on export
+            if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur();
+            }
+
             await document.fonts.ready;
             await new Promise((resolve) => setTimeout(resolve, 400));
 
             const canvas = await html2canvas(exportRef.current, {
-                width: 1080,
-                height: 1080,
-                scale: 2, // 2160x2160 ultra sharp output
+                width: currentDim.width,
+                height: currentDim.height,
+                scale: 2, // 2x ultra sharp output
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: "#06050e",
                 logging: false,
                 scrollX: 0,
                 scrollY: 0,
-                windowWidth: 1080,
-                windowHeight: 1080,
+                windowWidth: currentDim.width,
+                windowHeight: currentDim.height,
             });
 
             canvas.toBlob((blob) => {
                 if (blob) {
-                    const filename = `AiRA_Welcome_${name.replace(/\s+/g, "_")}.png`;
+                    const filename = `AiRA_Welcome_${name.replace(/\s+/g, "_")}_${aspectRatio.replace(":", "x")}.png`;
                     saveAs(blob, filename);
                     toast.success("Poster PNG downloaded cleanly!", { id: toastId });
                 } else {
@@ -227,11 +258,15 @@ export default function PostersPage() {
         setTimeout(() => setCopiedCaption(false), 3000);
     };
 
-    // Poster Layout Template JSX - DRAGGABLE & FREE POSITIONING READY
+    // Poster Layout Template JSX - INLINE EDITABLE & DRAGGABLE & CUSTOM ASPECT RATIO READY
     const PosterContent = () => (
         <div 
-            style={{ width: "1080px", height: "1080px", boxSizing: "border-box" }}
-            className="bg-[#06050e] text-white p-10 select-none flex flex-col justify-between relative overflow-hidden font-sans"
+            style={{ 
+                width: `${currentDim.width}px`, 
+                height: `${currentDim.height}px`, 
+                boxSizing: "border-box" 
+            }}
+            className="bg-[#06050e] text-white p-12 select-none flex flex-col justify-between relative overflow-hidden font-sans"
         >
             {/* Background glowing effects */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,_var(--tw-gradient-stops))] from-purple-900/30 via-transparent to-transparent pointer-events-none" />
@@ -256,7 +291,7 @@ export default function PostersPage() {
                     drag={enableDrag}
                     dragMomentum={false}
                     dragElastic={0}
-                    className={`space-y-3 ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-2xl p-1 transition-shadow" : ""}`}
+                    className={`space-y-3 ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50 hover:rounded-2xl p-1" : ""}`}
                 >
                     {/* Logo and Proud to Welcome line */}
                     <div className="flex items-center gap-6">
@@ -277,10 +312,15 @@ export default function PostersPage() {
                         </div>
                     </div>
 
-                    {/* Main Title */}
+                    {/* Main Headline - Inline Editable */}
                     <div className="pt-1">
-                        <h1 className="font-orbitron font-black text-6xl text-white tracking-tight leading-none uppercase">
-                            WELCOME
+                        <h1 
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => setWelcomeText(e.currentTarget.textContent || "WELCOME")}
+                            className="font-orbitron font-black text-6xl text-white tracking-tight leading-none uppercase outline-none focus:ring-1 focus:ring-purple-400/60 rounded px-1"
+                        >
+                            {welcomeText}
                         </h1>
                         <div className="flex items-center gap-2 my-0.5 relative">
                             <span className="font-script text-5xl text-purple-400 -rotate-6 font-bold tracking-wide -mt-2 -mb-2 z-10 drop-shadow-[0_2px_8px_rgba(168,85,247,0.8)]">
@@ -290,13 +330,18 @@ export default function PostersPage() {
                                 AIRA LAB
                             </span>
                         </div>
-                        <p className="text-[11px] font-orbitron tracking-[0.3em] text-purple-300/90 pt-2 uppercase font-medium">
-                            A NEW MIND. A NEW ENERGY. A NEW IMPACT.
+                        <p 
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => setTaglineText(e.currentTarget.textContent || "")}
+                            className="text-[11px] font-orbitron tracking-[0.3em] text-purple-300/90 pt-2 uppercase font-medium outline-none focus:ring-1 focus:ring-purple-400/60 rounded px-1"
+                        >
+                            {taglineText}
                         </p>
                     </div>
                 </motion.div>
 
-                {/* Top Right Quote Box Draggable */}
+                {/* Top Right Quote Box Draggable & Inline Editable */}
                 <motion.div 
                     key={`topquote_${resetKey}`}
                     drag={enableDrag}
@@ -305,8 +350,13 @@ export default function PostersPage() {
                     className={`relative p-5 rounded-2xl bg-[#0c0a1b]/90 border border-purple-500/30 backdrop-blur-md max-w-[310px] shadow-2xl ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50" : ""}`}
                 >
                     <div className="text-purple-400 font-serif text-3xl leading-none mb-1">“</div>
-                    <p className="text-[11px] font-orbitron font-bold text-slate-200 tracking-widest leading-relaxed uppercase">
-                        THE FUTURE IS CREATED BY THOSE WHO DARE TO BUILD IT.
+                    <p 
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => setTopQuoteText(e.currentTarget.textContent || "")}
+                        className="text-[11px] font-orbitron font-bold text-slate-200 tracking-widest leading-relaxed uppercase outline-none focus:ring-1 focus:ring-purple-400/60 rounded p-1"
+                    >
+                        {topQuoteText}
                     </p>
                     <div className="absolute bottom-2 right-2 flex gap-1 opacity-40">
                         <div className="w-1 h-1 rounded-full bg-purple-400" />
@@ -319,7 +369,7 @@ export default function PostersPage() {
             {/* ══ MIDDLE BODY: TIMELINE & PORTRAIT ══ */}
             <div className="relative z-10 grid grid-cols-12 gap-8 items-center py-2 flex-1">
                 
-                {/* Left Side: 3 Connected Timeline Circle Nodes + Quote Card Draggable */}
+                {/* Left Side: 3 Connected Timeline Circle Nodes + Quote Card Draggable & Inline Editable */}
                 <motion.div 
                     key={`lefttimeline_${resetKey}`}
                     drag={enableDrag}
@@ -339,7 +389,12 @@ export default function PostersPage() {
                             <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
                                 ROLE
                             </span>
-                            <span className="font-bold text-xl text-white truncate block tracking-wide">
+                            <span 
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setRole(e.currentTarget.textContent || "")}
+                                className="font-bold text-xl text-white truncate block tracking-wide outline-none focus:ring-1 focus:ring-purple-400/60 rounded px-1"
+                            >
                                 {role || "Chief Technical Officer"}
                             </span>
                         </div>
@@ -354,7 +409,12 @@ export default function PostersPage() {
                             <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
                                 DEPARTMENT
                             </span>
-                            <span className="font-bold text-xl text-white truncate block tracking-wide">
+                            <span 
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setDepartment(e.currentTarget.textContent || "")}
+                                className="font-bold text-xl text-white truncate block tracking-wide outline-none focus:ring-1 focus:ring-purple-400/60 rounded px-1"
+                            >
                                 {department || "Technical Wing"}
                             </span>
                         </div>
@@ -369,7 +429,12 @@ export default function PostersPage() {
                             <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
                                 JOINED IN
                             </span>
-                            <span className="font-bold text-xl text-white truncate block tracking-wide">
+                            <span 
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setJoinedDate(e.currentTarget.textContent || "")}
+                                className="font-bold text-xl text-white truncate block tracking-wide outline-none focus:ring-1 focus:ring-purple-400/60 rounded px-1"
+                            >
                                 {joinedDate || "March 2026"}
                             </span>
                         </div>
@@ -385,7 +450,12 @@ export default function PostersPage() {
 
                         <div className="flex-1">
                             <span className="text-purple-400 font-serif text-3xl font-bold leading-none">“</span>
-                            <p className="text-xs text-slate-200 italic leading-relaxed px-1 py-1 font-sans">
+                            <p 
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setQuote(e.currentTarget.textContent || "")}
+                                className="text-xs text-slate-200 italic leading-relaxed px-1 py-1 font-sans outline-none focus:ring-1 focus:ring-purple-400/60 rounded"
+                            >
                                 {quote}
                             </p>
                             <span className="text-purple-400 font-serif text-3xl font-bold leading-none block text-right">”</span>
@@ -443,13 +513,18 @@ export default function PostersPage() {
                                 </div>
                             )}
 
-                            {/* Bottom Corner Overlay with Signature */}
+                            {/* Bottom Corner Overlay with Inline Editable Signature */}
                             <div className="absolute bottom-0 right-0 left-0 h-36 bg-gradient-to-t from-black via-black/85 to-transparent flex items-end justify-end p-5 z-20">
                                 <div className="absolute bottom-4 right-4 text-purple-900/30 text-7xl font-orbitron font-black pointer-events-none">
                                     ▲
                                 </div>
                                 <div className="text-right relative z-10">
-                                    <div className="font-script text-5xl text-purple-300 font-bold drop-shadow-[0_2px_12px_rgba(168,85,247,0.9)] -rotate-3 tracking-wide">
+                                    <div 
+                                        contentEditable
+                                        suppressContentEditableWarning
+                                        onBlur={(e) => setSignatureName(e.currentTarget.textContent || "")}
+                                        className="font-script text-5xl text-purple-300 font-bold drop-shadow-[0_2px_12px_rgba(168,85,247,0.9)] -rotate-3 tracking-wide outline-none focus:ring-1 focus:ring-purple-400/60 rounded px-1"
+                                    >
                                         {signatureName}
                                     </div>
                                 </div>
@@ -517,10 +592,18 @@ export default function PostersPage() {
                     </div>
                 </div>
 
-                {/* Footer Bar */}
+                {/* Footer Bar - Inline Editable */}
                 <div className="pt-3 border-t border-purple-500/30 flex items-center justify-between text-xs font-orbitron text-slate-400 tracking-wider">
                     <div className="flex items-center gap-2 text-purple-300 font-semibold">
-                        <Globe size={14} /> www.aira-lab.in
+                        <Globe size={14} /> 
+                        <span 
+                            contentEditable 
+                            suppressContentEditableWarning 
+                            onBlur={(e) => setFooterUrl(e.currentTarget.textContent || "www.aira-lab.in")}
+                            className="outline-none focus:ring-1 focus:ring-purple-400/60 rounded px-1"
+                        >
+                            {footerUrl}
+                        </span>
                     </div>
 
                     <div className="tracking-[0.25em] text-slate-300 font-medium">
@@ -548,14 +631,14 @@ export default function PostersPage() {
                 }
             `}</style>
 
-            {/* ══ HIDDEN OFFSCREEN UNTRANSFORMED DOM NODE FOR 1:1 EXACT HTML2CANVAS CAPTURE ══ */}
+            {/* ══ HIDDEN OFFSCREEN UNTRANSFORMED DOM NODE FOR EXACT ASPECT RATIO HTML2CANVAS CAPTURE ══ */}
             <div 
                 style={{
                     position: "fixed",
                     left: "-9999px",
                     top: "-9999px",
-                    width: "1080px",
-                    height: "1080px",
+                    width: `${currentDim.width}px`,
+                    height: `${currentDim.height}px`,
                     overflow: "hidden",
                     zIndex: -9999,
                 }}
@@ -576,13 +659,13 @@ export default function PostersPage() {
                             Onboarding Poster Studio
                         </h1>
                         <p className="text-xs text-slate-400">
-                            Drag any element to move it freely, zoom photo & export 1080×1080 PNG
+                            Custom Aspect Ratios (1:1, 4:5, 9:16, 16:9), Click-to-Edit text & free element dragging
                         </p>
                     </div>
                 </div>
 
                 {/* Reset Positions & Drag Toggle Buttons */}
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <button
                         type="button"
                         onClick={() => setEnableDrag(!enableDrag)}
@@ -592,7 +675,7 @@ export default function PostersPage() {
                                 : "bg-slate-900 border-white/10 text-slate-400"
                         }`}
                     >
-                        <Move size={14} /> {enableDrag ? "Drag Mode Enabled" : "Drag Mode Disabled"}
+                        <Move size={14} /> {enableDrag ? "Drag Mode Enabled" : "Drag Locked"}
                     </button>
                     <button
                         type="button"
@@ -608,13 +691,40 @@ export default function PostersPage() {
             {/* Main Studio Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
-                {/* ══ LEFT COLUMN: CANDIDATE PICKER & CONTROLS ══ */}
+                {/* ══ LEFT COLUMN: ASPECT RATIO, CANDIDATE PICKER & CONTROLS ══ */}
                 <div className="lg:col-span-5 space-y-6">
                     
+                    {/* Aspect Ratio Selector Card */}
+                    <div className="glass rounded-2xl p-5 border border-white/5 space-y-3">
+                        <h2 className="font-orbitron font-bold text-sm text-white flex items-center gap-2">
+                            <Maximize2 size={16} className="text-purple-400" /> 1. Select Aspect Ratio & Format
+                        </h2>
+                        <div className="grid grid-cols-2 gap-2">
+                            {aspectRatios.map((ratio) => {
+                                const isSel = aspectRatio === ratio.value;
+                                return (
+                                    <button
+                                        key={ratio.value}
+                                        type="button"
+                                        onClick={() => setAspectRatio(ratio.value)}
+                                        className={`p-3 rounded-xl border text-left transition-all ${
+                                            isSel
+                                                ? "bg-purple-600/30 border-purple-400 text-white shadow-md shadow-purple-600/20"
+                                                : "bg-slate-900/60 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                                        }`}
+                                    >
+                                        <span className="font-orbitron font-bold text-xs block text-white">{ratio.label}</span>
+                                        <span className="text-[10px] text-purple-300/80 block pt-0.5">{ratio.desc}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     {/* Candidate Picker Box */}
                     <div className="glass rounded-2xl p-5 border border-white/5 space-y-4">
                         <h2 className="font-orbitron font-bold text-sm text-white flex items-center gap-2">
-                            <UserCheck size={16} className="text-aira-cyan" /> 1. Select Candidate
+                            <UserCheck size={16} className="text-aira-cyan" /> 2. Select Candidate
                         </h2>
 
                         <div className="relative">
@@ -628,7 +738,7 @@ export default function PostersPage() {
                             />
                         </div>
 
-                        <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
+                        <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1">
                             {isLoading ? (
                                 <div className="p-4 text-center text-slate-500 text-xs flex items-center justify-center gap-2">
                                     <RefreshCw size={14} className="animate-spin text-aira-cyan" /> Loading candidates...
@@ -690,10 +800,9 @@ export default function PostersPage() {
                     {/* Edit Form Fields & Photo Adjust */}
                     <div className="glass rounded-2xl p-5 border border-white/5 space-y-4">
                         <h2 className="font-orbitron font-bold text-sm text-white flex items-center gap-2">
-                            <Sparkles size={16} className="text-purple-400" /> 2. Edit Text & Photo Zoom
+                            <Type size={16} className="text-purple-400" /> 3. Edit Details & Direct Click-to-Edit
                         </h2>
 
-                        {/* Photo Zoom & Position Sliders */}
                         <div className="p-3 bg-purple-950/30 border border-purple-500/20 rounded-xl space-y-2">
                             <span className="text-xs font-semibold text-purple-300 block flex items-center justify-between">
                                 <span>Adjust Photo Fit & Zoom</span>
@@ -826,11 +935,11 @@ export default function PostersPage() {
                         >
                             {downloading ? (
                                 <>
-                                    <RefreshCw size={16} className="animate-spin" /> Exporting 1080×1080 PNG...
+                                    <RefreshCw size={16} className="animate-spin" /> Exporting {currentDim.width}×{currentDim.height} PNG...
                                 </>
                             ) : (
                                 <>
-                                    <Download size={16} /> Download IG Poster PNG (1080×1080)
+                                    <Download size={16} /> Download {aspectRatio} Poster PNG ({currentDim.width}×{currentDim.height})
                                 </>
                             )}
                         </button>
@@ -855,24 +964,29 @@ export default function PostersPage() {
                     </div>
                 </div>
 
-                {/* ══ RIGHT COLUMN: LIVE PREVIEW & DRAG CANVAS ══ */}
+                {/* ══ RIGHT COLUMN: DYNAMIC ASPECT RATIO LIVE CANVAS PREVIEW ══ */}
                 <div className="lg:col-span-7 flex flex-col items-center justify-start bg-slate-950/60 p-6 rounded-2xl border border-white/5">
                     <div className="w-full flex items-center justify-between mb-4">
                         <span className="text-xs font-orbitron font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <Sparkles size={14} className="text-aira-cyan" /> Interactive Drag-and-Move Canvas
+                            <Sparkles size={14} className="text-aira-cyan" /> Live Interactive Studio ({aspectRatio} - {currentDim.width}×{currentDim.height}px)
                         </span>
                         <span className="text-[11px] text-purple-300 font-mono">
-                            {enableDrag ? "✨ Drag any block on canvas below" : "Locked"}
+                            ✍️ Click text directly to edit & drag blocks
                         </span>
                     </div>
 
-                    {/* Display preview box */}
-                    <div className="w-full max-w-[540px] aspect-square overflow-hidden shadow-2xl rounded-2xl border border-purple-500/40 relative bg-[#06050e]">
+                    {/* Dynamic Aspect Ratio Box */}
+                    <div 
+                        style={{
+                            aspectRatio: `${currentDim.width} / ${currentDim.height}`,
+                        }}
+                        className="w-full max-w-[540px] overflow-hidden shadow-2xl rounded-2xl border border-purple-500/40 relative bg-[#06050e] flex items-center justify-center"
+                    >
                         <div
                             style={{
-                                width: "1080px",
-                                height: "1080px",
-                                transform: "scale(0.5)",
+                                width: `${currentDim.width}px`,
+                                height: `${currentDim.height}px`,
+                                transform: `scale(${540 / currentDim.width})`,
                                 transformOrigin: "top left",
                             }}
                         >

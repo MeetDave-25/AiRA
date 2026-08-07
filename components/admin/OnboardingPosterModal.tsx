@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
     X, Download, Copy, Sparkles, User, Layers, Calendar, Quote, 
     Rocket, Search, Code, Star, Globe, Check, Image as ImageIcon,
-    RefreshCw, Move, RotateCcw, ZoomIn, ZoomOut
+    RefreshCw, Move, RotateCcw, ZoomIn, ZoomOut, Maximize2, Type
 } from "lucide-react";
 import toast from "react-hot-toast";
 import html2canvas from "html2canvas";
@@ -26,12 +26,20 @@ interface OnboardingPosterModalProps {
     } | null;
 }
 
+type AspectRatioType = "1:1" | "4:5" | "9:16" | "16:9";
+
 export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPosterModalProps) {
     const exportRef = useRef<HTMLDivElement>(null);
     const [downloading, setDownloading] = useState(false);
     const [copiedCaption, setCopiedCaption] = useState(false);
 
-    // Dynamic poster state
+    // Aspect Ratio & Dimensions State
+    const [aspectRatio, setAspectRatio] = useState<AspectRatioType>("1:1");
+
+    // Dynamic poster text state
+    const [welcomeText, setWelcomeText] = useState("WELCOME");
+    const [taglineText, setTaglineText] = useState("A NEW MIND. A NEW ENERGY. A NEW IMPACT.");
+    const [topQuoteText, setTopQuoteText] = useState("THE FUTURE IS CREATED BY THOSE WHO DARE TO BUILD IT.");
     const [name, setName] = useState("");
     const [role, setRole] = useState("");
     const [department, setDepartment] = useState("Technical Wing");
@@ -39,6 +47,7 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
     const [quote, setQuote] = useState("");
     const [photoUrl, setPhotoUrl] = useState("");
     const [signatureName, setSignatureName] = useState("");
+    const [footerUrl, setFooterUrl] = useState("www.aira-lab.in");
 
     // Interactive Drag & Photo Zoom Controls State
     const [enableDrag, setEnableDrag] = useState(true);
@@ -54,6 +63,25 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
         "Cybersecurity Wing",
         "Core Team"
     ];
+
+    const aspectRatios = [
+        { label: "1:1 Square (1080×1080)", value: "1:1" as AspectRatioType, desc: "IG Feed & LinkedIn" },
+        { label: "4:5 Portrait (1080×1350)", value: "4:5" as AspectRatioType, desc: "IG Portrait Feed" },
+        { label: "9:16 Story (1080×1920)", value: "9:16" as AspectRatioType, desc: "IG Stories & Reels" },
+        { label: "16:9 Landscape (1920×1080)", value: "16:9" as AspectRatioType, desc: "X / Web Banner" }
+    ];
+
+    const getDimensions = (ratio: AspectRatioType) => {
+        switch (ratio) {
+            case "4:5": return { width: 1080, height: 1350 };
+            case "9:16": return { width: 1080, height: 1920 };
+            case "16:9": return { width: 1920, height: 1080 };
+            case "1:1":
+            default: return { width: 1080, height: 1080 };
+        }
+    };
+
+    const currentDim = getDimensions(aspectRatio);
 
     useEffect(() => {
         if (applicant) {
@@ -90,15 +118,19 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
     const handleDownloadPoster = async () => {
         if (!exportRef.current) return;
         setDownloading(true);
-        const toastId = toast.loading("Exporting pixel-perfect 1080×1080 PNG...");
+        const toastId = toast.loading(`Exporting ${currentDim.width}×${currentDim.height} HD poster...`);
 
         try {
+            if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur();
+            }
+
             await document.fonts.ready;
             await new Promise((resolve) => setTimeout(resolve, 400));
 
             const canvas = await html2canvas(exportRef.current, {
-                width: 1080,
-                height: 1080,
+                width: currentDim.width,
+                height: currentDim.height,
                 scale: 2,
                 useCORS: true,
                 allowTaint: true,
@@ -106,13 +138,13 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                 logging: false,
                 scrollX: 0,
                 scrollY: 0,
-                windowWidth: 1080,
-                windowHeight: 1080,
+                windowWidth: currentDim.width,
+                windowHeight: currentDim.height,
             });
 
             canvas.toBlob((blob) => {
                 if (blob) {
-                    const filename = `AiRA_Welcome_${name.replace(/\s+/g, "_")}.png`;
+                    const filename = `AiRA_Welcome_${name.replace(/\s+/g, "_")}_${aspectRatio.replace(":", "x")}.png`;
                     saveAs(blob, filename);
                     toast.success("Onboarding Poster downloaded!", { id: toastId });
                 } else {
@@ -165,8 +197,12 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
 
     const PosterContent = () => (
         <div 
-            style={{ width: "1080px", height: "1080px", boxSizing: "border-box" }}
-            className="bg-[#06050e] text-white p-10 select-none flex flex-col justify-between relative overflow-hidden font-sans"
+            style={{ 
+                width: `${currentDim.width}px`, 
+                height: `${currentDim.height}px`, 
+                boxSizing: "border-box" 
+            }}
+            className="bg-[#06050e] text-white p-12 select-none flex flex-col justify-between relative overflow-hidden font-sans"
         >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,_var(--tw-gradient-stops))] from-purple-900/30 via-transparent to-transparent pointer-events-none" />
             <div className="absolute top-1/3 right-1/4 w-[450px] h-[450px] bg-purple-600/35 rounded-full blur-[110px] pointer-events-none" />
@@ -207,8 +243,13 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                     </div>
 
                     <div className="pt-1">
-                        <h1 className="font-orbitron font-black text-6xl text-white tracking-tight leading-none uppercase">
-                            WELCOME
+                        <h1 
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => setWelcomeText(e.currentTarget.textContent || "WELCOME")}
+                            className="font-orbitron font-black text-6xl text-white tracking-tight leading-none uppercase outline-none focus:ring-1 focus:ring-purple-400/60 rounded px-1"
+                        >
+                            {welcomeText}
                         </h1>
                         <div className="flex items-center gap-2 my-0.5 relative">
                             <span className="font-script text-5xl text-purple-400 -rotate-6 font-bold tracking-wide -mt-2 -mb-2 z-10 drop-shadow-[0_2px_8px_rgba(168,85,247,0.8)]">
@@ -218,8 +259,13 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                                 AIRA LAB
                             </span>
                         </div>
-                        <p className="text-[11px] font-orbitron tracking-[0.3em] text-purple-300/90 pt-2 uppercase font-medium">
-                            A NEW MIND. A NEW ENERGY. A NEW IMPACT.
+                        <p 
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => setTaglineText(e.currentTarget.textContent || "")}
+                            className="text-[11px] font-orbitron tracking-[0.3em] text-purple-300/90 pt-2 uppercase font-medium outline-none focus:ring-1 focus:ring-purple-400/60 rounded px-1"
+                        >
+                            {taglineText}
                         </p>
                     </div>
                 </motion.div>
@@ -232,8 +278,13 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                     className={`relative p-5 rounded-2xl bg-[#0c0a1b]/90 border border-purple-500/30 backdrop-blur-md max-w-[310px] shadow-2xl ${enableDrag ? "cursor-move hover:ring-1 hover:ring-purple-400/50" : ""}`}
                 >
                     <div className="text-purple-400 font-serif text-3xl leading-none mb-1">“</div>
-                    <p className="text-[11px] font-orbitron font-bold text-slate-200 tracking-widest leading-relaxed uppercase">
-                        THE FUTURE IS CREATED BY THOSE WHO DARE TO BUILD IT.
+                    <p 
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => setTopQuoteText(e.currentTarget.textContent || "")}
+                        className="text-[11px] font-orbitron font-bold text-slate-200 tracking-widest leading-relaxed uppercase outline-none focus:ring-1 focus:ring-purple-400/60 rounded p-1"
+                    >
+                        {topQuoteText}
                     </p>
                     <div className="absolute bottom-2 right-2 flex gap-1 opacity-40">
                         <div className="w-1 h-1 rounded-full bg-purple-400" />
@@ -261,7 +312,12 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                             <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
                                 ROLE
                             </span>
-                            <span className="font-bold text-xl text-white truncate block tracking-wide">
+                            <span 
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setRole(e.currentTarget.textContent || "")}
+                                className="font-bold text-xl text-white truncate block tracking-wide outline-none focus:ring-1 focus:ring-purple-400/60 rounded px-1"
+                            >
                                 {role || "Chief Technical Officer"}
                             </span>
                         </div>
@@ -275,7 +331,12 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                             <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
                                 DEPARTMENT
                             </span>
-                            <span className="font-bold text-xl text-white truncate block tracking-wide">
+                            <span 
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setDepartment(e.currentTarget.textContent || "")}
+                                className="font-bold text-xl text-white truncate block tracking-wide outline-none focus:ring-1 focus:ring-purple-400/60 rounded px-1"
+                            >
                                 {department || "Technical Wing"}
                             </span>
                         </div>
@@ -289,7 +350,12 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                             <span className="text-[11px] font-orbitron tracking-[0.25em] text-purple-400 uppercase font-bold block mb-0.5">
                                 JOINED IN
                             </span>
-                            <span className="font-bold text-xl text-white truncate block tracking-wide">
+                            <span 
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setJoinedDate(e.currentTarget.textContent || "")}
+                                className="font-bold text-xl text-white truncate block tracking-wide outline-none focus:ring-1 focus:ring-purple-400/60 rounded px-1"
+                            >
                                 {joinedDate || "March 2026"}
                             </span>
                         </div>
@@ -304,7 +370,12 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
 
                         <div className="flex-1">
                             <span className="text-purple-400 font-serif text-3xl font-bold leading-none">“</span>
-                            <p className="text-xs text-slate-200 italic leading-relaxed px-1 py-1 font-sans">
+                            <p 
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => setQuote(e.currentTarget.textContent || "")}
+                                className="text-xs text-slate-200 italic leading-relaxed px-1 py-1 font-sans outline-none focus:ring-1 focus:ring-purple-400/60 rounded"
+                            >
                                 {quote}
                             </p>
                             <span className="text-purple-400 font-serif text-3xl font-bold leading-none block text-right">”</span>
@@ -362,7 +433,12 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                                     ▲
                                 </div>
                                 <div className="text-right relative z-10">
-                                    <div className="font-script text-5xl text-purple-300 font-bold drop-shadow-[0_2px_12px_rgba(168,85,247,0.9)] -rotate-3 tracking-wide">
+                                    <div 
+                                        contentEditable
+                                        suppressContentEditableWarning
+                                        onBlur={(e) => setSignatureName(e.currentTarget.textContent || "")}
+                                        className="font-script text-5xl text-purple-300 font-bold drop-shadow-[0_2px_12px_rgba(168,85,247,0.9)] -rotate-3 tracking-wide outline-none focus:ring-1 focus:ring-purple-400/60 rounded px-1"
+                                    >
                                         {signatureName}
                                     </div>
                                 </div>
@@ -431,7 +507,15 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
 
                 <div className="pt-3 border-t border-purple-500/30 flex items-center justify-between text-xs font-orbitron text-slate-400 tracking-wider">
                     <div className="flex items-center gap-2 text-purple-300 font-semibold">
-                        <Globe size={14} /> www.aira-lab.in
+                        <Globe size={14} /> 
+                        <span 
+                            contentEditable 
+                            suppressContentEditableWarning 
+                            onBlur={(e) => setFooterUrl(e.currentTarget.textContent || "www.aira-lab.in")}
+                            className="outline-none focus:ring-1 focus:ring-purple-400/60 rounded px-1"
+                        >
+                            {footerUrl}
+                        </span>
                     </div>
 
                     <div className="tracking-[0.25em] text-slate-300 font-medium">
@@ -466,8 +550,8 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                         position: "fixed",
                         left: "-9999px",
                         top: "-9999px",
-                        width: "1080px",
-                        height: "1080px",
+                        width: `${currentDim.width}px`,
+                        height: `${currentDim.height}px`,
                         overflow: "hidden",
                         zIndex: -9999,
                     }}
@@ -493,7 +577,7 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                                     Onboarding Welcome Poster Studio
                                 </h2>
                                 <p className="text-xs text-slate-400">
-                                    Drag elements to move freely, zoom photo & export 1080×1080 poster
+                                    Aspect Ratios ({aspectRatio}), Direct Click-to-Edit text & free element dragging
                                 </p>
                             </div>
                         </div>
@@ -518,7 +602,29 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                     <div className="grid grid-cols-1 lg:grid-cols-12 overflow-y-auto flex-1 p-6 gap-6">
                         <div className="lg:col-span-5 space-y-4 flex flex-col justify-between">
                             <div className="space-y-4">
-                                {/* Photo Zoom & Position Sliders */}
+                                {/* Aspect Ratio Selector */}
+                                <div className="p-3 bg-slate-900/90 border border-white/10 rounded-xl space-y-2">
+                                    <span className="text-xs font-semibold text-purple-300 block flex items-center gap-1.5">
+                                        <Maximize2 size={14} /> Aspect Ratio Format
+                                    </span>
+                                    <div className="grid grid-cols-2 gap-1.5">
+                                        {aspectRatios.map((ratio) => (
+                                            <button
+                                                key={ratio.value}
+                                                type="button"
+                                                onClick={() => setAspectRatio(ratio.value)}
+                                                className={`px-2.5 py-1.5 rounded-lg text-left border transition-all ${
+                                                    aspectRatio === ratio.value
+                                                        ? "bg-purple-600/30 border-purple-400 text-white font-bold"
+                                                        : "bg-slate-950/60 border-white/5 text-slate-400 hover:text-slate-200"
+                                                }`}
+                                            >
+                                                <span className="text-[11px] block">{ratio.label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <div className="p-3 bg-purple-950/30 border border-purple-500/20 rounded-xl space-y-2">
                                     <span className="text-xs font-semibold text-purple-300 block flex items-center justify-between">
                                         <span>Adjust Photo Fit & Zoom</span>
@@ -650,11 +756,11 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
                                 >
                                     {downloading ? (
                                         <>
-                                            <RefreshCw size={16} className="animate-spin" /> Exporting 1080×1080 PNG...
+                                            <RefreshCw size={16} className="animate-spin" /> Exporting {currentDim.width}×{currentDim.height} PNG...
                                         </>
                                     ) : (
                                         <>
-                                            <Download size={16} /> Download IG Poster PNG (1080×1080)
+                                            <Download size={16} /> Download {aspectRatio} Poster PNG ({currentDim.width}×{currentDim.height})
                                         </>
                                     )}
                                 </button>
@@ -681,15 +787,20 @@ export function OnboardingPosterModal({ open, onClose, applicant }: OnboardingPo
 
                         <div className="lg:col-span-7 flex flex-col items-center justify-center bg-black/50 p-4 rounded-xl border border-white/5">
                             <span className="text-[11px] text-slate-400 font-orbitron mb-3 uppercase tracking-wider flex items-center gap-1.5">
-                                <Sparkles size={12} className="text-aira-cyan" /> Live Interactive Drag Canvas
+                                <Sparkles size={12} className="text-aira-cyan" /> Live Preview ({aspectRatio}) - ✍️ Click text directly to edit
                             </span>
 
-                            <div className="w-full max-w-[500px] aspect-square overflow-hidden shadow-2xl rounded-xl border border-purple-500/30 relative bg-[#06050e]">
+                            <div 
+                                style={{
+                                    aspectRatio: `${currentDim.width} / ${currentDim.height}`,
+                                }}
+                                className="w-full max-w-[500px] overflow-hidden shadow-2xl rounded-xl border border-purple-500/30 relative bg-[#06050e] flex items-center justify-center"
+                            >
                                 <div
                                     style={{
-                                        width: "1080px",
-                                        height: "1080px",
-                                        transform: "scale(0.462963)",
+                                        width: `${currentDim.width}px`,
+                                        height: `${currentDim.height}px`,
+                                        transform: `scale(${500 / currentDim.width})`,
                                         transformOrigin: "top left",
                                     }}
                                 >
