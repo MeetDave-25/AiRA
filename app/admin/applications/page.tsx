@@ -32,6 +32,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import AnimatedModal from "@/components/ui/AnimatedModal";
+import { OnboardingPosterModal } from "@/components/admin/OnboardingPosterModal";
 
 export default function ApplicationsPage() {
     const [apps, setApps] = useState<any[]>([]);
@@ -49,8 +50,9 @@ export default function ApplicationsPage() {
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
     const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
-    // Photo zoom preview state
+    // Photo zoom preview & poster generator modal state
     const [previewPhoto, setPreviewPhoto] = useState<{ url: string; name: string } | null>(null);
+    const [posterApplicant, setPosterApplicant] = useState<any | null>(null);
 
     // Modal state for newly approved credentials
     const [approvedModalData, setApprovedModalData] = useState<{
@@ -516,6 +518,15 @@ export default function ApplicationsPage() {
                                         </>
                                     )}
 
+                                    {/* IG Onboarding Welcome Poster Generator Button */}
+                                    <button
+                                        onClick={() => setPosterApplicant(app)}
+                                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-purple-900/50 to-indigo-900/50 border border-purple-500/40 text-purple-200 hover:bg-purple-600/40 text-xs font-semibold transition-all shadow-sm"
+                                        title="Create Instagram Welcome Poster"
+                                    >
+                                        <Sparkles size={14} className="text-aira-cyan animate-pulse" /> IG Welcome Poster
+                                    </button>
+
                                     {/* Prominent Delete Button */}
                                     <button
                                         onClick={() => {
@@ -834,6 +845,13 @@ export default function ApplicationsPage() {
                     </div>
                 )}
             </AnimatedModal>
+
+            {/* ══ Onboarding Welcome Poster Modal ══ */}
+            <OnboardingPosterModal
+                open={!!posterApplicant}
+                onClose={() => setPosterApplicant(null)}
+                applicant={posterApplicant}
+            />
         </div>
     );
 }
