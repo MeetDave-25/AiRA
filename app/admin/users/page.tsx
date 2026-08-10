@@ -243,7 +243,7 @@ export default function AdminUsersPage() {
                             <motion.div key={p.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} className="glass rounded-2xl border border-white/10 p-4">
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <img src={p.photo || "https://placehold.co/100x100/0d1526/00D4FF?text=AL"} alt={p.name} className="w-11 h-11 rounded-full object-cover border border-white/15" />
+                                        <img src={p.photo || "/logo.png"} alt={p.name} className="w-11 h-11 rounded-full object-cover border border-white/15 bg-slate-950" />
                                         <div className="min-w-0"><p className="text-white font-semibold text-sm truncate">{p.name}</p><p className="text-aira-cyan text-xs truncate">{p.role}</p></div>
                                     </div>
                                     {p.isPresident && <Crown size={16} className="text-aira-gold" />}

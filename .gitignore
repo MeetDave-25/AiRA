@@ -17,13 +17,17 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+*.log
+dev-server.log
 
 # misc
 .DS_Store
 *.pem
-
-# typescript
 *.tsbuildinfo
+WhatsApp*
+/logo_revel.mp4
+/logo.jpeg
+/*.glb
 
 # IDE
 .vscode/

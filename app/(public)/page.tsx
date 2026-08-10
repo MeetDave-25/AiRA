@@ -3,10 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Zap, Users, Calendar, Trophy } from "lucide-react";
+import { 
+    ArrowRight, Zap, Users, Calendar, Trophy, Sparkles 
+} from "lucide-react";
 import { isVideoMedia } from "@/lib/media";
+import LandingLogoReveal from "@/components/ui/LandingLogoReveal";
+import HeroKineticTitle from "@/components/ui/HeroKineticTitle";
 
-// Particle canvas component
+// Interactive Particle canvas component (Mobile battery & CPU optimized)
 function ParticleCanvas() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -16,6 +20,7 @@ function ParticleCanvas() {
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
+        const isMobile = window.innerWidth < 768;
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
@@ -24,17 +29,18 @@ function ParticleCanvas() {
             size: number; color: string; alpha: number;
         }> = [];
 
-        const colors = ["#00D4FF", "#7C3AED", "#FF006E", "#F59E0B"];
+        const colors = ["#00D4FF", "#7C3AED", "#4F46E5", "#8B5CF6", "#06B6D4"];
+        const particleCount = isMobile ? 35 : 85;
 
-        for (let i = 0; i < 120; i++) {
+        for (let i = 0; i < particleCount; i++) {
             particles.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
-                vx: (Math.random() - 0.5) * 0.5,
-                vy: (Math.random() - 0.5) * 0.5,
-                size: Math.random() * 2.5 + 0.5,
+                vx: (Math.random() - 0.5) * (isMobile ? 0.25 : 0.4),
+                vy: (Math.random() - 0.5) * (isMobile ? 0.25 : 0.4),
+                size: Math.random() * 2 + 0.6,
                 color: colors[Math.floor(Math.random() * colors.length)],
-                alpha: Math.random() * 0.7 + 0.2,
+                alpha: Math.random() * 0.6 + 0.2,
             });
         }
 
@@ -43,6 +49,9 @@ function ParticleCanvas() {
         function animate() {
             if (!ctx || !canvas) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const maxDistance = isMobile ? 80 : 110;
+            const maxConnections = isMobile ? 4 : 7;
 
             particles.forEach((p, i) => {
                 p.x += p.vx;
@@ -58,14 +67,14 @@ function ParticleCanvas() {
                 ctx.fillStyle = p.color + Math.round(p.alpha * 255).toString(16).padStart(2, "0");
                 ctx.fill();
 
-                // Connect nearby particles
-                particles.slice(i + 1).forEach((p2) => {
+                // Subtle neural connections between nearby particles
+                particles.slice(i + 1, i + maxConnections).forEach((p2) => {
                     const dx = p.x - p2.x;
                     const dy = p.y - p2.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < 120) {
+                    if (dist < maxDistance) {
                         ctx.beginPath();
-                        ctx.strokeStyle = `rgba(0, 212, 255, ${0.08 * (1 - dist / 120)})`;
+                        ctx.strokeStyle = `rgba(0, 212, 255, ${0.07 * (1 - dist / maxDistance)})`;
                         ctx.lineWidth = 0.5;
                         ctx.moveTo(p.x, p.y);
                         ctx.lineTo(p2.x, p2.y);
@@ -80,6 +89,7 @@ function ParticleCanvas() {
         animate();
 
         const handleResize = () => {
+            if (!canvas) return;
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         };
@@ -91,30 +101,80 @@ function ParticleCanvas() {
         };
     }, []);
 
-    return <canvas ref={canvasRef} id="particle-canvas" className="absolute inset-0 z-0" />;
+    return <canvas ref={canvasRef} id="particle-canvas" className="absolute inset-0 z-0 pointer-events-none" />;
 }
 
-// Animated counter
-function StatCounter({ value, label, icon: Icon, color }: {
-    value: string; label: string; icon: any; color: string;
+// Smooth Count-Up Animated Number
+function AnimatedNumber({ target, suffix = "+" }: { target: number; suffix?: string }) {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        const num = Number(target);
+        if (isNaN(num) || num <= 0) {
+            setCount(0);
+            return;
+        }
+
+        let start = 0;
+        const duration = 1400; // ms
+        const startTime = performance.now();
+
+        const updateCount = (now: number) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            // Ease out cubic
+            const easeOutProgress = 1 - Math.pow(1 - progress, 3);
+            const current = Math.floor(easeOutProgress * num);
+            setCount(current);
+
+            if (progress < 1) {
+                requestAnimationFrame(updateCount);
+            } else {
+                setCount(num);
+            }
+        };
+
+        requestAnimationFrame(updateCount);
+    }, [target]);
+
+    return (
+        <span>
+            {count.toLocaleString()}
+            {target > 0 ? suffix : ""}
+        </span>
+    );
+}
+
+// Responsive Statistics Counter Card
+function StatCounter({ value, label, icon: Icon, color, loading }: {
+    value: number; label: string; icon: any; color: string; loading?: boolean;
 }) {
     return (
         <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 25 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center card-3d glass rounded-2xl p-6 border border-white/5"
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-center card-3d glass rounded-2xl p-4 sm:p-6 border border-white/5 relative overflow-hidden group hover:border-white/20 transition-all"
         >
+            <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{ background: `radial-gradient(circle at center, ${color}18 0%, transparent 70%)` }}
+            />
             <div
-                className="w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center"
-                style={{ background: `${color}20`, border: `1px solid ${color}40` }}
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl mx-auto mb-2.5 sm:mb-3 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg"
+                style={{ background: `${color}18`, border: `1px solid ${color}35` }}
             >
-                <Icon size={22} style={{ color }} />
+                <Icon size={20} className="sm:w-[22px] sm:h-[22px]" style={{ color }} />
             </div>
-            <div className="font-orbitron font-bold text-3xl mb-1" style={{ color }}>
-                {value}
+            <div className="font-orbitron font-bold text-2xl sm:text-3xl lg:text-4xl mb-1 drop-shadow-[0_0_12px_rgba(0,212,255,0.3)] tracking-tight" style={{ color }}>
+                {loading ? (
+                    <span className="inline-block w-16 h-7 bg-white/10 rounded-md animate-pulse align-middle" />
+                ) : (
+                    <AnimatedNumber target={value} />
+                )}
             </div>
-            <div className="text-slate-400 text-sm">{label}</div>
+            <div className="text-slate-400 text-xs sm:text-sm font-medium line-clamp-1">{label}</div>
         </motion.div>
     );
 }
@@ -123,163 +183,260 @@ export default function HomePage() {
     const [events, setEvents] = useState<any[]>([]);
     const [achievements, setAchievements] = useState<any[]>([]);
     const [stats, setStats] = useState({ events: 0, members: 0, achievements: 0, participants: 0 });
-    const [heroPointer, setHeroPointer] = useState({ x: 0, y: 0 });
+    const [statsLoading, setStatsLoading] = useState(true);
+    const [pointer, setPointer] = useState({ x: 0, y: 0 });
+    const [isRevealDone, setIsRevealDone] = useState(false);
+    const heroVideoRef = useRef<HTMLVideoElement>(null);
+
     const { scrollYProgress } = useScroll();
     const heroOpacity = useTransform(scrollYProgress, [0, 0.18], [1, 0.35]);
-    const heroScale = useTransform(scrollYProgress, [0, 0.18], [1, 0.94]);
+
+    const handleRevealComplete = () => {
+        setIsRevealDone(true);
+        if (heroVideoRef.current) {
+            heroVideoRef.current.play().catch(() => {});
+        }
+    };
 
     useEffect(() => {
+        // Fetch public events
         fetch("/api/events")
             .then(r => r.ok ? r.json() : [])
             .then(d => setEvents(Array.isArray(d) ? d.slice(0, 4) : []))
             .catch(() => setEvents([]));
 
+        // Fetch public achievements
         fetch("/api/achievements")
             .then(r => r.ok ? r.json() : [])
             .then(d => setAchievements(Array.isArray(d) ? d.slice(0, 3) : []))
             .catch(() => setAchievements([]));
 
+        // Fetch real public statistics
+        setStatsLoading(true);
         fetch("/api/public/stats")
             .then(r => r.ok ? r.json() : { events: 0, members: 0, achievements: 0, participants: 0 })
-            .then(d => setStats(d))
-            .catch(() => { });
+            .then(d => {
+                setStats({
+                    events: Number(d.events) || 0,
+                    members: Number(d.members) || 0,
+                    achievements: Number(d.achievements) || 0,
+                    participants: Number(d.participants) || 0
+                });
+                setStatsLoading(false);
+            })
+            .catch(() => {
+                setStatsLoading(false);
+            });
     }, []);
 
     return (
-        <div className="relative min-h-screen">
-            {/* Hero */}
+        <div className="relative min-h-screen bg-aira-bg text-white selection:bg-aira-cyan/30 selection:text-white overflow-x-hidden">
+            {/* Cinematic Logo Reveal Video Intro */}
+            <LandingLogoReveal onComplete={handleRevealComplete} />
+
+            {/* ═══════════════════════════════════════════════════════════
+               HERO SECTION WITH CONTINUOUS LOOP VIDEO BACKGROUND
+               ═══════════════════════════════════════════════════════════ */}
             <motion.section
-                style={{ opacity: heroOpacity, scale: heroScale }}
+                style={{ opacity: heroOpacity }}
                 onMouseMove={(e) => {
-                    const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                    const rect = e.currentTarget.getBoundingClientRect();
                     const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
                     const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-                    setHeroPointer({ x, y });
+                    setPointer({ x, y });
                 }}
-                onMouseLeave={() => setHeroPointer({ x: 0, y: 0 })}
-                className="relative min-h-screen flex items-center justify-center overflow-hidden grid-bg"
+                onMouseLeave={() => setPointer({ x: 0, y: 0 })}
+                className="relative min-h-[88vh] sm:min-h-[92vh] lg:min-h-screen flex items-center overflow-hidden pt-20 pb-12 sm:pt-24 sm:pb-16 lg:py-0"
             >
-                <ParticleCanvas />
+                {/* Dynamic Aurora Ambient Light Beams */}
+                <div className="absolute top-0 inset-x-0 h-[450px] sm:h-[500px] bg-[radial-gradient(ellipse_75%_55%_at_65%_-10%,rgba(56,189,248,0.25),rgba(6,182,212,0.14)_45%,transparent_70%)] pointer-events-none z-[1]" />
+                <div className="absolute top-1/4 right-1/5 w-72 sm:w-[32rem] h-72 sm:h-[28rem] rounded-full bg-cyan-400/[0.14] blur-[100px] sm:blur-[150px] pointer-events-none z-[1]" />
 
-                {/* Glow orbs */}
+                {/* 1. Deep 3D Parallax Video Background (Continuous Loop) */}
                 <motion.div
-                    style={{ x: heroPointer.x * 24, y: heroPointer.y * 16 }}
-                    className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-aira-cyan/10 blur-3xl"
-                />
-                <motion.div
-                    style={{ x: heroPointer.x * -20, y: heroPointer.y * -14 }}
-                    className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-aira-magenta/10 blur-3xl"
-                />
-
-                <motion.div
-                    style={{ x: heroPointer.x * 8, y: heroPointer.y * 6 }}
-                    className="relative z-10 text-center px-4 max-w-5xl mx-auto"
+                    style={{
+                        x: pointer.x * -10,
+                        y: pointer.y * -6,
+                    }}
+                    animate={{
+                        scale: [1, 1.015, 1],
+                    }}
+                    transition={{
+                        scale: { duration: 16, repeat: Infinity, ease: "easeInOut" }
+                    }}
+                    className="absolute inset-0 z-0 pointer-events-none select-none"
                 >
-                    {/* Badge */}
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-aira-cyan/30 text-aira-cyan text-xs font-medium mb-8 font-orbitron tracking-widest"
-                    >
-                        <Zap size={12} className="text-aira-gold" />
-                        INNOVATION · RESEARCH · EXCELLENCE
-                    </motion.div>
+                    <video
+                        ref={heroVideoRef}
+                        src="/hero-loop.mp4"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        preload="auto"
+                        poster="/mevy_1.png"
+                        style={{
+                            transform: "translate3d(0,0,0)",
+                            backfaceVisibility: "hidden",
+                            WebkitBackfaceVisibility: "hidden",
+                            willChange: "transform",
+                        }}
+                        className="w-full h-full object-cover object-[80%_35%] sm:object-[78%_35%] md:object-[76%_38%] lg:object-[80%_40%] opacity-95 lg:opacity-100 filter contrast-[1.04] brightness-[1.02]"
+                        onEnded={(e) => {
+                            e.currentTarget.currentTime = 0;
+                            e.currentTarget.play().catch(() => {});
+                        }}
+                    />
 
-                    {/* Title */}
-                    <motion.h1
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                        className="font-orbitron font-black text-6xl sm:text-7xl lg:text-8xl leading-none mb-6"
-                    >
-                        <span className="text-white">AiRA</span>
-                        <br />
-                        <span className="gradient-text text-glow-cyan">Lab</span>
-                    </motion.h1>
-
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.4 }}
-                        className="text-slate-300 text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
-                    >
-                        Where innovation meets excellence. We conduct cutting-edge events,
-                        workshops, and research programs that shape the next generation of
-                        technology leaders.
-                    </motion.p>
-
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.6 }}
-                        className="flex flex-col sm:flex-row items-center justify-center gap-4"
-                    >
-                        <Link
-                            href="/events"
-                            className="group flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-semibold text-sm hover:shadow-lg hover:shadow-aira-cyan/30 transition-all duration-300 hover:scale-105"
-                        >
-                            Explore Events
-                            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                        </Link>
-                        <Link
-                            href="/join"
-                            className="flex items-center gap-2 px-8 py-4 rounded-xl glass border border-aira-magenta/40 text-aira-magenta font-semibold text-sm hover:bg-aira-magenta/10 hover:border-aira-magenta transition-all duration-300"
-                        >
-                            Join AiRA Lab
-                        </Link>
-                    </motion.div>
+                    {/* Gradient depth masks: Seamlessly balances narrative readability on the left with full cinematic panorama */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-aira-bg/95 via-aira-bg/80 via-45% sm:via-42% to-transparent lg:w-[52%] w-full" />
+                    
+                    {/* Bottom gradient fade into main content */}
+                    <div className="absolute inset-x-0 bottom-0 h-28 sm:h-36 bg-gradient-to-t from-aira-bg via-aira-bg/85 to-transparent" />
+                    
+                    {/* Top gradient fade under navbar */}
+                    <div className="absolute inset-x-0 top-0 h-20 sm:h-24 bg-gradient-to-b from-aira-bg/90 via-aira-bg/30 to-transparent" />
                 </motion.div>
 
-                {/* Scroll indicator */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-slate-500 text-xs">
-                    <span>Scroll to explore</span>
-                    <div className="w-5 h-8 rounded-full border border-slate-600 flex items-start justify-center pt-1">
+                {/* 2. Cyber Laser Scanning Line */}
+                <motion.div
+                    animate={{ y: ["-5%", "105%"] }}
+                    transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+                    className="absolute left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-sky-400/30 to-transparent shadow-[0_0_20px_rgba(56,189,248,0.4)] pointer-events-none z-[2]"
+                />
+
+                {/* 3. Neural Particle Canvas */}
+                <ParticleCanvas />
+
+                {/* 4. Glowing Dynamic Ambient Aura Spheres */}
+                <motion.div
+                    style={{ x: pointer.x * 20, y: pointer.y * 15 }}
+                    className="absolute top-1/4 left-1/4 w-72 sm:w-[36rem] h-72 sm:h-[36rem] rounded-full bg-sky-500/[0.08] blur-[100px] sm:blur-[140px] pointer-events-none z-[1]"
+                />
+                <motion.div
+                    style={{ x: pointer.x * -18, y: pointer.y * -12 }}
+                    className="absolute bottom-1/4 right-1/4 w-60 sm:w-[30rem] h-60 sm:h-[30rem] rounded-full bg-indigo-500/[0.08] blur-[80px] sm:blur-[120px] pointer-events-none z-[1]"
+                />
+
+                {/* ═══════════════════════════════════════════════════════════
+                   HERO MAIN CONTENT (LEFT NARRATIVE & CTAs)
+                   ═══════════════════════════════════════════════════════════ */}
+                <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <motion.div
+                        style={{
+                            x: pointer.x * 6,
+                            y: pointer.y * 4,
+                        }}
+                        className="max-w-2xl flex flex-col items-start text-left"
+                    >
+                        {/* 3D Kinetic Animated Title & Rotating Frontier Domain Badge */}
+                        <HeroKineticTitle />
+
+                        {/* Clean Subtitle */}
+                        <motion.p
+                            initial={{ opacity: 0, x: -30 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.8, delay: 0.3 }}
+                            className="text-xs xs:text-sm sm:text-base lg:text-lg text-slate-300 mb-6 sm:mb-8 max-w-xl leading-relaxed font-light"
+                        >
+                            Pioneering autonomous intelligence, robotics, and next-generation systems. 
+                            Empowering innovators, creators, and engineers to build the future.
+                        </motion.p>
+
+                        {/* Call to Actions */}
                         <motion.div
-                            className="w-1 h-2 rounded-full bg-aira-cyan"
-                            animate={{ y: [0, 12, 0] }}
-                            transition={{ repeat: Infinity, duration: 1.5 }}
-                        />
-                    </div>
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: 0.45 }}
+                            className="flex flex-col xs:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto"
+                        >
+                            <Link
+                                href="/events"
+                                className="group relative flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-sky-400 via-sky-300 to-slate-100 text-slate-950 font-bold text-xs sm:text-sm hover:shadow-[0_0_35px_rgba(56,189,248,0.5)] transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden text-center"
+                            >
+                                <span className="relative z-10">Explore Events</span>
+                                <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1.5 transition-transform" />
+                                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            </Link>
+                            
+                            <Link
+                                href="/join"
+                                className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl glass border border-white/20 text-white font-semibold text-xs sm:text-sm hover:bg-white/10 hover:border-white/40 transition-all duration-300 backdrop-blur-md hover:shadow-[0_0_24px_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95 text-center"
+                            >
+                                <Sparkles size={15} className="text-sky-400" />
+                                <span>Join AiRA Lab</span>
+                            </Link>
+                        </motion.div>
+                    </motion.div>
                 </div>
             </motion.section>
 
-            <div className="h-20 bg-gradient-to-b from-transparent to-aira-bg pointer-events-none" />
+            {/* Transition gradient */}
+            <div className="h-12 sm:h-16 bg-gradient-to-b from-transparent to-aira-bg pointer-events-none" />
 
-            {/* Stats */}
-            <section className="py-20 px-4 max-w-6xl mx-auto">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <StatCounter value={`${stats.events}+`} label="Events Conducted" icon={Calendar} color="#00D4FF" />
-                    <StatCounter value={`${stats.members}+`} label="Team Members" icon={Users} color="#7C3AED" />
-                    <StatCounter value={`${stats.achievements}+`} label="Achievements" icon={Trophy} color="#F59E0B" />
-                    <StatCounter value={`${stats.participants}+`} label="Participants" icon={Zap} color="#FF006E" />
+            {/* ═══════════════════════════════════════════════════════════
+               STATISTICS SECTION (REAL LIVE DATABASE DATA)
+               ═══════════════════════════════════════════════════════════ */}
+            <section className="py-12 sm:py-20 px-4 max-w-6xl mx-auto relative z-10 bg-aira-bg">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+                    <StatCounter 
+                        value={stats.events} 
+                        label="Events Conducted" 
+                        icon={Calendar} 
+                        color="#38BDF8" 
+                        loading={statsLoading} 
+                    />
+                    <StatCounter 
+                        value={stats.members} 
+                        label="Team Members" 
+                        icon={Users} 
+                        color="#E2E8F0" 
+                        loading={statsLoading} 
+                    />
+                    <StatCounter 
+                        value={stats.achievements} 
+                        label="Achievements" 
+                        icon={Trophy} 
+                        color="#F59E0B" 
+                        loading={statsLoading} 
+                    />
+                    <StatCounter 
+                        value={stats.participants} 
+                        label="Participants" 
+                        icon={Zap} 
+                        color="#60A5FA" 
+                        loading={statsLoading} 
+                    />
                 </div>
             </section>
 
-            {/* Recent Events Preview */}
+            {/* ═══════════════════════════════════════════════════════════
+               RECENT EVENTS PREVIEW
+               ═══════════════════════════════════════════════════════════ */}
             {events.length > 0 && (
-                <section className="py-10 px-4 max-w-7xl mx-auto">
-                    <div className="flex items-end justify-between mb-8">
+                <section className="py-8 sm:py-12 px-4 max-w-7xl mx-auto relative z-10 bg-aira-bg">
+                    <div className="flex items-end justify-between mb-6 sm:mb-8">
                         <div>
-                            <p className="text-aira-cyan font-medium text-sm mb-1 font-orbitron tracking-widest uppercase">Latest</p>
-                            <h2 className="font-orbitron font-bold text-3xl text-white">Recent Events</h2>
+                            <p className="text-aira-cyan font-medium text-xs sm:text-sm mb-1 font-orbitron tracking-widest uppercase">Latest</p>
+                            <h2 className="font-orbitron font-bold text-2xl sm:text-3xl text-white">Recent Events</h2>
                         </div>
-                        <Link href="/events" className="text-aira-cyan text-sm hover:underline flex items-center gap-1">
-                            View All <ArrowRight size={14} />
+                        <Link href="/events" className="text-aira-cyan text-xs sm:text-sm hover:underline flex items-center gap-1 font-semibold group">
+                            <span>View All</span> 
+                            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                         </Link>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
                         {events.map((event) => {
                             const primaryMedia = event.images?.find((img: any) => img.isPrimary) || event.images?.[0];
                             const img = primaryMedia?.url || "/images/event-placeholder.jpg";
                             const isUpcoming = new Date(event.date) > new Date();
                             return (
-                                <Link key={event.id} href={`/events/${event.id}`}>
-                                    <div className="netflix-card relative rounded-xl overflow-hidden aspect-[2/3] bg-aira-card">
+                                <Link key={event.id} href={`/events/${event.id}`} className="group block">
+                                    <div className="netflix-card relative rounded-xl overflow-hidden aspect-[4/5] xs:aspect-[2/3] bg-aira-card group border border-white/5 hover:border-aira-cyan/40 transition-all duration-300 shadow-xl">
                                         {isVideoMedia(primaryMedia) ? (
                                             <video
                                                 src={img}
-                                                className="w-full h-full object-cover"
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                 muted
                                                 playsInline
                                             />
@@ -287,20 +444,20 @@ export default function HomePage() {
                                             <img
                                                 src={img}
                                                 alt={event.title}
-                                                className="w-full h-full object-cover"
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                 onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/400x600/0d1526/00D4FF?text=AiRA+Lab"; }}
                                             />
                                         )}
-                                        <div className="netflix-overlay absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent p-4 flex flex-col justify-end">
+                                        <div className="netflix-overlay absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent p-4 flex flex-col justify-end">
                                             <div className="mb-2">
                                                 {isUpcoming ? (
-                                                    <span className="badge-upcoming">Upcoming</span>
+                                                    <span className="badge-upcoming text-[11px]">Upcoming</span>
                                                 ) : (
-                                                    <span className="badge-completed">Completed</span>
+                                                    <span className="badge-completed text-[11px]">Completed</span>
                                                 )}
                                             </div>
-                                            <h3 className="font-orbitron font-bold text-sm text-white line-clamp-2">{event.title}</h3>
-                                            <p className="text-xs text-slate-300 mt-1">
+                                            <h3 className="font-orbitron font-bold text-sm sm:text-base text-white line-clamp-2">{event.title}</h3>
+                                            <p className="text-xs text-slate-300 mt-1 font-mono">
                                                 {new Date(event.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                                             </p>
                                         </div>
@@ -312,52 +469,59 @@ export default function HomePage() {
                 </section>
             )}
 
-            {/* Achievements */}
+            {/* ═══════════════════════════════════════════════════════════
+               ACHIEVEMENTS SECTION
+               ═══════════════════════════════════════════════════════════ */}
             {achievements.length > 0 && (
-                <section className="py-20 px-4 max-w-6xl mx-auto">
-                    <div className="text-center mb-12">
-                        <p className="text-aira-gold font-medium text-sm mb-1 font-orbitron tracking-widest uppercase">Our Pride</p>
-                        <h2 className="font-orbitron font-bold text-3xl text-white">Achievements</h2>
+                <section className="py-12 sm:py-20 px-4 max-w-6xl mx-auto relative z-10 bg-aira-bg">
+                    <div className="text-center mb-8 sm:mb-12">
+                        <p className="text-aira-gold font-medium text-xs sm:text-sm mb-1 font-orbitron tracking-widest uppercase">Our Pride</p>
+                        <h2 className="font-orbitron font-bold text-2xl sm:text-3xl text-white">Achievements</h2>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
                         {achievements.map((ach, i) => (
                             <motion.div
                                 key={ach.id}
-                                initial={{ opacity: 0, y: 40 }}
+                                initial={{ opacity: 0, y: 30 }}
                                 whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5, delay: i * 0.15 }}
-                                className="glass rounded-2xl p-6 card-3d border border-aira-gold/20 hover:border-aira-gold/40 transition-all"
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.5, delay: i * 0.1 }}
+                                className="glass rounded-2xl p-5 sm:p-6 card-3d border border-aira-gold/20 hover:border-aira-gold/40 transition-all group"
                             >
-                                <div className="text-4xl mb-4">{ach.icon || "🏆"}</div>
-                                <h3 className="font-semibold text-white mb-2">{ach.title}</h3>
-                                <p className="text-slate-400 text-sm leading-relaxed">{ach.description}</p>
+                                <div className="text-3xl sm:text-4xl mb-3 sm:mb-4 transition-transform group-hover:scale-110 duration-300">{ach.icon || "🏆"}</div>
+                                <h3 className="font-semibold text-white text-base sm:text-lg mb-2">{ach.title}</h3>
+                                <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">{ach.description}</p>
                             </motion.div>
                         ))}
                     </div>
                 </section>
             )}
 
-            {/* CTA Banner */}
-            <section className="py-20 px-4">
+            {/* ═══════════════════════════════════════════════════════════
+               CTA BANNER
+               ═══════════════════════════════════════════════════════════ */}
+            <section className="py-12 sm:py-20 px-4 relative z-10 bg-aira-bg">
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
+                    initial={{ opacity: 0, scale: 0.96 }}
                     whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
                     transition={{ duration: 0.6 }}
-                    className="max-w-4xl mx-auto text-center glass rounded-3xl p-12 border border-aira-cyan/20 glow-cyan relative overflow-hidden"
+                    className="max-w-4xl mx-auto text-center glass-strong rounded-3xl p-6 sm:p-10 md:p-14 border border-sky-400/25 shadow-2xl shadow-sky-950/40 relative overflow-hidden"
                 >
-                    <div className="absolute inset-0 bg-gradient-radial from-aira-cyan/10 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-radial from-sky-400/10 via-indigo-500/5 to-transparent pointer-events-none" />
                     <div className="relative z-10">
-                        <h2 className="font-orbitron font-bold text-4xl text-white mb-4">
+                        <h2 className="font-orbitron font-bold text-2xl sm:text-3xl md:text-4xl text-white mb-3 sm:mb-4">
                             Ready to <span className="gradient-text">Innovate?</span>
                         </h2>
-                        <p className="text-slate-300 mb-8 max-w-xl mx-auto">
+                        <p className="text-slate-300 mb-6 sm:mb-8 max-w-xl mx-auto text-sm sm:text-base md:text-lg">
                             Join AiRA Lab and be part of a community that's building the future through technology and innovation.
                         </p>
                         <Link
                             href="/join"
-                            className="inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-semibold hover:shadow-xl hover:shadow-aira-cyan/30 hover:scale-105 transition-all duration-300"
+                            className="inline-flex items-center justify-center gap-2 px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-sky-400 via-sky-300 to-slate-100 text-slate-950 font-bold text-xs sm:text-sm hover:shadow-xl hover:shadow-sky-400/40 hover:scale-105 active:scale-95 transition-all duration-300"
                         >
-                            Apply to Join <ArrowRight size={16} />
+                            <span>Apply to Join</span> 
+                            <ArrowRight size={16} />
                         </Link>
                     </div>
                 </motion.div>

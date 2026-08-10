@@ -12,7 +12,8 @@ import {
     MessageSquare, 
     Mail, 
     Eye,
-    ShieldCheck
+    ShieldCheck,
+    BarChart3
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -20,15 +21,21 @@ import { uploadDirectFile } from "@/lib/upload-client";
 
 export default function SettingsPage() {
     const [settings, setSettings] = useState<Record<string, string>>({});
+    const [liveStats, setLiveStats] = useState<any>(null);
     const [saving, setSaving] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
-    const [activeTab, setActiveTab] = useState<"about" | "leadership" | "contact">("about");
+    const [activeTab, setActiveTab] = useState<"about" | "leadership" | "milestones" | "contact">("about");
 
     useEffect(() => {
         fetch("/api/settings")
             .then((r) => r.json())
             .then((d) => setSettings(d || {}))
             .catch(() => setSettings({}));
+
+        fetch("/api/public/stats")
+            .then((r) => r.json())
+            .then((d) => setLiveStats(d.live || d))
+            .catch(() => {});
     }, []);
 
     const handleSave = async () => {
@@ -108,7 +115,7 @@ export default function SettingsPage() {
                             : "glass border border-white/10 text-slate-300 hover:text-white"
                     }`}
                 >
-                    <FileText size={15} /> About Us & Hero Section
+                    <FileText size={15} /> About Us & Hero
                 </button>
                 <button
                     onClick={() => setActiveTab("leadership")}
@@ -118,7 +125,17 @@ export default function SettingsPage() {
                             : "glass border border-white/10 text-slate-300 hover:text-white"
                     }`}
                 >
-                    <Crown size={15} /> Leadership & Founder Copy
+                    <Crown size={15} /> Leadership & Copy
+                </button>
+                <button
+                    onClick={() => setActiveTab("milestones")}
+                    className={`px-5 py-2.5 rounded-2xl font-orbitron font-semibold text-xs flex items-center gap-2 transition-all ${
+                        activeTab === "milestones"
+                            ? "bg-sky-400 text-slate-950 shadow-lg shadow-sky-400/20 font-bold"
+                            : "glass border border-white/10 text-slate-300 hover:text-white"
+                    }`}
+                >
+                    <BarChart3 size={15} /> Statistics & Milestones
                 </button>
                 <button
                     onClick={() => setActiveTab("contact")}
@@ -256,6 +273,91 @@ export default function SettingsPage() {
                             >
                                 Open Leadership Directory →
                             </Link>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === "milestones" && (
+                    <div className="space-y-6">
+                        <div className="border-b border-white/10 pb-3">
+                            <h3 className="font-orbitron font-bold text-base text-white">Homepage Statistics & Milestones</h3>
+                            <p className="text-xs text-slate-400">
+                                Stats dynamically calculate from database records by default. You can also specify custom milestone numbers if desired.
+                            </p>
+                        </div>
+
+                        {/* Live DB Stats Preview */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-slate-900/60 border border-sky-400/20">
+                            <div>
+                                <p className="text-[10px] uppercase font-mono text-slate-400">Live Events</p>
+                                <p className="text-xl font-bold font-orbitron text-sky-400">{liveStats?.events ?? 0}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] uppercase font-mono text-slate-400">Live Profiles</p>
+                                <p className="text-xl font-bold font-orbitron text-slate-200">{liveStats?.members ?? 0}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] uppercase font-mono text-slate-400">Live Achievements</p>
+                                <p className="text-xl font-bold font-orbitron text-amber-400">{liveStats?.achievements ?? 0}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] uppercase font-mono text-slate-400">Live Participants</p>
+                                <p className="text-xl font-bold font-orbitron text-blue-400">{liveStats?.participants ?? 0}</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">
+                                    Events Conducted (Leave blank for Live DB Count)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={settings.stat_events || ""}
+                                    onChange={(e) => setSettings({ ...settings, stat_events: e.target.value })}
+                                    placeholder={`Live DB count: ${liveStats?.events ?? 0}`}
+                                    className="w-full px-4 py-2.5 bg-slate-950/80 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-aira-cyan font-mono"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">
+                                    Team Members Count (Leave blank for Live DB Count)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={settings.stat_members || ""}
+                                    onChange={(e) => setSettings({ ...settings, stat_members: e.target.value })}
+                                    placeholder={`Live DB count: ${liveStats?.members ?? 0}`}
+                                    className="w-full px-4 py-2.5 bg-slate-950/80 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-aira-cyan font-mono"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">
+                                    Achievements Count (Leave blank for Live DB Count)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={settings.stat_achievements || ""}
+                                    onChange={(e) => setSettings({ ...settings, stat_achievements: e.target.value })}
+                                    placeholder={`Live DB count: ${liveStats?.achievements ?? 0}`}
+                                    className="w-full px-4 py-2.5 bg-slate-950/80 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-aira-cyan font-mono"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5 block">
+                                    Total Participants (Leave blank for Live DB Count)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={settings.stat_participants || ""}
+                                    onChange={(e) => setSettings({ ...settings, stat_participants: e.target.value })}
+                                    placeholder={`Live DB count: ${liveStats?.participants ?? 0}`}
+                                    className="w-full px-4 py-2.5 bg-slate-950/80 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-aira-cyan font-mono"
+                                />
+                            </div>
                         </div>
                     </div>
                 )}

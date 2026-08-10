@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
         description: "AiRA Lab innovation and research platform with events, achievements, and media galleries.",
         start_url: "/",
         display: "standalone",
-        background_color: "#020817",
-        theme_color: "#020817",
+        background_color: "#0B1120",
+        theme_color: "#0B1120",
         orientation: "portrait",
         scope: "/",
         icons: [

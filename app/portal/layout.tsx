@@ -19,8 +19,11 @@ import {
     Radio,
     ShieldCheck,
     Briefcase,
-    MessageSquare
+    MessageSquare,
+    BookOpen,
+    Newspaper
 } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 import { signOut } from "next-auth/react";
 import { NotificationBell } from "@/components/ui/NotificationBell";
 import FloatingAdminMenu from "@/components/admin/FloatingAdminMenu";
@@ -76,6 +79,11 @@ export default function PortalLayout({
         { href: "/portal/team-dashboard", label: "Team Hub", icon: Briefcase, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
         { href: "/portal/team-members", label: "Team Members", icon: Users, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
         { href: "/portal/team-updates", label: "Team Updates", icon: MessageSquare, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
+        // Blog & Magazine
+        { href: "/portal/blog", label: "Blog", icon: BookOpen, roles: ["ADMIN", "TEAM_LEAD", "TEAM_MEMBER"] },
+        { href: "/portal/admin/blog", label: "Blog Management", icon: BookOpen, roles: ["ADMIN"] },
+        { href: "/portal/admin/magazine", label: "Magazine Studio", icon: Newspaper, roles: ["ADMIN"] },
+        // Reports & Admin
         { href: "/admin/reports", label: "Team Reports", icon: FileText, roles: ["ADMIN"] },
         { href: "/admin/applications", label: "Applications", icon: FileText, roles: ["ADMIN"] },
         { href: "/admin/achievements", label: "Achievements", icon: Award, roles: ["ADMIN", "CONTENT_MANAGER"] },
@@ -101,18 +109,8 @@ export default function PortalLayout({
 
             {/* Desktop Sidebar */}
             <aside className="w-64 border-r border-white/10 bg-slate-950/80 backdrop-blur-xl hidden md:flex flex-col">
-                <div className="p-6 border-b border-white/5">
-                    <Link href="/" className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-aira-cyan to-aira-purple flex items-center justify-center font-orbitron font-bold text-xs text-white shadow-md shadow-aira-cyan/20">
-                            AL
-                        </div>
-                        <div>
-                            <span className="font-orbitron font-bold text-base gradient-text-cyan">
-                                AiRA Lab
-                            </span>
-                            <p className="text-[10px] text-slate-400 font-orbitron">MEMBER PORTAL</p>
-                        </div>
-                    </Link>
+                <div className="p-5 border-b border-white/5">
+                    <Logo href="/" size="sm" showText textVariant="portal" priority />
                 </div>
 
                 <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
@@ -138,18 +136,18 @@ export default function PortalLayout({
 
                 <div className="p-4 border-t border-white/10 bg-slate-900/40">
                     <div className="flex items-center gap-3 mb-4 px-2">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-aira-cyan to-aira-purple flex items-center justify-center text-white font-bold text-sm shadow-sm shadow-aira-cyan/30">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 via-sky-500 to-indigo-600 flex items-center justify-center text-slate-950 font-bold text-sm shadow-sm shadow-sky-500/30">
                             {session.user?.name?.[0] || "?"}
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-white truncate">{session.user?.name}</p>
-                            <p className="text-[11px] text-aira-cyan font-mono truncate">{role.replace("_", " ")}</p>
+                            <p className="text-[11px] text-sky-400 font-mono truncate">{role.replace("_", " ")}</p>
                         </div>
                         <NotificationBell />
                     </div>
                     <button
                         onClick={() => signOut({ callbackUrl: "/" })}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-aira-magenta bg-aira-magenta/10 hover:bg-aira-magenta/20 border border-aira-magenta/30 transition-all"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-rose-400 bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 transition-all"
                     >
                         <LogOut size={15} />
                         Logout

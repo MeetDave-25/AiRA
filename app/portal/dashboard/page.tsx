@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Award, Calendar, CheckSquare, Clock3, Users } from "lucide-react";
+import { Award, Calendar, CheckSquare, Clock3, Users, Sparkles, Rocket } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Interactive3DMascot } from "@/components/ui/Interactive3DMascot";
 
 export default function DashboardPage() {
     const { data: session } = useSession();
@@ -59,22 +60,24 @@ export default function DashboardPage() {
         let streak = 0;
         const dayCursor = new Date();
         while (true) {
-            const key = dayCursor.toISOString().slice(0, 10);
-            if (completedDays.includes(key)) {
-                streak += 1;
+            const dateStr = dayCursor.toISOString().slice(0, 10);
+            if (completedDays.includes(dateStr)) {
+                streak++;
                 dayCursor.setDate(dayCursor.getDate() - 1);
             } else {
                 break;
             }
         }
-
-        return { progress, overdue, streak };
+        return { total, done, overdue, progress, streak };
     }, [tasks]);
 
-    const upcomingEvents = useMemo(
-        () => events.filter((e) => new Date(e.date) > new Date()).slice(0, 4),
-        [events]
-    );
+    const upcomingEvents = useMemo(() => {
+        const now = new Date();
+        return events
+            .filter((e) => new Date(e.date) >= now)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .slice(0, 5);
+    }, [events]);
 
     const stats = [
         { label: "My Tasks", value: String(taskStats.mine), icon: CheckSquare, color: "#00D4FF" },
@@ -85,12 +88,34 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-6">
-            <div className="glass rounded-2xl p-8 border border-white/5 relative overflow-hidden">
-                <div className="absolute -right-20 -top-20 w-64 h-64 bg-aira-cyan/10 rounded-full blur-3xl pointer-events-none" />
-                <h1 className="font-orbitron font-bold text-3xl text-white mb-2">
-                    Welcome back, <span className="gradient-text-cyan">{session?.user?.name}</span>
-                </h1>
-                <p className="text-slate-400">Role: <span className="text-aira-cyan">{role.replace("_", " ")}</span></p>
+            {/* ══ Welcome Card with 3D Cyber Mascot ══ */}
+            <div className="glass rounded-3xl p-6 sm:p-8 border border-purple-500/30 relative overflow-hidden bg-gradient-to-r from-[#0c0a1a] via-slate-950 to-slate-900 shadow-2xl">
+                <div className="absolute -right-20 -top-20 w-80 h-80 bg-aira-cyan/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -left-20 -bottom-20 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
+                    <div className="space-y-2 text-center sm:text-left">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aira-cyan/15 border border-aira-cyan/30 text-[11px] font-orbitron font-bold text-aira-cyan">
+                            <Sparkles size={12} className="text-amber-400" />
+                            AIRA SQUAD DASHBOARD
+                        </div>
+                        <h1 className="font-orbitron font-black text-2xl sm:text-3xl text-white">
+                            Welcome back, <span className="gradient-text-cyan">{session?.user?.name || "Architect"}</span> ⚡
+                        </h1>
+                        <p className="text-slate-300 text-sm max-w-xl">
+                            Role: <span className="text-aira-cyan font-semibold font-mono">{role.replace("_", " ")}</span> • Your lab workspace is synchronized and live.
+                        </p>
+                    </div>
+
+                    <div className="shrink-0 flex items-center justify-center">
+                        <Interactive3DMascot
+                            size="sm"
+                            showSpeechBubble={true}
+                            speechText="Ready to build today? 🚀"
+                            className="mx-auto"
+                        />
+                    </div>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

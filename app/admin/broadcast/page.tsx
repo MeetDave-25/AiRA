@@ -413,8 +413,8 @@ export default function BroadcastPage() {
                             <div className="bg-slate-900/90 backdrop-blur-xl border border-aira-cyan/40 rounded-2xl p-3.5 shadow-xl shadow-aira-cyan/10">
                                 <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-white/10 text-[10px]">
                                     <div className="flex items-center gap-1.5">
-                                        <div className="w-4 h-4 rounded bg-gradient-to-br from-aira-cyan to-aira-purple flex items-center justify-center font-bold text-[8px] text-white">
-                                            AL
+                                        <div className="w-4 h-4 rounded overflow-hidden bg-slate-950 border border-white/20 shrink-0">
+                                            <img src="/logo.png" alt="AiRA" className="w-full h-full object-contain" />
                                         </div>
                                         <span className="font-orbitron font-bold text-slate-300">AiRA Lab</span>
                                     </div>

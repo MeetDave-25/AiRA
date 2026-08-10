@@ -3,26 +3,39 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-    X, 
-    Github, 
-    Linkedin, 
-    ExternalLink, 
-    Sparkles, 
-    Zap, 
-    Cpu, 
-    Code2, 
-    BrainCircuit, 
-    Globe2, 
-    Trophy, 
-    Users, 
-    Compass, 
-    Rocket, 
+import {
+    X,
+    Github,
+    Linkedin,
+    ExternalLink,
+    Sparkles,
+    Zap,
+    Cpu,
+    Code2,
+    BrainCircuit,
+    Globe2,
+    Trophy,
+    Users,
+    Compass,
+    Rocket,
     ArrowRight,
     Crown,
     Target,
-    Quote
+    Quote,
+    Flame,
+    ShieldCheck,
 } from "lucide-react";
+import { Interactive3DMascot } from "@/components/ui/Interactive3DMascot";
+import {
+    SpotlightCard,
+    MagneticButton,
+    SplitText,
+    GradientMesh,
+    AuroraBackground,
+    FloatingParticles,
+    ScrollReveal,
+    ShimmerBorder,
+} from "@/components/ui/PremiumEffects";
 
 function MemberModal({ member, onClose }: { member: any; onClose: () => void }) {
     if (!member) return null;
@@ -67,8 +80,8 @@ function MemberModal({ member, onClose }: { member: any; onClose: () => void }) 
                             )}
                         </div>
 
-                        <button 
-                            onClick={onClose} 
+                        <button
+                            onClick={onClose}
                             className="w-8 h-8 sm:w-9 sm:h-9 rounded-full glass border border-white/15 flex items-center justify-center text-slate-300 hover:text-white hover:bg-rose-500/20 hover:border-rose-500/40 transition-all"
                             aria-label="Close modal"
                         >
@@ -84,11 +97,18 @@ function MemberModal({ member, onClose }: { member: any; onClose: () => void }) 
                             <div className="relative group">
                                 <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-3xl overflow-hidden border-2 border-aira-cyan/60 glow-cyan bg-slate-900 shadow-2xl">
                                     <img
-                                        src={member.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=300`}
+                                        src={
+                                            member.photo ||
+                                            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                                member.name
+                                            )}&background=0d1526&color=00D4FF&size=300`
+                                        }
                                         alt={member.name}
                                         className="w-full h-full object-cover"
-                                        onError={(e) => { 
-                                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=300`; 
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                                member.name
+                                            )}&background=0d1526&color=00D4FF&size=300`;
                                         }}
                                     />
                                 </div>
@@ -117,9 +137,13 @@ function MemberModal({ member, onClose }: { member: any; onClose: () => void }) 
                             {/* Social Buttons */}
                             <div className="flex flex-col gap-2 w-full pt-2">
                                 {member.linkedin && (
-                                    <a 
-                                        href={member.linkedin.startsWith("http") ? member.linkedin : `https://${member.linkedin}`} 
-                                        target="_blank" 
+                                    <a
+                                        href={
+                                            member.linkedin.startsWith("http")
+                                                ? member.linkedin
+                                                : `https://${member.linkedin}`
+                                        }
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center justify-center md:justify-start gap-2.5 px-4 py-2.5 rounded-xl bg-[#0077b5]/20 border border-[#0077b5]/50 text-blue-300 text-xs font-semibold hover:bg-[#0077b5]/30 hover:scale-[1.02] transition-all shadow-md w-full"
                                     >
@@ -128,9 +152,13 @@ function MemberModal({ member, onClose }: { member: any; onClose: () => void }) 
                                     </a>
                                 )}
                                 {member.github && (
-                                    <a 
-                                        href={member.github.startsWith("http") ? member.github : `https://${member.github}`} 
-                                        target="_blank" 
+                                    <a
+                                        href={
+                                            member.github.startsWith("http")
+                                                ? member.github
+                                                : `https://${member.github}`
+                                        }
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center justify-center md:justify-start gap-2.5 px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white text-xs font-semibold hover:bg-white/20 hover:scale-[1.02] transition-all shadow-md w-full"
                                     >
@@ -194,13 +222,20 @@ function OrbitCard({ member, onClick }: { member: any; onClick: () => void }) {
             title={member.name}
         >
             <div className="relative">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex items-center justify-center bg-slate-900 border-2 border-aira-cyan/40 group-hover:border-aira-cyan group-hover:shadow-lg group-hover:shadow-aira-cyan/50 transition-all duration-300 transform group-hover:scale-125 active:scale-95 text-[10px] text-white">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex items-center justify-center bg-slate-900 border-2 border-aira-cyan/40 group-hover:border-aira-cyan group-hover:shadow-[0_0_20px_#00D4FF] transition-all duration-300 transform group-hover:scale-125 active:scale-95 text-[10px] text-white">
                     <img
-                        src={member.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=120`}
+                        src={
+                            member.photo ||
+                            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                member.name
+                            )}&background=0d1526&color=00D4FF&size=120`
+                        }
                         alt={member.name}
                         className="w-full h-full object-cover"
-                        onError={(e) => { 
-                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=120`; 
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                member.name
+                            )}&background=0d1526&color=00D4FF&size=120`;
                         }}
                     />
                 </div>
@@ -210,7 +245,9 @@ function OrbitCard({ member, onClick }: { member: any; onClick: () => void }) {
                 {/* Floating Tooltip */}
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 rounded-xl glass border border-white/10 text-xs text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 shadow-lg">
                     <div className="font-semibold text-white">{member.name}</div>
-                    <div className="text-aira-cyan text-[10px]">{(member.role || "").slice(0, 24)}</div>
+                    <div className="text-aira-cyan text-[10px]">
+                        {(member.role || "").slice(0, 24)}
+                    </div>
                 </div>
             </div>
         </button>
@@ -227,13 +264,13 @@ export default function AboutPage() {
 
     useEffect(() => {
         fetch("/api/team-members")
-            .then(r => r.ok ? r.json() : [])
-            .then(d => setMembers(Array.isArray(d) ? d : []))
+            .then((r) => (r.ok ? r.json() : []))
+            .then((d) => setMembers(Array.isArray(d) ? d : []))
             .catch(() => setMembers([]));
 
         fetch("/api/settings")
-            .then(r => r.ok ? r.json() : {})
-            .then(d => setSettings(d))
+            .then((r) => (r.ok ? r.json() : {}))
+            .then((d) => setSettings(d))
             .catch(() => setSettings({}));
 
         const handleResize = () => {
@@ -252,13 +289,13 @@ export default function AboutPage() {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    const nonPresidents = useMemo(() => members.filter(m => !m.isPresident), [members]);
-    const president = useMemo(() => members.find(m => m.isPresident) || members[0], [members]);
+    const nonPresidents = useMemo(() => members.filter((m) => !m.isPresident), [members]);
+    const president = useMemo(() => members.find((m) => m.isPresident) || members[0], [members]);
 
     // Unique groups for filtering
     const teamGroups = useMemo(() => {
         const groups = new Set<string>();
-        members.forEach(m => {
+        members.forEach((m) => {
             if (m.teamGroup && m.teamGroup.trim()) {
                 groups.add(m.teamGroup.trim());
             }
@@ -268,47 +305,55 @@ export default function AboutPage() {
 
     const filteredMembers = useMemo(() => {
         if (activeGroup === "ALL") return members;
-        return members.filter(m => m.teamGroup === activeGroup);
+        return members.filter((m) => m.teamGroup === activeGroup);
     }, [members, activeGroup]);
 
     const corePillars = [
         {
             icon: BrainCircuit,
             title: "Autonomous Intelligence",
-            desc: "Pioneering research in neural architectures, computer vision, robotics, and generative AI systems."
+            desc: "Pioneering neural architectures, computer vision models, robotic kinematics, and generative systems.",
+            color: "#38BDF8",
         },
         {
             icon: Code2,
             title: "Full-Stack Innovation",
-            desc: "Engineering scalable software, distributed cloud systems, and real-time interactive experiences."
+            desc: "Engineering high-throughput software, distributed cloud systems, and real-time computing stacks.",
+            color: "#6366F1",
         },
         {
             icon: Trophy,
             title: "Competitive Excellence",
-            desc: "Representing at national hackathons, research symposiums, and global engineering challenges."
+            desc: "Dominating national hackathons, publishing collegiate research papers, and global challenges.",
+            color: "#F59E0B",
         },
         {
             icon: Rocket,
             title: "Student-Led Impact",
-            desc: "Empowering undergraduate researchers to incubate production-ready ventures and publish breakthroughs."
-        }
+            desc: "Empowering undergraduate researchers to incubate production ventures and patent inventions.",
+            color: "#F43F5E",
+        },
     ];
 
     return (
-        <div className="pt-24 pb-20 min-h-screen relative overflow-hidden">
-            {/* Background elements */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-hero-glow opacity-30 blur-3xl pointer-events-none" />
-            <div className="absolute inset-0 grid-bg opacity-40 pointer-events-none" />
+        <div className="pt-24 pb-20 min-h-screen bg-aira-bg text-white relative overflow-hidden">
+            {/* Background 3D Aurora Mesh */}
+            <GradientMesh />
+            <AuroraBackground />
+            <FloatingParticles count={30} />
+            <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
 
-            {/* ══ Hero Section with Interactive Orbit ══ */}
-            <section className="relative min-h-[580px] sm:min-h-[680px] flex flex-col items-center justify-center overflow-hidden px-4">
-                {/* Background Typography */}
-                <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center justify-between w-full max-w-5xl pointer-events-none select-none z-0 px-4">
+            {/* ═══════════════════════════════════════════════════════════
+                1. CINEMATIC HERO SECTION WITH INTERACTIVE 3D ORBIT SYSTEM
+               ═══════════════════════════════════════════════════════════ */}
+            <section className="relative min-h-[580px] sm:min-h-[700px] flex flex-col items-center justify-center overflow-hidden px-4">
+                {/* Background 3D Typography */}
+                <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center justify-between w-full max-w-5xl pointer-events-none select-none z-0 px-4 opacity-10">
                     <motion.span
                         initial={{ x: -60, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-                        className="font-orbitron font-black text-5xl sm:text-8xl md:text-9xl text-white/5 tracking-widest leading-none"
+                        className="font-orbitron font-black text-6xl sm:text-8xl md:text-9xl text-white tracking-widest leading-none"
                     >
                         AB
                     </motion.span>
@@ -316,89 +361,106 @@ export default function AboutPage() {
                         initial={{ x: 60, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-                        className="font-orbitron font-black text-5xl sm:text-8xl md:text-9xl text-white/5 tracking-widest leading-none"
+                        className="font-orbitron font-black text-6xl sm:text-8xl md:text-9xl text-white tracking-widest leading-none"
                     >
                         OUT
                     </motion.span>
                 </div>
 
                 {/* Interactive Orbit System */}
-                <div 
-                    className="relative w-[320px] h-[320px] sm:w-[460px] sm:h-[460px] md:w-[560px] md:h-[560px] flex items-center justify-center z-10"
+                <div
+                    className="relative w-[320px] h-[320px] sm:w-[460px] sm:h-[460px] md:w-[580px] md:h-[580px] flex items-center justify-center z-10"
                     onMouseEnter={() => setIsOrbitPaused(true)}
                     onMouseLeave={() => setIsOrbitPaused(false)}
                 >
-                    {/* Dual Concentric Orbit Rings */}
-                    {/* Orbit 1 Ring */}
-                    <div 
-                        className="absolute rounded-full border border-aira-cyan/25 pointer-events-none animate-pulse"
+                    {/* Concentric Glowing Orbit Rings */}
+                    <div
+                        className="absolute rounded-full border border-aira-cyan/30 pointer-events-none shadow-[0_0_25px_rgba(0,212,255,0.15)] animate-pulse"
                         style={{ width: orbitRadius * 2, height: orbitRadius * 2 }}
                     />
-                    <div 
-                        className="absolute rounded-full border border-white/5 pointer-events-none"
+                    <div
+                        className="absolute rounded-full border border-white/10 pointer-events-none"
                         style={{ width: orbitRadius * 2 + 30, height: orbitRadius * 2 + 30 }}
                     />
 
-                    {/* Orbit 2 Ring (Outer Orbit for expanding team members) */}
+                    {/* Orbit 2 Ring */}
                     {nonPresidents.length > 6 && (
                         <>
-                            <div 
-                                className="absolute rounded-full border border-dashed border-purple-500/30 pointer-events-none shadow-[0_0_25px_rgba(168,85,247,0.15)]"
+                            <div
+                                className="absolute rounded-full border border-dashed border-purple-500/35 pointer-events-none shadow-[0_0_30px_rgba(168,85,247,0.2)]"
                                 style={{ width: orbitRadius * 2.8, height: orbitRadius * 2.8 }}
                             />
-                            <div 
-                                className="absolute rounded-full border border-white/5 pointer-events-none"
+                            <div
+                                className="absolute rounded-full border border-white/10 pointer-events-none"
                                 style={{ width: orbitRadius * 2.8 + 35, height: orbitRadius * 2.8 + 35 }}
                             />
                         </>
                     )}
 
-                    {/* Central Hero Card / President */}
+                    {/* Central Hero Card / President with 3D Float */}
                     <motion.div
-                        animate={{ y: [-4, 4, -4] }}
+                        animate={{ y: [-5, 5, -5] }}
                         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                         className="relative z-20 cursor-pointer group"
                         onClick={() => president && setSelectedMember(president)}
                     >
                         <div className="relative">
-                            <div className="w-36 h-48 sm:w-48 sm:h-60 md:w-52 md:h-64 rounded-3xl overflow-hidden border-2 border-aira-cyan/50 glow-cyan bg-slate-950 shadow-2xl transition-transform duration-300 group-hover:scale-105">
+                            <div className="w-36 h-48 sm:w-48 sm:h-60 md:w-52 md:h-64 rounded-3xl overflow-hidden border-2 border-aira-cyan/60 glow-cyan bg-slate-950 shadow-2xl transition-transform duration-300 group-hover:scale-105">
                                 <img
-                                    src={president?.photo || settings.lab_main_image || "https://placehold.co/300x400/020817/00D4FF?text=AiRA+Lab"}
+                                    src={
+                                        president?.photo ||
+                                        settings.lab_main_image ||
+                                        "https://placehold.co/300x400/020817/00D4FF?text=AiRA+Lab"
+                                    }
                                     alt={president?.name || "AiRA Lab"}
                                     className="w-full h-full object-cover"
-                                    onError={(e) => { 
-                                        (e.target as HTMLImageElement).src = "https://placehold.co/300x400/020817/00D4FF?text=AiRA+Lab"; 
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src =
+                                            "https://placehold.co/300x400/020817/00D4FF?text=AiRA+Lab";
                                     }}
                                 />
                             </div>
 
                             {/* Label */}
-                            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full glass border border-aira-cyan/40 text-center whitespace-nowrap shadow-lg">
-                                <p className="font-orbitron font-bold text-xs text-white">{president?.name || "AiRA Lab"}</p>
-                                <p className="text-[10px] text-aira-cyan">{president?.role || "Innovation Center"}</p>
+                            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full glass-panel-glow border border-aira-cyan/40 text-center whitespace-nowrap shadow-xl">
+                                <p className="font-orbitron font-bold text-xs text-white">
+                                    {president?.name || "AiRA Lab"}
+                                </p>
+                                <p className="text-[10px] text-aira-cyan font-medium">
+                                    {president?.role || "Innovation Center"}
+                                </p>
                             </div>
                         </div>
                     </motion.div>
 
-                    {/* ══ Orbit 1: Inner Orbit (First 6 Members) ══ */}
+                    {/* Orbit 1: Inner Orbit */}
                     {nonPresidents.length > 0 && (
-                        <div 
+                        <div
                             className="absolute inset-0 z-20 pointer-events-none"
-                            style={{ 
-                                animation: isOrbitPaused ? "none" : "spin 32s linear infinite" 
+                            style={{
+                                animation: isOrbitPaused ? "none" : "spin 32s linear infinite",
                             }}
                         >
-                            {(nonPresidents.length <= 6 ? nonPresidents : nonPresidents.slice(0, 6)).map((member, i, arr) => {
+                            {(nonPresidents.length <= 6
+                                ? nonPresidents
+                                : nonPresidents.slice(0, 6)
+                            ).map((member, i, arr) => {
                                 const angle = (360 / arr.length) * i;
                                 return (
                                     <div
                                         key={member.id}
                                         className="absolute left-1/2 top-1/2 -ml-6 -mt-6 sm:-ml-8 sm:-mt-8 pointer-events-auto"
-                                        style={{ 
-                                            transform: `rotate(${angle}deg) translate(${orbitRadius}px) rotate(-${angle}deg)` 
+                                        style={{
+                                            transform: `rotate(${angle}deg) translate(${orbitRadius}px) rotate(-${angle}deg)`,
                                         }}
                                     >
-                                        <div style={{ animation: isOrbitPaused ? "none" : "counterspin 32s linear infinite" }}>
+                                        <div
+                                            style={{
+                                                animation: isOrbitPaused
+                                                    ? "none"
+                                                    : "counterspin 32s linear infinite",
+                                            }}
+                                        >
                                             <OrbitCard
                                                 member={member}
                                                 onClick={() => setSelectedMember(member)}
@@ -410,12 +472,12 @@ export default function AboutPage() {
                         </div>
                     )}
 
-                    {/* ══ Orbit 2: Outer Orbit (Members 7+ Beyond Orbit 1 Limit) ══ */}
+                    {/* Orbit 2: Outer Orbit */}
                     {nonPresidents.length > 6 && (
-                        <div 
+                        <div
                             className="absolute inset-0 z-20 pointer-events-none"
-                            style={{ 
-                                animation: isOrbitPaused ? "none" : "counterspin 50s linear infinite" 
+                            style={{
+                                animation: isOrbitPaused ? "none" : "counterspin 50s linear infinite",
                             }}
                         >
                             {nonPresidents.slice(6).map((member, i, arr) => {
@@ -425,11 +487,17 @@ export default function AboutPage() {
                                     <div
                                         key={member.id}
                                         className="absolute left-1/2 top-1/2 -ml-6 -mt-6 sm:-ml-8 sm:-mt-8 pointer-events-auto"
-                                        style={{ 
-                                            transform: `rotate(${angle}deg) translate(${radius2}px) rotate(-${angle}deg)` 
+                                        style={{
+                                            transform: `rotate(${angle}deg) translate(${radius2}px) rotate(-${angle}deg)`,
                                         }}
                                     >
-                                        <div style={{ animation: isOrbitPaused ? "none" : "spin 50s linear infinite" }}>
+                                        <div
+                                            style={{
+                                                animation: isOrbitPaused
+                                                    ? "none"
+                                                    : "spin 50s linear infinite",
+                                            }}
+                                        >
                                             <OrbitCard
                                                 member={member}
                                                 onClick={() => setSelectedMember(member)}
@@ -442,147 +510,275 @@ export default function AboutPage() {
                     )}
                 </div>
 
-                <div className="mt-8 text-center z-10 flex items-center justify-center gap-3">
-                    <span className="text-xs text-slate-400 px-3 py-1 rounded-full glass border border-white/10 inline-flex items-center gap-1.5">
-                        <Sparkles size={12} className="text-aira-cyan" /> Hover to pause orbits • Click profile for bio
+                <div className="mt-10 text-center z-10 flex flex-wrap items-center justify-center gap-3">
+                    <span className="text-xs text-slate-300 px-3.5 py-1.5 rounded-full glass border border-white/10 inline-flex items-center gap-1.5 shadow-lg shadow-black/40">
+                        <Sparkles size={13} className="text-aira-cyan animate-pulse" /> Hover to pause orbit • Click profile for bio
                     </span>
                     {nonPresidents.length > 6 && (
-                        <span className="text-xs text-purple-300 px-2.5 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 inline-flex items-center gap-1 font-mono">
+                        <span className="text-xs text-purple-300 px-3 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/30 inline-flex items-center gap-1.5 font-mono">
                             ⚡ 2 Orbits Active ({nonPresidents.length} Members)
                         </span>
                     )}
                 </div>
             </section>
 
-            {/* ══ About Statement Section ══ */}
-            <section className="max-w-4xl mx-auto px-4 py-12 text-center relative z-10">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="glass p-8 sm:p-10 rounded-3xl border border-white/10 animated-border space-y-4"
-                >
-                    <span className="text-xs font-semibold uppercase tracking-widest text-aira-cyan">Our Purpose & Mission</span>
-                    <h2 className="font-orbitron font-bold text-2xl sm:text-3xl text-white">
-                        Empowering the Next Generation of <span className="gradient-text-cyan">Innovators</span>
-                    </h2>
-                    <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-3xl mx-auto">
-                        {settings.lab_about_text || "AiRA (Artificial Intelligence & Robotics Association) Lab is a premier innovation and research hub. We unite passionate engineers, designers, and researchers to push the frontiers of autonomous technologies, intelligence, and modern computing."}
-                    </p>
-                </motion.div>
+            {/* ═══════════════════════════════════════════════════════════
+                2. MISSION & PURPOSE STATEMENT (SPOTLIGHT CARD)
+               ═══════════════════════════════════════════════════════════ */}
+            <section className="max-w-4xl mx-auto px-4 sm:px-6 py-16 text-center relative z-10">
+                <ScrollReveal direction="up">
+                    <SpotlightCard
+                        spotlightColor="rgba(0, 212, 255, 0.18)"
+                        className="p-8 sm:p-12 rounded-3xl border-white/10 space-y-4"
+                    >
+                        <span className="text-xs font-bold uppercase tracking-[0.25em] text-aira-cyan font-orbitron">
+                            Our Purpose & Mission
+                        </span>
+                        <h2 className="font-orbitron font-black text-2xl sm:text-4xl text-white">
+                            Empowering the Next Generation of{" "}
+                            <span className="gradient-text-animated">Innovators</span>
+                        </h2>
+                        <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-3xl mx-auto font-sans font-normal">
+                            {settings.lab_about_text ||
+                                "AiRA (Artificial Intelligence & Robotics Association) Lab is a premier innovation and research hub. We unite passionate engineers, designers, and researchers to push the frontiers of autonomous technologies, intelligence, and modern computing."}
+                        </p>
+                    </SpotlightCard>
+                </ScrollReveal>
             </section>
 
-            {/* ══ Core Pillars / What We Do ══ */}
-            <section className="max-w-6xl mx-auto px-4 py-12">
-                <div className="text-center mb-10">
-                    <span className="text-xs font-semibold uppercase tracking-widest text-violet-400">Core Pillars</span>
-                    <h2 className="font-orbitron font-bold text-2xl sm:text-3xl text-white mt-1">
-                        Driven by <span className="gradient-text">Excellence</span>
-                    </h2>
-                </div>
+            {/* ═══════════════════════════════════════════════════════════
+                3. CORE PILLARS / WHAT WE DO (SPOTLIGHT CARDS)
+               ═══════════════════════════════════════════════════════════ */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
+                <ScrollReveal direction="up">
+                    <div className="text-center mb-12">
+                        <span className="text-xs font-bold uppercase tracking-[0.25em] text-violet-400 font-orbitron">
+                            DNA Pillars
+                        </span>
+                        <h2 className="font-orbitron font-bold text-3xl sm:text-4xl text-white mt-1">
+                            Driven by <span className="gradient-text-animated">Excellence</span>
+                        </h2>
+                    </div>
+                </ScrollReveal>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     {corePillars.map((pillar, idx) => {
                         const Icon = pillar.icon;
                         return (
-                            <motion.div
-                                key={idx}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: idx * 0.08 }}
-                                className="glass p-6 rounded-2xl border border-white/5 hover:border-aira-cyan/30 transition-all group flex flex-col justify-between"
-                            >
-                                <div>
-                                    <div className="w-12 h-12 rounded-xl bg-aira-cyan/10 border border-aira-cyan/20 flex items-center justify-center text-aira-cyan group-hover:scale-110 transition-transform mb-4">
-                                        <Icon size={22} />
+                            <ScrollReveal key={idx} delay={idx * 0.1} direction="up">
+                                <SpotlightCard
+                                    spotlightColor={`${pillar.color}25`}
+                                    className="p-7 h-full flex flex-col justify-between border-white/[0.08] hover:border-white/[0.2] transition-all duration-300"
+                                >
+                                    <div>
+                                        <div
+                                            className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 shadow-lg"
+                                            style={{
+                                                background: `radial-gradient(circle at top left, ${pillar.color}30, ${pillar.color}10)`,
+                                                border: `1px solid ${pillar.color}45`,
+                                                boxShadow: `0 0 20px ${pillar.color}25`,
+                                            }}
+                                        >
+                                            <Icon size={22} style={{ color: pillar.color }} />
+                                        </div>
+                                        <h3 className="font-orbitron font-bold text-lg text-white mb-2">
+                                            {pillar.title}
+                                        </h3>
+                                        <p className="text-sm text-slate-300 leading-relaxed font-sans font-normal">
+                                            {pillar.desc}
+                                        </p>
                                     </div>
-                                    <h3 className="font-orbitron font-bold text-base text-white mb-2">{pillar.title}</h3>
-                                    <p className="text-xs text-slate-400 leading-relaxed">{pillar.desc}</p>
-                                </div>
-                            </motion.div>
+                                </SpotlightCard>
+                            </ScrollReveal>
                         );
                     })}
                 </div>
             </section>
 
-            {/* ══ Full Team Showcase Grid ══ */}
-            <section className="max-w-6xl mx-auto px-4 py-12">
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-                    <div>
-                        <span className="text-xs font-semibold uppercase tracking-widest text-aira-cyan">Our People</span>
-                        <h2 className="font-orbitron font-bold text-2xl sm:text-3xl text-white mt-1">
-                            Meet the <span className="gradient-text-cyan">Team</span>
-                        </h2>
-                    </div>
-
-                    <Link
-                        href="/leadership"
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-bold hover:bg-amber-400/20 hover:scale-105 transition-all shadow-md"
+            {/* ═══════════════════════════════════════════════════════════
+                4. 3D CYBER MASCOT SHOWCASE (MEET MD)
+               ═══════════════════════════════════════════════════════════ */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
+                <ScrollReveal direction="up">
+                    <SpotlightCard
+                        spotlightColor="rgba(168, 85, 247, 0.22)"
+                        className="p-8 sm:p-12 border-purple-500/30 rounded-3xl"
                     >
-                        <Crown size={14} className="text-amber-400" />
-                        <span>View Founders & Executive Board →</span>
-                    </Link>
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+                            {/* Left: 3D Parallax Mascot Card */}
+                            <div className="lg:col-span-5 flex justify-center">
+                                <Interactive3DMascot
+                                    size="lg"
+                                    showSpeechBubble={true}
+                                    speechText="A New Mind. A New Energy. A New Impact. ⚡"
+                                    className="mx-auto"
+                                />
+                            </div>
 
-                    {/* Group Filter Buttons */}
-                    {teamGroups.length > 2 && (
-                        <div className="flex flex-wrap gap-2">
-                            {teamGroups.map(grp => (
-                                <button
-                                    key={grp}
-                                    onClick={() => setActiveGroup(grp)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${
-                                        activeGroup === grp 
-                                            ? "bg-aira-cyan/20 text-aira-cyan border-aira-cyan/50" 
-                                            : "bg-slate-900/40 text-slate-400 border-white/5 hover:bg-white/5"
-                                    }`}
-                                >
-                                    {grp}
-                                </button>
-                            ))}
+                            {/* Right: Mascot Story, Traits & Interactive Badges */}
+                            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+                                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-xs font-orbitron font-bold uppercase tracking-wider">
+                                    <Sparkles size={13} className="text-amber-400" />
+                                    OFFICIAL LAB MASCOT & AI GUIDE
+                                </div>
+
+                                <h2 className="font-orbitron font-black text-3xl sm:text-5xl text-white tracking-tight">
+                                    Meet <span className="gradient-text-animated">Mevy</span> · 3D Cyber Wolf
+                                </h2>
+
+                                <p className="text-slate-300 text-base leading-relaxed font-sans">
+                                    Engineered at the intersection of robotics, generative AI, and autonomous systems, Mevy the 3D Cyber Wolf embodies the fierce curiosity, pack spirit, and fearless innovation of AiRA Lab.
+                                </p>
+
+                                {/* 3 Core Mascot Tenets */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2">
+                                    <div className="p-4 rounded-2xl glass-panel-3d text-left">
+                                        <span className="text-[10px] font-orbitron text-aira-cyan font-bold block mb-1">
+                                            01 · VISION
+                                        </span>
+                                        <p className="text-xs text-white font-semibold font-orbitron">A New Mind</p>
+                                        <p className="text-[11px] text-slate-300 mt-1 leading-snug">
+                                            Neural curiosity and fearless learning.
+                                        </p>
+                                    </div>
+                                    <div className="p-4 rounded-2xl glass-panel-3d text-left">
+                                        <span className="text-[10px] font-orbitron text-purple-400 font-bold block mb-1">
+                                            02 · DRIVE
+                                        </span>
+                                        <p className="text-xs text-white font-semibold font-orbitron">A New Energy</p>
+                                        <p className="text-[11px] text-slate-300 mt-1 leading-snug">
+                                            High-voltage hackathon momentum.
+                                        </p>
+                                    </div>
+                                    <div className="p-4 rounded-2xl glass-panel-3d text-left">
+                                        <span className="text-[10px] font-orbitron text-pink-400 font-bold block mb-1">
+                                            03 · LEGACY
+                                        </span>
+                                        <p className="text-xs text-white font-semibold font-orbitron">A New Impact</p>
+                                        <p className="text-[11px] text-slate-300 mt-1 leading-snug">
+                                            Human-centered engineering breakthroughs.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="pt-3 flex flex-wrap items-center justify-center lg:justify-start gap-4">
+                                    <MagneticButton
+                                        onClick={() => {
+                                            if (typeof window !== "undefined") {
+                                                window.dispatchEvent(new CustomEvent("open-aira-chat"));
+                                            }
+                                        }}
+                                        magnetStrength={0.25}
+                                    >
+                                        <span className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-aira-cyan via-sky-500 to-indigo-600 text-white font-semibold text-sm shadow-xl shadow-aira-cyan/25 flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform font-orbitron">
+                                            <Sparkles size={16} /> Chat with Mevy AI Guide
+                                        </span>
+                                    </MagneticButton>
+
+                                    <MagneticButton href="/join" magnetStrength={0.25}>
+                                        <span className="px-7 py-3.5 rounded-xl glass-panel-3d border border-white/15 text-slate-200 hover:text-white text-sm hover:border-aira-cyan/40 transition-all font-semibold flex items-center gap-2 font-orbitron">
+                                            Join the Pack <ArrowRight size={15} />
+                                        </span>
+                                    </MagneticButton>
+                                </div>
+                            </div>
                         </div>
-                    )}
-                </div>
+                    </SpotlightCard>
+                </ScrollReveal>
+            </section>
+
+            {/* ═══════════════════════════════════════════════════════════
+                5. FULL TEAM SHOWCASE GRID (SPOTLIGHT CARDS)
+               ═══════════════════════════════════════════════════════════ */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
+                <ScrollReveal direction="up">
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+                        <div>
+                            <span className="text-xs font-bold uppercase tracking-[0.25em] text-aira-cyan font-orbitron">
+                                Our Collective
+                            </span>
+                            <h2 className="font-orbitron font-bold text-3xl sm:text-4xl text-white mt-1">
+                                Meet the <span className="gradient-text-cyan">Team</span>
+                            </h2>
+                        </div>
+
+                        <Link
+                            href="/leadership"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-bold hover:bg-amber-400/20 hover:scale-105 transition-all shadow-md"
+                        >
+                            <Crown size={15} className="text-amber-400" />
+                            <span>View Founders & Executive Board →</span>
+                        </Link>
+
+                        {/* Group Filter Buttons */}
+                        {teamGroups.length > 2 && (
+                            <div className="flex flex-wrap gap-2">
+                                {teamGroups.map((grp) => (
+                                    <button
+                                        key={grp}
+                                        onClick={() => setActiveGroup(grp)}
+                                        className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                                            activeGroup === grp
+                                                ? "bg-aira-cyan/20 text-aira-cyan border-aira-cyan/50 shadow-md shadow-aira-cyan/20"
+                                                : "bg-slate-900/40 text-slate-400 border-white/5 hover:bg-white/5"
+                                        }`}
+                                    >
+                                        {grp}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </ScrollReveal>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {filteredMembers.map((member, i) => (
-                        <motion.button
-                            key={member.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: i * 0.04 }}
-                            onClick={() => setSelectedMember(member)}
-                            className="glass rounded-2xl p-4 text-center hover:border-aira-cyan/40 border border-white/5 transition-all card-3d group flex flex-col items-center justify-between"
-                        >
-                            <div className="w-full">
-                                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-aira-cyan/60 mx-auto mb-3 transition-all flex items-center justify-center bg-slate-900 text-xs text-white relative">
-                                    <img
-                                        src={member.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=120`}
-                                        alt={member.name}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => { 
-                                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=0d1526&color=00D4FF&size=120`; 
-                                        }}
-                                    />
-                                    {member.isPresident && (
-                                        <div className="absolute top-0 right-0 text-xs">👑</div>
-                                    )}
-                                </div>
-                                <p className="font-semibold text-xs sm:text-sm text-white line-clamp-1 group-hover:text-aira-cyan transition-colors">
-                                    {member.name}
-                                </p>
-                                <p className="text-aira-cyan text-[11px] mt-0.5 line-clamp-1">
-                                    {member.role}
-                                </p>
-                            </div>
+                        <ScrollReveal key={member.id} delay={i * 0.03} direction="up">
+                            <SpotlightCard
+                                spotlightColor="rgba(0, 212, 255, 0.16)"
+                                className="p-4 text-center cursor-pointer border-white/[0.08] hover:border-aira-cyan/50 transition-all duration-300 hover:scale-[1.03]"
+                            >
+                                <button
+                                    onClick={() => setSelectedMember(member)}
+                                    className="w-full text-center flex flex-col items-center justify-between h-full"
+                                >
+                                    <div className="w-full">
+                                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-aira-cyan/60 mx-auto mb-3 transition-all flex items-center justify-center bg-slate-900 text-xs text-white relative shadow-lg">
+                                            <img
+                                                src={
+                                                    member.photo ||
+                                                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                                        member.name
+                                                    )}&background=0d1526&color=00D4FF&size=120`
+                                                }
+                                                alt={member.name}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                                        member.name
+                                                    )}&background=0d1526&color=00D4FF&size=120`;
+                                                }}
+                                            />
+                                            {member.isPresident && (
+                                                <div className="absolute top-0 right-0 text-xs">👑</div>
+                                            )}
+                                        </div>
+                                        <p className="font-semibold text-xs sm:text-sm text-white line-clamp-1 group-hover:text-aira-cyan transition-colors">
+                                            {member.name}
+                                        </p>
+                                        <p className="text-aira-cyan text-[11px] mt-0.5 line-clamp-1">
+                                            {member.role}
+                                        </p>
+                                    </div>
 
-                            {member.teamGroup && (
-                                <span className="text-[10px] text-slate-500 mt-2 block truncate w-full">
-                                    {member.teamGroup}
-                                </span>
-                            )}
-                        </motion.button>
+                                    {member.teamGroup && (
+                                        <span className="text-[10px] text-slate-400 mt-2.5 block truncate w-full font-mono">
+                                            {member.teamGroup}
+                                        </span>
+                                    )}
+                                </button>
+                            </SpotlightCard>
+                        </ScrollReveal>
                     ))}
 
                     {filteredMembers.length === 0 && (
@@ -593,33 +789,47 @@ export default function AboutPage() {
                 </div>
             </section>
 
-            {/* ══ Join Us CTA Banner ══ */}
-            <section className="max-w-4xl mx-auto px-4 py-12">
-                <div className="glass p-8 sm:p-12 rounded-3xl border border-aira-cyan/30 text-center relative overflow-hidden">
-                    <div className="absolute -top-10 -right-10 w-48 h-48 bg-aira-cyan/20 blur-3xl rounded-full pointer-events-none" />
-                    <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-aira-purple/20 blur-3xl rounded-full pointer-events-none" />
+            {/* ═══════════════════════════════════════════════════════════
+                6. JOIN US CTA BANNER (SHIMMER BORDER + MAGNETIC BUTTON)
+               ═══════════════════════════════════════════════════════════ */}
+            <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
+                <ScrollReveal direction="up">
+                    <ShimmerBorder borderRadius="1.5rem">
+                        <div className="relative p-10 sm:p-14 text-center overflow-hidden rounded-[inherit]">
+                            <div className="absolute inset-0 bg-gradient-radial from-aira-cyan/15 via-aira-purple/10 to-transparent pointer-events-none" />
 
-                    <span className="text-xs font-semibold uppercase tracking-widest text-aira-cyan">Ready to make an impact?</span>
-                    <h2 className="font-orbitron font-bold text-2xl sm:text-3xl text-white mt-2 mb-4">
-                        Join the <span className="gradient-text-cyan">AiRA Lab</span> Team
-                    </h2>
-                    <p className="text-slate-300 text-sm sm:text-base max-w-xl mx-auto mb-6">
-                        We are constantly seeking ambitious researchers, developers, and designers to build next-generation technologies together.
-                    </p>
-                    <Link
-                        href="/join"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-semibold rounded-xl text-sm hover:scale-105 transition-transform shadow-lg shadow-aira-cyan/20"
-                    >
-                        Apply for Membership <ArrowRight size={16} />
-                    </Link>
-                </div>
+                            <div className="relative z-10 max-w-2xl mx-auto space-y-5">
+                                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass border border-aira-cyan/30 text-aira-cyan text-xs font-orbitron font-bold tracking-widest uppercase">
+                                    <Flame size={14} className="text-aira-magenta" /> Ready to make an impact?
+                                </span>
+
+                                <h2 className="font-orbitron font-black text-3xl sm:text-5xl text-white leading-tight">
+                                    Join the <span className="gradient-text-animated">AiRA Lab</span> Team
+                                </h2>
+
+                                <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
+                                    We are constantly seeking ambitious researchers, developers, and designers to build next-generation technologies together.
+                                </p>
+
+                                <div className="pt-3 flex justify-center">
+                                    <MagneticButton href="/join" magnetStrength={0.3}>
+                                        <span className="inline-flex items-center gap-3 px-10 py-4.5 rounded-xl bg-gradient-to-r from-aira-cyan via-aira-purple to-aira-magenta text-white font-semibold text-base shadow-2xl shadow-aira-cyan/30 hover:shadow-aira-cyan/50 hover:scale-105 transition-all duration-300">
+                                            Apply for Membership
+                                            <ArrowRight size={18} />
+                                        </span>
+                                    </MagneticButton>
+                                </div>
+                            </div>
+                        </div>
+                    </ShimmerBorder>
+                </ScrollReveal>
             </section>
 
             {/* ══ Member Profile Details Modal ══ */}
             {selectedMember && (
-                <MemberModal 
-                    member={selectedMember} 
-                    onClose={() => setSelectedMember(null)} 
+                <MemberModal
+                    member={selectedMember}
+                    onClose={() => setSelectedMember(null)}
                 />
             )}
         </div>

@@ -1,4 +1,4 @@
-const CACHE_NAME = "aira-lab-shell-v2";
+const CACHE_NAME = "aira-lab-shell-v3";
 const OFFLINE_URL = "/offline";
 const PRECACHE_URLS = ["/", OFFLINE_URL];
 
@@ -23,42 +23,37 @@ self.addEventListener("activate", (event) => {
     );
 });
 
+self.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "SKIP_WAITING") {
+        self.skipWaiting();
+    }
+});
+
+// Non-blocking fetch: keep navigation and Next.js client-side routes blazing fast
 self.addEventListener("fetch", (event) => {
     const { request } = event;
-    const url = new URL(request.url);
+    if (request.method !== "GET") return;
 
-    if (request.method !== "GET" || url.origin !== self.location.origin) {
-        return;
-    }
-
+    // For offline fallback only on full document navigation if network completely fails
     if (request.mode === "navigate") {
         event.respondWith(
-            fetch(request)
-                .then((response) => {
-                    const copy = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
-                    return response;
-                })
-                .catch(async () => {
-                    const cached = await caches.match(request);
-                    return cached || caches.match(OFFLINE_URL);
-                })
+            fetch(request).catch(async () => {
+                const cached = await caches.match(request);
+                return cached || caches.match(OFFLINE_URL);
+            })
         );
         return;
     }
 
-    if (url.pathname.startsWith("/_next/") || url.pathname.startsWith("/icon") || url.pathname.startsWith("/apple-icon")) {
+    // Static assets cache-first with network update
+    if (request.url.includes("/icon.svg") || request.url.includes("/apple-icon.svg")) {
         event.respondWith(
             caches.match(request).then((cached) => {
-                const networkFetch = fetch(request)
-                    .then((response) => {
-                        const copy = response.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
-                        return response;
-                    })
-                    .catch(() => cached);
-
-                return cached || networkFetch;
+                return cached || fetch(request).then((response) => {
+                    const copy = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
+                    return response;
+                });
             })
         );
     }
@@ -82,17 +77,20 @@ self.addEventListener("push", (event) => {
     }
 
     const options = {
-        body: payload.body || payload.message,
+        body: payload.body || payload.message || "New announcement posted",
         icon: payload.icon || "/icon.svg",
         badge: "/icon.svg",
-        vibrate: [200, 100, 200, 100, 200],
+        vibrate: [300, 100, 300, 100, 300],
         tag: payload.id || `aira-notif-${Date.now()}`,
         renotify: true,
+        requireInteraction: true,
+        silent: false,
         data: {
             url: payload.url || payload.link || "/",
+            dateOfArrival: Date.now(),
         },
         actions: [
-            { action: "open", title: "View Details 🚀" },
+            { action: "open", title: "Open App 🚀" },
             { action: "dismiss", title: "Dismiss" }
         ],
     };
@@ -115,7 +113,7 @@ self.addEventListener("notificationclick", (event) => {
     event.waitUntil(
         clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
             for (const client of clientList) {
-                if ("focus" in client) {
+                if ("focus" in client && client.url.includes(self.location.origin)) {
                     client.navigate(targetUrl);
                     return client.focus();
                 }

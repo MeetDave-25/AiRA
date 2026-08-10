@@ -17,7 +17,8 @@ export function NotificationBell() {
         markAllAsRead, 
         requestPushPermission,
         openPushPrompt,
-        pushPermission 
+        pushPermission,
+        triggerDelayedOutsideTest
     } = useNotifications();
     
     const [open, setOpen] = useState(false);
@@ -188,6 +189,24 @@ export function NotificationBell() {
                                     </div>
                                 ))
                             )}
+                        </div>
+
+                        {/* Test Lock Screen Alert Footer */}
+                        <div className="p-2.5 bg-slate-900/80 border-t border-white/10 flex items-center justify-between shrink-0">
+                            <span className="text-[10px] text-slate-400 font-sans">Lock screen notifications</span>
+                            <button
+                                onClick={() => {
+                                    setOpen(false);
+                                    triggerDelayedOutsideTest({
+                                        title: "🔔 AiRA Lab: Lock Screen Test!",
+                                        message: "Lock screen notification working successfully!",
+                                        link: "/",
+                                    }, 3);
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-aira-cyan/20 hover:text-aira-cyan text-slate-300 text-[11px] font-semibold flex items-center gap-1.5 transition-colors"
+                            >
+                                <Smartphone size={12} className="text-aira-cyan" /> Test Lock Screen
+                            </button>
                         </div>
                     </motion.div>
                 )}

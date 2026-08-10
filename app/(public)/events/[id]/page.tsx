@@ -183,7 +183,7 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                                             </div>
                                         </div>
                                     ) : (
-                                        <img src={img.url} alt={`Event ${i + 1}`} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/100x100/0d1526/00D4FF?text=AL"; }} />
+                                        <img src={img.url} alt={`Event ${i + 1}`} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "/logo.png"; }} />
                                     )}
                                 </button>
                             ))}

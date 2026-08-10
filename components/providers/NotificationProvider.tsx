@@ -219,45 +219,62 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     };
 
     // Helper: Trigger Native OS-Level Notification (Shows outside app, on lock screen, status bar)
-    const triggerNativeOutsideNotification = useCallback((notif: { title: string; message: string; link?: string | null }) => {
-        if (typeof window === "undefined" || !("Notification" in window) || Notification.permission !== "granted") {
+    const triggerNativeOutsideNotification = useCallback((notif: { title?: string; message?: string; link?: string | null }) => {
+        if (typeof window === "undefined" || !("Notification" in window)) {
             return;
         }
 
-        const title = notif.title || "AiRA Lab";
+        if (Notification.permission !== "granted") {
+            return;
+        }
+
+        const title = notif.title?.trim() || "AiRA Lab";
+        const message = notif.message?.trim() || "You have a new update in AiRA Lab.";
+        const targetUrl = notif.link?.trim() || "/";
+
         const options: NotificationOptions = {
-            body: notif.message,
+            body: message,
             icon: "/icon.svg",
             badge: "/icon.svg",
             tag: `aira-push-${Date.now()}`,
             renotify: true,
+            requireInteraction: true,
+            silent: false,
+            vibrate: [300, 100, 300, 100, 300],
             data: {
-                url: notif.link || "/",
+                url: targetUrl,
+                dateOfArrival: Date.now(),
             },
+            actions: [
+                { action: "open", title: "Open App 🚀" },
+                { action: "dismiss", title: "Dismiss" }
+            ],
         } as any;
 
-        // Primary: Service Worker showNotification (Works on Mobile Android Chrome, PWA & Desktop)
+        // 1. Try active Service Worker registration (Works on Mobile Android, PWA & Desktop Lock Screen)
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.ready
-                .then((registration) => {
-                    return registration.showNotification(title, options);
+            navigator.serviceWorker.getRegistration()
+                .then((reg) => {
+                    if (reg && reg.showNotification) {
+                        return reg.showNotification(title, options);
+                    }
+                    if (navigator.serviceWorker.ready) {
+                        return navigator.serviceWorker.ready.then((readyReg) => {
+                            return readyReg.showNotification(title, options);
+                        });
+                    }
+                    throw new Error("No active SW registration");
                 })
                 .catch(() => {
-                    // Fallback to desktop Notification constructor
+                    // Fallback to direct Window Notification
                     try {
-                        new Notification(title, {
-                            body: notif.message,
-                            icon: "/icon.svg",
-                        });
+                        new Notification(title, options);
                     } catch {}
                 });
         } else {
-            // Fallback for browsers without serviceWorker
+            // 2. Direct Window Notification fallback
             try {
-                new Notification(title, {
-                    body: notif.message,
-                    icon: "/icon.svg",
-                });
+                new Notification(title, options);
             } catch {}
         }
     }, []);
@@ -730,8 +747,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                             {/* App Header Tag */}
                             <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-white/10">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 rounded-md bg-gradient-to-br from-aira-cyan to-aira-purple flex items-center justify-center text-[10px] font-bold text-white shadow-sm shadow-aira-cyan/50 font-orbitron">
-                                        AL
+                                    <div className="w-5 h-5 rounded-md overflow-hidden bg-slate-950 border border-white/20 shrink-0">
+                                        <img src="/logo.png" alt="AiRA Lab" className="w-full h-full object-contain" />
                                     </div>
                                     <span className="text-[11px] font-orbitron font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                                         AiRA Lab <span className="w-1.5 h-1.5 rounded-full bg-aira-cyan animate-ping" />

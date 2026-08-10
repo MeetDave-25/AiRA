@@ -27,6 +27,8 @@ model User {
   notifications   Notification[]
   reports         Report[]
   resetTokens     PasswordResetToken[]
+  blogPosts       BlogPost[]   @relation("BlogAuthor")
+  blogReviews     BlogReview[] @relation("BlogReviewer")
 }
 
 model Team {
@@ -209,3 +211,79 @@ model PasswordResetToken {
 
   @@index([userId])
 }
+
+// ═══════════════════════════════════════════
+// BLOG & MAGAZINE SYSTEM
+// ═══════════════════════════════════════════
+
+model BlogTopic {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  posts       BlogPost[]
+}
+
+model BlogPost {
+  id          String         @id @default(cuid())
+  topicId     String
+  topic       BlogTopic      @relation(fields: [topicId], references: [id])
+  authorId    String
+  author      User           @relation("BlogAuthor", fields: [authorId], references: [id])
+  title       String
+  content     String
+  coverImage  String?
+  tags        String[]       @default([])
+  status      String         @default("DRAFT")  // DRAFT | PUBLISHED | REJECTED
+  readTime    String?
+  publishedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  reviews     BlogReview[]
+  magazines   MagazinePost[]
+
+  @@index([status, publishedAt])
+  @@index([authorId])
+}
+
+model BlogReview {
+  id        String   @id @default(cuid())
+  postId    String
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation("BlogReviewer", fields: [authorId], references: [id])
+  body      String
+  rating    Int      @default(5)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, authorId])
+  @@index([postId])
+}
+
+model Magazine {
+  id          String         @id @default(cuid())
+  title       String
+  edition     String
+  description String?
+  coverImage  String?
+  status      String         @default("DRAFT")   // DRAFT | PUBLISHED
+  publishedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  posts       MagazinePost[]
+}
+
+model MagazinePost {
+  id         String   @id @default(cuid())
+  magazineId String
+  magazine   Magazine @relation(fields: [magazineId], references: [id], onDelete: Cascade)
+  postId     String
+  post       BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@unique([magazineId, postId])
+  @@index([magazineId, sortOrder])
+}
+
