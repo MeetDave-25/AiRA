@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Users, Mail, Phone, Badge, Briefcase, Calendar } from "lucide-react";
+import { Users, Mail, Phone, Badge, Briefcase, Calendar, Download, FileSpreadsheet } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import { TeamSubNav } from "@/components/ui/TeamSubNav";
+import { exportMembersToExcel, MemberExportRecord } from "@/lib/excel-export";
 
 export default function TeamMembersPage() {
     const { data: session } = useSession();
@@ -16,6 +17,33 @@ export default function TeamMembersPage() {
     const [teamMembers, setTeamMembers] = useState<any[]>([]);
     const [teamData, setTeamData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+
+    const handleExportExcel = () => {
+        if (!teamMembers.length) {
+            toast.error("No team members to export");
+            return;
+        }
+
+        try {
+            const exportData: MemberExportRecord[] = teamMembers.map((m) => ({
+                Name: m.name || "",
+                Role: m.role || "Team Member",
+                Category: teamData?.name || "Team",
+                Email: m.email || "",
+                Bio_Or_Message: m.bio || m.about || "",
+                LinkedIn: m.linkedin || "",
+                GitHub: m.github || "",
+                Joined_Or_Created_At: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("en-IN") : "",
+            }));
+
+            const nowStr = new Date().toISOString().split("T")[0];
+            const cleanTeamName = (teamData?.name || "Team").replace(/[^a-zA-Z0-9_-]/g, "_");
+            exportMembersToExcel(exportData, `AiRA_${cleanTeamName}_Members_${nowStr}.xlsx`);
+            toast.success(`Exported ${exportData.length} team members to Excel!`);
+        } catch (err: any) {
+            toast.error(err?.message || "Failed to export members");
+        }
+    };
 
     useEffect(() => {
         if (!user?.teams || user.teams.length === 0) {
@@ -70,14 +98,23 @@ export default function TeamMembersPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="glass rounded-2xl p-8 border border-white/5"
+                className="glass rounded-2xl p-6 sm:p-8 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
-                <h1 className="font-orbitron font-bold text-3xl text-white mb-2">
-                    Team Members
-                </h1>
-                <p className="text-slate-400">
-                    {teamMembers.length} members in {teamData?.name}
-                </p>
+                <div>
+                    <h1 className="font-orbitron font-bold text-2xl sm:text-3xl text-white mb-1.5">
+                        Team Members
+                    </h1>
+                    <p className="text-slate-400 text-xs sm:text-sm">
+                        {teamMembers.length} members in <strong className="text-sky-300">{teamData?.name}</strong>
+                    </p>
+                </div>
+
+                <button
+                    onClick={handleExportExcel}
+                    className="px-4 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-semibold text-xs flex items-center gap-2 transition-all w-fit shadow-md shadow-emerald-950/20 active:scale-95"
+                >
+                    <FileSpreadsheet size={16} /> Export Excel ({teamMembers.length})
+                </button>
             </motion.div>
 
             {/* Members Grid */}

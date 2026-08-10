@@ -23,12 +23,15 @@ import {
     AlertCircle,
     X,
     FileText,
-    Image as ImageIcon
+    Image as ImageIcon,
+    Download,
+    FileSpreadsheet
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import AnimatedModal from "@/components/ui/AnimatedModal";
 import { uploadDirectFile } from "@/lib/upload-client";
+import { exportMembersToExcel, MemberExportRecord } from "@/lib/excel-export";
 
 type MemberForm = {
     name: string;
@@ -278,6 +281,43 @@ export default function TeamMembersAdminPage() {
         }
     };
 
+    const handleExportExcel = (scope: "current" | "all" = "current") => {
+        const sourceData = scope === "all" ? members : (searchQuery.trim() ? displayedMembers : currentList);
+        
+        if (!sourceData || sourceData.length === 0) {
+            toast.error("No member profiles available to export");
+            return;
+        }
+
+        try {
+            const exportData: MemberExportRecord[] = sourceData.map((m) => ({
+                Name: m.name || "",
+                Role: m.role || "",
+                Category: m.teamGroup || (m.isPresident ? "Leadership & Founders" : "General Team"),
+                Bio_Or_Message: m.bio || "",
+                LinkedIn: m.linkedin || "",
+                GitHub: m.github || "",
+                Is_Leadership: m.isPresident ? "YES" : "NO",
+                Display_Order: m.sortOrder ?? 0,
+                Photo_URL: m.photo || "",
+                Joined_Or_Created_At: m.createdAt ? new Date(m.createdAt).toLocaleDateString("en-IN") : "",
+            }));
+
+            const nowStr = new Date().toISOString().split("T")[0];
+            const fileName = scope === "all"
+                ? `AiRA_All_Members_And_Leaders_${nowStr}.xlsx`
+                : activeTab === "LEADERSHIP"
+                ? `AiRA_Leadership_Profiles_${nowStr}.xlsx`
+                : `AiRA_Team_Members_${nowStr}.xlsx`;
+
+            exportMembersToExcel(exportData, fileName);
+            toast.success(`Successfully exported ${exportData.length} profiles to Excel!`);
+        } catch (error: any) {
+            console.error("Export error:", error);
+            toast.error(error?.message || "Failed to export Excel file");
+        }
+    };
+
     const currentList = activeTab === "LEADERSHIP" ? leadersList : peopleList;
 
     const displayedMembers = useMemo(() => {
@@ -322,6 +362,16 @@ export default function TeamMembersAdminPage() {
                             <Database size={14} /> Seed Starter Profiles
                         </button>
                     )}
+                    
+                    {/* Export to Excel Action */}
+                    <button
+                        onClick={() => handleExportExcel("current")}
+                        className="px-3.5 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-semibold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-emerald-950/20 active:scale-95"
+                        title="Download member profiles and bio messages in Excel (.xlsx)"
+                    >
+                        <FileSpreadsheet size={15} /> Export Excel ({displayedMembers.length})
+                    </button>
+
                     <Link
                         href={activeTab === "LEADERSHIP" ? "/leadership" : "/about"}
                         target="_blank"
@@ -380,8 +430,18 @@ export default function TeamMembersAdminPage() {
                     />
                 </div>
 
-                <div className="text-xs text-slate-400 sm:pr-2">
-                    Showing <strong className="text-white">{displayedMembers.length}</strong> {activeTab === "LEADERSHIP" ? "Leaders" : "Team Members"}
+                <div className="flex items-center gap-3">
+                    <div className="text-xs text-slate-400">
+                        Showing <strong className="text-white">{displayedMembers.length}</strong> {activeTab === "LEADERSHIP" ? "Leaders" : "Team Members"}
+                    </div>
+
+                    <button
+                        onClick={() => handleExportExcel("all")}
+                        className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-[11px] font-mono flex items-center gap-1.5 transition-all"
+                        title="Export ALL leaders and members to Excel"
+                    >
+                        <Download size={13} className="text-emerald-400" /> Export All ({members.length})
+                    </button>
                 </div>
             </div>
 

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Edit2, Trash2, Shield, Key, Copy, Eye, EyeOff, Crown, UploadCloud, Users, ShieldAlert, Sparkles } from "lucide-react";
+import { Plus, Edit2, Trash2, Shield, Key, Copy, Eye, EyeOff, Crown, UploadCloud, Users, ShieldAlert, Sparkles, Download, FileSpreadsheet } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import AnimatedModal from "@/components/ui/AnimatedModal";
 import { uploadDirectFile } from "@/lib/upload-client";
+import { exportMembersToExcel, MemberExportRecord } from "@/lib/excel-export";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 const ROLES = ["TEAM_MEMBER", "TEAM_LEAD", "CONTENT_MANAGER", "CERTIFICATE_MANAGER", "ADMIN"];
@@ -49,6 +50,45 @@ export default function AdminUsersPage() {
     const [profileForm, setProfileForm] = useState<ProfileForm>(baseProfileForm);
     const [isProfileSubmitting, setIsProfileSubmitting] = useState(false);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+    // ── Export handlers ──
+    const handleExportExcel = () => {
+        try {
+            if (tab === "accounts") {
+                if (!users.length) return toast.error("No user accounts to export");
+                const exportData: MemberExportRecord[] = users.map((u) => ({
+                    Name: u.name || "",
+                    Role: u.role || "TEAM_MEMBER",
+                    Category: "System Account",
+                    Email: u.email || "",
+                    Bio_Or_Message: `Role: ${u.role}`,
+                    Joined_Or_Created_At: u.createdAt ? new Date(u.createdAt).toLocaleDateString("en-IN") : "",
+                }));
+                const nowStr = new Date().toISOString().split("T")[0];
+                exportMembersToExcel(exportData, `AiRA_System_Accounts_${nowStr}.xlsx`);
+                toast.success(`Exported ${users.length} accounts to Excel!`);
+            } else {
+                if (!profiles.length) return toast.error("No member profiles to export");
+                const exportData: MemberExportRecord[] = profiles.map((p) => ({
+                    Name: p.name || "",
+                    Role: p.role || "",
+                    Category: p.teamGroup || (p.isPresident ? "Leadership" : "Team Member"),
+                    Bio_Or_Message: p.bio || "",
+                    LinkedIn: p.linkedin || "",
+                    GitHub: p.github || "",
+                    Is_Leadership: p.isPresident ? "YES" : "NO",
+                    Display_Order: p.sortOrder ?? 0,
+                    Photo_URL: p.photo || "",
+                    Joined_Or_Created_At: p.createdAt ? new Date(p.createdAt).toLocaleDateString("en-IN") : "",
+                }));
+                const nowStr = new Date().toISOString().split("T")[0];
+                exportMembersToExcel(exportData, `AiRA_Public_Profiles_${nowStr}.xlsx`);
+                toast.success(`Exported ${profiles.length} profiles to Excel!`);
+            }
+        } catch (err: any) {
+            toast.error(err?.message || "Failed to export Excel file");
+        }
+    };
 
     // ─── Fetch ────────────────────────────────────────────────────────────────
     const fetchUsers = useCallback(async (showErr = false) => {
@@ -180,12 +220,21 @@ export default function AdminUsersPage() {
                         <h1 className="font-orbitron font-bold text-2xl md:text-3xl gradient-text-cyan text-glow-cyan">User Accounts & Profiles</h1>
                         <p className="text-slate-400 text-sm mt-1">Manage portal login accounts (roles & passwords) and public website team profiles</p>
                     </div>
-                    <button
-                        onClick={() => tab === "accounts" ? openCreate() : openProfileCreate()}
-                        className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-semibold rounded-xl text-sm hover:scale-105 transition-transform shadow-lg shadow-aira-cyan/20"
-                    >
-                        <Plus size={16} /> {tab === "accounts" ? "Add User Account" : "Add Public Profile"}
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                        <button
+                            onClick={handleExportExcel}
+                            className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-semibold rounded-xl text-xs sm:text-sm transition-all shadow-md shadow-emerald-950/20 active:scale-95"
+                            title={`Export ${tab === "accounts" ? "User Accounts" : "Public Profiles"} to Excel`}
+                        >
+                            <FileSpreadsheet size={16} /> Export {tab === "accounts" ? "Accounts" : "Profiles"} ({tab === "accounts" ? users.length : profiles.length})
+                        </button>
+                        <button
+                            onClick={() => tab === "accounts" ? openCreate() : openProfileCreate()}
+                            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-aira-cyan to-aira-purple text-white font-semibold rounded-xl text-xs sm:text-sm hover:scale-105 transition-transform shadow-lg shadow-aira-cyan/20"
+                        >
+                            <Plus size={16} /> {tab === "accounts" ? "Add User Account" : "Add Public Profile"}
+                        </button>
+                    </div>
                 </div>
                 {/* Tabs */}
                 <div className="flex flex-wrap gap-2 mt-5">

@@ -27,12 +27,15 @@ import {
     User,
     Camera,
     Linkedin,
-    Github
+    Github,
+    Download,
+    FileSpreadsheet
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import AnimatedModal from "@/components/ui/AnimatedModal";
 import { OnboardingPosterModal } from "@/components/admin/OnboardingPosterModal";
+import { exportMembersToExcel, MemberExportRecord } from "@/lib/excel-export";
 
 export default function ApplicationsPage() {
     const [apps, setApps] = useState<any[]>([]);
@@ -187,6 +190,35 @@ export default function ApplicationsPage() {
         };
     }, [apps]);
 
+    const handleExportExcel = () => {
+        if (!filteredApps.length) {
+            toast.error("No applications to export");
+            return;
+        }
+
+        try {
+            const exportData: MemberExportRecord[] = filteredApps.map((a) => ({
+                Name: a.name || "",
+                Role: a.domain || a.interest || "Applicant",
+                Category: a.status || "PENDING",
+                Email: a.email || "",
+                Bio_Or_Message: a.statement || a.message || a.reason || a.experience || "N/A",
+                LinkedIn: a.linkedin || "",
+                GitHub: a.github || "",
+                Is_Leadership: "NO",
+                Photo_URL: a.photo || "",
+                Joined_Or_Created_At: a.createdAt ? new Date(a.createdAt).toLocaleDateString("en-IN") : "",
+            }));
+
+            const nowStr = new Date().toISOString().split("T")[0];
+            const filterLabel = filterStatus === "ALL" ? "All" : filterStatus;
+            exportMembersToExcel(exportData, `AiRA_${filterLabel}_Applications_${nowStr}.xlsx`);
+            toast.success(`Exported ${exportData.length} applications to Excel!`);
+        } catch (err: any) {
+            toast.error(err?.message || "Failed to export applications");
+        }
+    };
+
     const toggleSelect = (id: string) => {
         setSelectedIds(prev => 
             prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
@@ -213,7 +245,14 @@ export default function ApplicationsPage() {
                         <h1 className="font-orbitron font-bold text-2xl md:text-3xl gradient-text-cyan text-glow-cyan">Join Applications</h1>
                         <p className="text-slate-400 text-sm mt-1">Review, accept, or delete applicant submissions. Accepted applicants auto-register into People.</p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <button
+                            onClick={handleExportExcel}
+                            className="px-3.5 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-semibold text-xs sm:text-sm flex items-center gap-1.5 transition-all shadow-md shadow-emerald-950/20 active:scale-95"
+                            title="Export applications and applicant statements to Excel (.xlsx)"
+                        >
+                            <FileSpreadsheet size={16} /> Export Excel ({filteredApps.length})
+                        </button>
                         <button
                             onClick={fetchApps}
                             className="p-2.5 rounded-xl glass border border-white/10 text-slate-300 hover:text-aira-cyan hover:border-aira-cyan/30 transition-all flex items-center gap-2 text-sm"
