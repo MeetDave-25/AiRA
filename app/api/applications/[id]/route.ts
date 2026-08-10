@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/admin-guard";
 import bcrypt from "bcryptjs";
 import { generatePassword } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
-import { sendWelcomeEmail, PORTAL_URL } from "@/lib/email";
+import { sendWelcomeEmail, sendApplicationRejectionEmail, PORTAL_URL } from "@/lib/email";
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
     const auth = await requireAdmin();
@@ -175,6 +175,30 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                     if (!existingProfiles[0].photo && app.photo) {
                         await db.from("TeamMemberProfile").update({ photo: app.photo }).eq("id", existingProfiles[0].id);
                     }
+                }
+            }
+        } else if (status === "REJECTED") {
+            const targetEmail = (app.email || "").trim().toLowerCase();
+            const applicantName = (app.name || "Applicant").trim();
+            const reason = body.reason || body.rejectionReason || null;
+
+            if (targetEmail) {
+                try {
+                    emailDispatchResult = await sendApplicationRejectionEmail({
+                        to: targetEmail,
+                        name: applicantName,
+                        interest: app.interest,
+                        reason: reason,
+                    });
+
+                    if (!emailDispatchResult.success) {
+                        console.error("[Applications] Rejection email dispatch failed:", emailDispatchResult.error || emailDispatchResult.status);
+                    } else {
+                        console.log(`[Applications] Rejection email dispatched to ${targetEmail} — status: ${emailDispatchResult.status}`);
+                    }
+                } catch (emailErr) {
+                    console.error("[Applications] Rejection email exception:", emailErr);
+                    emailDispatchResult = { success: false, error: String(emailErr), status: "exception" };
                 }
             }
         }

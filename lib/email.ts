@@ -735,3 +735,214 @@ export async function sendApplicationConfirmationEmail({
         text,
     };
 }
+
+// ─── Application Rejection Email ─────────────────────────────────────────────
+
+interface ApplicationRejectionParams {
+    to: string;
+    name: string;
+    interest?: string | null;
+    reason?: string | null;
+}
+
+/**
+ * Generate HTML rejection email for an applicant
+ */
+export function generateRejectionEmailHtml({
+    name,
+    interest,
+    reason,
+}: {
+    name: string;
+    interest?: string | null;
+    reason?: string | null;
+}) {
+    const firstName = name.split(" ")[0];
+    const interestText = interest ? ` for the <strong>${interest}</strong> division` : "";
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application Status — AiRA Lab</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #030712; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f3f4f6; -webkit-text-size-adjust: 100%; }
+    .wrapper { width: 100%; background-color: #030712; padding: 32px 16px; }
+    .container { max-width: 580px; margin: 0 auto; background: #0B0F19; border: 1px solid rgba(244, 63, 94, 0.25); border-radius: 24px; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 60px rgba(244, 63, 94, 0.08); }
+    .header { background: linear-gradient(135deg, #0a0e1a 0%, #170f1a 100%); padding: 40px 32px 32px; text-align: center; border-bottom: 1px solid rgba(244, 63, 94, 0.15); position: relative; overflow: hidden; }
+    .header-glow { position: absolute; top: -60px; left: 50%; transform: translateX(-50%); width: 240px; height: 160px; background: radial-gradient(ellipse, rgba(244, 63, 94, 0.18) 0%, transparent 70%); pointer-events: none; }
+    .header-label { font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #F43F5E; margin-bottom: 10px; }
+    .header-title { font-size: 26px; font-weight: 800; color: #fff; letter-spacing: -0.5px; line-height: 1.2; }
+    .header-title span { background: linear-gradient(135deg, #F43F5E 0%, #A855F7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .banner { background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%); border-top: 1px solid rgba(244, 63, 94, 0.2); border-bottom: 1px solid rgba(244, 63, 94, 0.2); padding: 16px 32px; text-align: center; font-size: 14px; font-weight: 600; color: #e2e8f0; }
+    .content { padding: 32px; }
+    .greeting { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+    .text { font-size: 14px; color: #94a3b8; line-height: 1.75; margin-bottom: 24px; }
+    .reason-box { background: rgba(244, 63, 94, 0.05); border: 1px solid rgba(244, 63, 94, 0.2); border-radius: 14px; padding: 18px 22px; margin-bottom: 24px; }
+    .reason-box p { font-size: 13px; color: #fda4af; line-height: 1.6; margin: 0; }
+    .next-box { background: #060b14; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 22px 24px; margin-bottom: 28px; }
+    .next-title { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #00D4FF; margin-bottom: 14px; }
+    .next-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; font-size: 13px; color: #94a3b8; line-height: 1.6; }
+    .next-item:last-child { margin-bottom: 0; }
+    .bullet { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; min-width: 18px; border-radius: 50%; background: rgba(0,212,255,0.15); color: #00D4FF; font-size: 10px; font-weight: 800; }
+    .footer { background: #060913; border-top: 1px solid rgba(255, 255, 255, 0.06); padding: 24px 32px; text-align: center; }
+    .footer-logo { font-size: 14px; font-weight: 800; color: #e2e8f0; margin-bottom: 6px; }
+    .footer-sub { font-size: 12px; color: #475569; line-height: 1.6; margin-bottom: 4px; }
+    .footer a { color: #00D4FF; text-decoration: none; }
+    .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 16px 0; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <div class="header">
+        <div class="header-glow"></div>
+        <div class="header-label">Application Status Update</div>
+        <h1 class="header-title">AiRA Lab <span>Application</span></h1>
+      </div>
+      <div class="banner">Update regarding your membership application</div>
+      <div class="content">
+        <div class="greeting">Dear ${firstName},</div>
+        <p class="text">
+          Thank you for your interest in <strong style="color:#e2e8f0;">AiRA Lab</strong> (Advanced Innovation Research and analysis Lab) and for submitting your application${interestText}.
+        </p>
+        <p class="text">
+          We received a large number of impressive applications this recruitment cycle. After thorough evaluation of candidate profiles against our current team requirements and cohort capacity, we regret to inform you that we are unable to offer you a core team position at this time.
+        </p>
+        ${reason ? `
+        <div class="reason-box">
+          <p><strong>Reviewer Feedback:</strong> ${reason}</p>
+        </div>` : ""}
+        <div class="next-box">
+          <div class="next-title">💡 Looking Ahead</div>
+          <div class="next-item">
+            <span class="bullet">✦</span>
+            <span><strong>Keep Building:</strong> This decision was based on current capacity and does not reflect your technical potential or passion.</span>
+          </div>
+          <div class="next-item">
+            <span class="bullet">✦</span>
+            <span><strong>Open Community:</strong> You are warmly welcome to participate in our open workshops, hackathons, seminars, and tech events.</span>
+          </div>
+          <div class="next-item">
+            <span class="bullet">✦</span>
+            <span><strong>Future Cycles:</strong> We encourage you to strengthen your project portfolio and re-apply in our next recruitment window.</span>
+          </div>
+        </div>
+        <p class="text" style="margin-bottom:0;font-size:13px;">
+          We sincerely appreciate the time and effort you invested in applying to AiRA Lab. If you have any questions, feel free to contact us at <a href="mailto:${AIRA_OFFICIAL_EMAIL}" style="color:#00D4FF;">${AIRA_OFFICIAL_EMAIL}</a>.
+        </p>
+      </div>
+      <div class="footer">
+        <div class="footer-logo">AiRA Lab</div>
+        <p class="footer-sub">Advanced Innovation Research and analysis Lab</p>
+        <p class="footer-sub">
+          <a href="mailto:${AIRA_OFFICIAL_EMAIL}">${AIRA_OFFICIAL_EMAIL}</a> &nbsp;•&nbsp;
+          <a href="https://www.aira-lab.in">www.aira-lab.in</a>
+        </p>
+        <div class="divider"></div>
+        <p class="footer-sub" style="font-size:11px;color:#334155;">This email was sent to ${name} regarding an application to AiRA Lab.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+/**
+ * Generate plain-text rejection email
+ */
+export function generateRejectionEmailText({
+    name,
+    interest,
+    reason,
+}: {
+    name: string;
+    interest?: string | null;
+    reason?: string | null;
+}) {
+    return `AiRA Lab Application Status Update
+
+Dear ${name},
+
+Thank you for your interest in AiRA Lab (Advanced Innovation Research and analysis Lab) and for submitting your application${interest ? ` for ${interest}` : ""}.
+
+We received a large number of impressive applications for this recruitment cycle. After thorough evaluation of candidate profiles against our current team requirements and cohort capacity, we regret to inform you that we are unable to offer you a core team position at this time.
+
+${reason ? `Feedback: ${reason}\n\n` : ""}Looking ahead:
+- Keep Building: This decision was based on current capacity and does not reflect your technical potential or passion.
+- Open Events: You are warmly welcome to attend our open hackathons, workshops, and lab seminars.
+- Future Cycles: We strongly encourage you to re-apply in our next recruitment window with new projects!
+
+We sincerely appreciate your interest and wish you the very best in your academic and technical journey.
+
+Best regards,
+The AiRA Lab Leadership Team
+${AIRA_OFFICIAL_EMAIL} | https://www.aira-lab.in
+`.trim();
+}
+
+/**
+ * Sends a polite rejection email to an applicant
+ */
+export async function sendApplicationRejectionEmail({
+    to,
+    name,
+    interest,
+    reason,
+}: ApplicationRejectionParams): Promise<{
+    success: boolean;
+    status: string;
+    messageId?: string;
+    error?: string;
+    subject: string;
+    text: string;
+}> {
+    const subject = `Update on your AiRA Lab Application — ${name}`;
+    const html = generateRejectionEmailHtml({ name, interest, reason });
+    const text = generateRejectionEmailText({ name, interest, reason });
+
+    const transporter = getEmailTransporter();
+
+    if (transporter) {
+        try {
+            const info = await transporter.sendMail({
+                from: AIRA_SENDER,
+                to,
+                replyTo: AIRA_OFFICIAL_EMAIL,
+                subject,
+                text,
+                html,
+            });
+
+            console.log(`[Email] Rejection email dispatched to ${to} — MessageID: ${info.messageId}`);
+
+            return {
+                success: true,
+                messageId: info.messageId,
+                status: "sent",
+                subject,
+                text,
+            };
+        } catch (error: any) {
+            console.error("[Email] SMTP rejection send failed:", error?.message || error);
+            return {
+                success: false,
+                error: error?.message || "SMTP send failed",
+                status: "smtp_failed",
+                subject,
+                text,
+            };
+        }
+    }
+
+    console.warn("[Email] No SMTP transporter configured. Set RESEND_API_KEY in .env to enable emails.");
+    return {
+        success: false,
+        status: "no_smtp_configured",
+        error: "RESEND_API_KEY not set in environment variables",
+        subject,
+        text,
+    };
+}

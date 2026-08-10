@@ -104,7 +104,7 @@ export default function ApplicationsPage() {
                     });
                 }
             } else if (status === "REJECTED") {
-                toast.success(`Marked application as rejected`);
+                toast.success(`Application rejected & notification email dispatched to ${app.email || app.name}`);
             } else {
                 toast.success(`Application marked as pending`);
             }
