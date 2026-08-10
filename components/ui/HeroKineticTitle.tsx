@@ -67,7 +67,7 @@ export function HeroKineticTitle() {
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
-                className="font-orbitron font-black text-4xl xs:text-5xl sm:text-7xl md:text-8xl lg:text-9xl leading-[0.95] tracking-tight mb-3 sm:mb-6 select-none perspective-[1000px] w-full"
+                className="font-orbitron font-black text-5xl xs:text-6xl sm:text-7xl md:text-8xl lg:text-9xl leading-[0.95] tracking-tight mb-3 sm:mb-6 select-none perspective-[1000px] w-full"
             >
                 {/* Line 1: AiRA */}
                 <div className="flex items-center overflow-hidden py-1">

@@ -239,27 +239,14 @@ export default function HomePage() {
                ═══════════════════════════════════════════════════════════ */}
             <motion.section
                 style={{ opacity: heroOpacity }}
-                onMouseMove={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-                    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-                    setPointer({ x, y });
-                }}
-                onMouseLeave={() => setPointer({ x: 0, y: 0 })}
-                className="relative min-h-[92vh] lg:min-h-screen flex items-center overflow-hidden pt-32 pb-16 sm:pt-40 sm:pb-24 lg:pt-44 lg:pb-32"
+                className="relative min-h-screen flex items-center overflow-hidden pt-24 pb-12 sm:pt-28 sm:pb-16 lg:pt-24 lg:pb-16"
             >
                 {/* Dynamic Aurora Ambient Light Beams */}
                 <div className="absolute top-0 inset-x-0 h-[450px] sm:h-[500px] bg-[radial-gradient(ellipse_75%_55%_at_65%_-10%,rgba(56,189,248,0.25),rgba(6,182,212,0.14)_45%,transparent_70%)] pointer-events-none z-[1]" />
                 <div className="absolute top-1/4 right-1/5 w-72 sm:w-[32rem] h-72 sm:h-[28rem] rounded-full bg-cyan-400/[0.14] blur-[100px] sm:blur-[150px] pointer-events-none z-[1]" />
 
-                {/* 1. Deep 3D Parallax Video Background (Continuous Loop) */}
-                <motion.div
-                    style={{
-                        x: pointer.x * -6,
-                        y: pointer.y * -4,
-                    }}
-                    className="absolute inset-0 z-0 pointer-events-none select-none"
-                >
+                {/* 1. Deep Video Background (Continuous Full Loop - Natural Framing) */}
+                <div className="absolute inset-0 z-0 pointer-events-none select-none">
                     <video
                         ref={heroVideoRef}
                         src="/hero-loop.mp4"
@@ -274,7 +261,7 @@ export default function HomePage() {
                             backfaceVisibility: "hidden",
                             WebkitBackfaceVisibility: "hidden",
                         }}
-                        className="w-full h-full object-cover object-center sm:object-[60%_center] lg:object-[62%_center] opacity-95 lg:opacity-100 filter contrast-[1.03] brightness-[1.02]"
+                        className="w-full h-full object-cover object-center sm:object-[60%_center] lg:object-[65%_center] opacity-95 lg:opacity-100 filter contrast-[1.03] brightness-[1.02]"
                         onEnded={(e) => {
                             e.currentTarget.currentTime = 0;
                             e.currentTarget.play().catch(() => {});
@@ -282,14 +269,14 @@ export default function HomePage() {
                     />
 
                     {/* Gradient depth masks: Balances narrative readability on the left with full cinematic panorama */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-aira-bg/95 via-aira-bg/60 via-40% to-transparent lg:w-[48%] w-full" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-aira-bg/95 via-aira-bg/50 via-40% to-transparent lg:w-[48%] w-full" />
                     
                     {/* Bottom gradient fade into main content */}
-                    <div className="absolute inset-x-0 bottom-0 h-24 sm:h-32 bg-gradient-to-t from-aira-bg via-aira-bg/80 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 h-20 sm:h-28 bg-gradient-to-t from-aira-bg via-aira-bg/80 to-transparent" />
                     
                     {/* Top gradient fade under navbar */}
-                    <div className="absolute inset-x-0 top-0 h-20 sm:h-24 bg-gradient-to-b from-aira-bg/90 via-aira-bg/30 to-transparent" />
-                </motion.div>
+                    <div className="absolute inset-x-0 top-0 h-16 sm:h-20 bg-gradient-to-b from-aira-bg/90 via-aira-bg/30 to-transparent" />
+                </div>
 
                 {/* 2. Cyber Laser Scanning Line */}
                 <motion.div
