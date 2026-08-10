@@ -235,7 +235,7 @@ export default function HomePage() {
             <LandingLogoReveal onComplete={handleRevealComplete} />
 
             {/* ═══════════════════════════════════════════════════════════
-               HERO SECTION WITH CONTINUOUS LOOP VIDEO BACKGROUND
+               HERO SECTION: TWO-COLUMN CYBER STAGE (WOLF SPOTLIGHT & NARRATIVE)
                ═══════════════════════════════════════════════════════════ */}
             <motion.section
                 style={{ opacity: heroOpacity }}
@@ -246,57 +246,12 @@ export default function HomePage() {
                     setPointer({ x, y });
                 }}
                 onMouseLeave={() => setPointer({ x: 0, y: 0 })}
-                className="relative min-h-[88vh] sm:min-h-[92vh] lg:min-h-screen flex items-center overflow-hidden pt-20 pb-12 sm:pt-24 sm:pb-16 lg:py-0"
+                className="relative min-h-[90vh] lg:min-h-screen flex items-center overflow-hidden pt-24 pb-12 sm:pt-28 sm:pb-16 lg:py-0"
             >
-                {/* Dynamic Aurora Ambient Light Beams */}
-                <div className="absolute top-0 inset-x-0 h-[450px] sm:h-[500px] bg-[radial-gradient(ellipse_75%_55%_at_65%_-10%,rgba(56,189,248,0.25),rgba(6,182,212,0.14)_45%,transparent_70%)] pointer-events-none z-[1]" />
-                <div className="absolute top-1/4 right-1/5 w-72 sm:w-[32rem] h-72 sm:h-[28rem] rounded-full bg-cyan-400/[0.14] blur-[100px] sm:blur-[150px] pointer-events-none z-[1]" />
-
-                {/* 1. Deep 3D Parallax Video Background (Continuous Loop) */}
-                <motion.div
-                    style={{
-                        x: pointer.x * -10,
-                        y: pointer.y * -6,
-                    }}
-                    animate={{
-                        scale: [1, 1.015, 1],
-                    }}
-                    transition={{
-                        scale: { duration: 16, repeat: Infinity, ease: "easeInOut" }
-                    }}
-                    className="absolute inset-0 z-0 pointer-events-none select-none"
-                >
-                    <video
-                        ref={heroVideoRef}
-                        src="/hero-loop.mp4"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        preload="auto"
-                        poster="/mevy_1.png"
-                        style={{
-                            transform: "translate3d(0,0,0)",
-                            backfaceVisibility: "hidden",
-                            WebkitBackfaceVisibility: "hidden",
-                            willChange: "transform",
-                        }}
-                        className="w-full h-full object-cover object-[80%_35%] sm:object-[78%_35%] md:object-[76%_38%] lg:object-[80%_40%] opacity-95 lg:opacity-100 filter contrast-[1.04] brightness-[1.02]"
-                        onEnded={(e) => {
-                            e.currentTarget.currentTime = 0;
-                            e.currentTarget.play().catch(() => {});
-                        }}
-                    />
-
-                    {/* Gradient depth masks: Seamlessly balances narrative readability on the left with full cinematic panorama */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-aira-bg/95 via-aira-bg/80 via-45% sm:via-42% to-transparent lg:w-[52%] w-full" />
-                    
-                    {/* Bottom gradient fade into main content */}
-                    <div className="absolute inset-x-0 bottom-0 h-28 sm:h-36 bg-gradient-to-t from-aira-bg via-aira-bg/85 to-transparent" />
-                    
-                    {/* Top gradient fade under navbar */}
-                    <div className="absolute inset-x-0 top-0 h-20 sm:h-24 bg-gradient-to-b from-aira-bg/90 via-aira-bg/30 to-transparent" />
-                </motion.div>
+                {/* 1. Ambient Background Aurora & Glows */}
+                <div className="absolute top-0 inset-x-0 h-[500px] bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(56,189,248,0.22),rgba(99,102,241,0.12)_45%,transparent_75%)] pointer-events-none z-[1]" />
+                <div className="absolute top-1/3 right-1/4 w-[28rem] sm:w-[34rem] h-[24rem] sm:h-[30rem] rounded-full bg-cyan-500/[0.12] blur-[120px] sm:blur-[150px] pointer-events-none z-[1]" />
+                <div className="absolute bottom-1/4 left-1/4 w-[24rem] sm:w-[30rem] h-[24rem] sm:h-[30rem] rounded-full bg-indigo-600/[0.1] blur-[120px] sm:blur-[140px] pointer-events-none z-[1]" />
 
                 {/* 2. Cyber Laser Scanning Line */}
                 <motion.div
@@ -308,66 +263,154 @@ export default function HomePage() {
                 {/* 3. Neural Particle Canvas */}
                 <ParticleCanvas />
 
-                {/* 4. Glowing Dynamic Ambient Aura Spheres */}
-                <motion.div
-                    style={{ x: pointer.x * 20, y: pointer.y * 15 }}
-                    className="absolute top-1/4 left-1/4 w-72 sm:w-[36rem] h-72 sm:h-[36rem] rounded-full bg-sky-500/[0.08] blur-[100px] sm:blur-[140px] pointer-events-none z-[1]"
-                />
-                <motion.div
-                    style={{ x: pointer.x * -18, y: pointer.y * -12 }}
-                    className="absolute bottom-1/4 right-1/4 w-60 sm:w-[30rem] h-60 sm:h-[30rem] rounded-full bg-indigo-500/[0.08] blur-[80px] sm:blur-[120px] pointer-events-none z-[1]"
-                />
-
                 {/* ═══════════════════════════════════════════════════════════
-                   HERO MAIN CONTENT (LEFT NARRATIVE & CTAs)
+                   HERO MAIN CONTENT (TWO-COLUMN GRID: NARRATIVE & WOLF STAGE)
                    ═══════════════════════════════════════════════════════════ */}
-                <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <motion.div
-                        style={{
-                            x: pointer.x * 6,
-                            y: pointer.y * 4,
-                        }}
-                        className="max-w-2xl flex flex-col items-start text-left"
-                    >
-                        {/* 3D Kinetic Animated Title & Rotating Frontier Domain Badge */}
-                        <HeroKineticTitle />
-
-                        {/* Clean Subtitle */}
-                        <motion.p
-                            initial={{ opacity: 0, x: -30 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.8, delay: 0.3 }}
-                            className="text-xs xs:text-sm sm:text-base lg:text-lg text-slate-300 mb-6 sm:mb-8 max-w-xl leading-relaxed font-light"
-                        >
-                            Pioneering autonomous intelligence, robotics, and next-generation systems. 
-                            Empowering innovators, creators, and engineers to build the future.
-                        </motion.p>
-
-                        {/* Call to Actions */}
+                <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 xl:gap-12 items-center">
+                        
+                        {/* ══ LEFT COLUMN: NARRATIVE, KINETIC TITLE & CTAs (lg:col-span-7) ══ */}
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.45 }}
-                            className="flex flex-col xs:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto"
+                            style={{
+                                x: pointer.x * 5,
+                                y: pointer.y * 3,
+                            }}
+                            className="lg:col-span-7 flex flex-col items-start text-left order-2 lg:order-1"
                         >
-                            <Link
-                                href="/events"
-                                className="group relative flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-sky-400 via-sky-300 to-slate-100 text-slate-950 font-bold text-xs sm:text-sm hover:shadow-[0_0_35px_rgba(56,189,248,0.5)] transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden text-center"
+                            {/* 3D Kinetic Animated Title & Rotating Frontier Domain Badge */}
+                            <HeroKineticTitle />
+
+                            {/* Clean Subtitle */}
+                            <motion.p
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.8, delay: 0.25 }}
+                                className="text-xs xs:text-sm sm:text-base lg:text-lg text-slate-300 mb-6 sm:mb-8 max-w-xl leading-relaxed font-light"
                             >
-                                <span className="relative z-10">Explore Events</span>
-                                <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1.5 transition-transform" />
-                                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                            </Link>
-                            
-                            <Link
-                                href="/join"
-                                className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl glass border border-white/20 text-white font-semibold text-xs sm:text-sm hover:bg-white/10 hover:border-white/40 transition-all duration-300 backdrop-blur-md hover:shadow-[0_0_24px_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95 text-center"
+                                Pioneering autonomous intelligence, robotics, and next-generation systems. 
+                                Empowering innovators, creators, and engineers to build the future.
+                            </motion.p>
+
+                            {/* Call to Actions */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.8, delay: 0.4 }}
+                                className="flex flex-col xs:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto mb-6 sm:mb-8"
                             >
-                                <Sparkles size={15} className="text-sky-400" />
-                                <span>Join AiRA Lab</span>
-                            </Link>
+                                <Link
+                                    href="/events"
+                                    className="group relative flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-sky-400 via-sky-300 to-slate-100 text-slate-950 font-bold text-xs sm:text-sm hover:shadow-[0_0_35px_rgba(56,189,248,0.5)] transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden text-center"
+                                >
+                                    <span className="relative z-10">Explore Events</span>
+                                    <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1.5 transition-transform" />
+                                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                </Link>
+                                
+                                <Link
+                                    href="/join"
+                                    className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl glass border border-white/20 text-white font-semibold text-xs sm:text-sm hover:bg-white/10 hover:border-white/40 transition-all duration-300 backdrop-blur-md hover:shadow-[0_0_24px_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95 text-center"
+                                >
+                                    <Sparkles size={15} className="text-sky-400" />
+                                    <span>Join AiRA Lab</span>
+                                </Link>
+                            </motion.div>
+
+                            {/* Micro-Features / Trust Ribbon */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.8, delay: 0.55 }}
+                                className="flex flex-wrap items-center gap-3 sm:gap-6 pt-4 border-t border-white/10 text-[11px] sm:text-xs font-mono text-slate-400"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
+                                    <span className="text-slate-300 font-semibold">Live AI Lab</span>
+                                </div>
+                                <div className="h-3 w-px bg-white/10 hidden sm:block" />
+                                <div className="text-slate-400">
+                                    <span className="text-sky-400 font-semibold">5</span> Frontier Wings
+                                </div>
+                                <div className="h-3 w-px bg-white/10 hidden sm:block" />
+                                <div className="text-slate-400">
+                                    Autonomous Systems & Research
+                                </div>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
+
+                        {/* ══ RIGHT COLUMN: 3D CYBER WOLF SPOTLIGHT STAGE (lg:col-span-5) ══ */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            transition={{ duration: 0.9, delay: 0.2 }}
+                            style={{
+                                x: pointer.x * -8,
+                                y: pointer.y * -6,
+                            }}
+                            className="lg:col-span-5 flex flex-col items-center justify-center order-1 lg:order-2 w-full max-w-md sm:max-w-lg mx-auto lg:max-w-none relative"
+                        >
+                            {/* Ambient Wolf Backlight Halo */}
+                            <div className="absolute inset-0 -inset-x-4 -inset-y-4 bg-gradient-to-tr from-sky-500/25 via-indigo-500/20 to-cyan-400/25 rounded-3xl blur-3xl opacity-75 pointer-events-none" />
+
+                            {/* Futuristic Cyber Frame Capsule */}
+                            <div className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden glass-strong border border-sky-400/35 shadow-[0_0_45px_rgba(56,189,248,0.22)] group">
+                                
+                                {/* Top Cyber HUD Bar */}
+                                <div className="flex items-center justify-between px-3.5 sm:px-4 py-2 sm:py-2.5 bg-slate-950/85 border-b border-sky-400/25 backdrop-blur-xl text-[10px] sm:text-[11px] font-mono select-none">
+                                    <div className="flex items-center gap-2">
+                                        <span className="relative flex h-2 w-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
+                                        </span>
+                                        <span className="text-sky-300 font-semibold tracking-wider">MEVY · 3D AI MASCOT</span>
+                                    </div>
+                                    <span className="text-slate-400 text-[9px] sm:text-[10px] bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                                        LIVE PREVIEW
+                                    </span>
+                                </div>
+
+                                {/* Video Canvas Viewport - 100% Clear Wolf View */}
+                                <div className="relative aspect-[16/11] xs:aspect-[16/10] sm:aspect-[16/11] lg:aspect-[4/3] w-full bg-slate-950 flex items-center justify-center overflow-hidden">
+                                    <video
+                                        ref={heroVideoRef}
+                                        src="/hero-loop.mp4"
+                                        autoPlay
+                                        loop
+                                        muted
+                                        playsInline
+                                        preload="auto"
+                                        poster="/mevy_1.png"
+                                        style={{
+                                            transform: "translate3d(0,0,0)",
+                                            backfaceVisibility: "hidden",
+                                            WebkitBackfaceVisibility: "hidden",
+                                            willChange: "transform",
+                                        }}
+                                        className="w-full h-full object-contain sm:object-cover object-center filter contrast-[1.05] brightness-[1.03] group-hover:scale-105 transition-transform duration-700 bg-slate-950"
+                                        onEnded={(e) => {
+                                            e.currentTarget.currentTime = 0;
+                                            e.currentTarget.play().catch(() => {});
+                                        }}
+                                    />
+
+                                    {/* Soft Vignette Border Fade inside the capsule */}
+                                    <div className="absolute inset-0 pointer-events-none border border-white/10 shadow-[inset_0_0_30px_rgba(0,0,0,0.55)]" />
+
+                                    {/* Futuristic Corner Tech Accents */}
+                                    <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-sky-400 pointer-events-none" />
+                                    <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-sky-400 pointer-events-none" />
+                                    <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-sky-400 pointer-events-none" />
+                                    <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-sky-400 pointer-events-none" />
+                                </div>
+
+                                {/* Bottom Cyber Status Strip */}
+                                <div className="px-3.5 sm:px-4 py-1.5 sm:py-2 bg-slate-950/90 border-t border-white/10 flex items-center justify-between text-[9px] sm:text-[10px] font-mono text-slate-400">
+                                    <span className="text-slate-400">AiRA Autonomous Neural Engine</span>
+                                    <span className="text-cyan-400 font-semibold">60 FPS · ACTIVE</span>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
                 </div>
             </motion.section>
 

@@ -88,9 +88,9 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
             onPointerUp={handlePointerUp}
             rotation={[0.02, -0.45, 0]}
         >
-            {/* Center vertically and horizontally so entire body from ears to sneakers is visible */}
+            {/* Center vertically and horizontally with safe scale margins so ears, face & paws never clip */}
             <Center position={[0, 0.02, 0]}>
-                <primitive object={gltf.scene} scale={1.22} />
+                <primitive object={gltf.scene} scale={1.12} />
             </Center>
 
             {/* Glowing Holographic Base Platform */}
@@ -144,7 +144,7 @@ export interface Wolf3DCanvasProps {
 export function Wolf3DCanvas({
     onWolfClick,
     interactive = true,
-    className = "w-full h-full min-h-[380px] sm:min-h-[440px]",
+    className = "w-full h-full min-h-[320px] sm:min-h-[420px]",
     showControls = true,
 }: Wolf3DCanvasProps) {
     const [autoRotate, setAutoRotate] = useState(false);
@@ -174,15 +174,15 @@ export function Wolf3DCanvas({
             <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-purple-500/70 pointer-events-none" />
 
             {/* Top Telemetry Header */}
-            <div className="absolute top-3 inset-x-4 flex items-center justify-between z-10 pointer-events-none">
-                <div className="flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-sky-400/30">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="font-orbitron font-bold text-[10px] text-sky-200 tracking-wider">
+            <div className="absolute top-3 inset-x-3 sm:inset-x-4 flex items-center justify-between z-10 pointer-events-none">
+                <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-950/80 backdrop-blur-md px-2 sm:px-2.5 py-1 rounded-full border border-sky-400/30">
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="font-orbitron font-bold text-[9px] sm:text-[10px] text-sky-200 tracking-wider">
                         3D WOLF · LIVE CANVAS
                     </span>
                 </div>
-                <div className="flex items-center gap-1.5 text-[9px] font-mono text-purple-300 bg-purple-950/60 px-2 py-0.5 rounded-md border border-purple-500/30">
-                    <Shield size={10} className="text-purple-400" />
+                <div className="flex items-center gap-1 sm:gap-1.5 text-[8px] sm:text-[9px] font-mono text-purple-300 bg-purple-950/60 px-1.5 sm:px-2 py-0.5 rounded-md border border-purple-500/30">
+                    <Shield size={9} className="text-purple-400" />
                     <span>SILKY INERTIA</span>
                 </div>
             </div>
@@ -190,7 +190,7 @@ export function Wolf3DCanvas({
             {/* ══ THREE.JS CANVAS WITH BUTTER-SMOOTH ORBITCONTROLS ══ */}
             <Suspense fallback={<JarvisHoloLoader />}>
                 <Canvas
-                    camera={{ position: [0, 0.05, 3.25], fov: 40 }}
+                    camera={{ position: [0, 0.05, 3.4], fov: 42 }}
                     className="w-full h-full cursor-grab active:cursor-grabbing"
                     gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
                     onCreated={({ gl }) => {
@@ -217,8 +217,8 @@ export function Wolf3DCanvas({
                             rotateSpeed={0.9}
                             enableZoom={false}
                             enablePan={false}
-                            minPolarAngle={Math.PI / 3.8}
-                            maxPolarAngle={Math.PI / 1.75}
+                            minPolarAngle={Math.PI / 3.6}
+                            maxPolarAngle={Math.PI / 1.7}
                             autoRotate={autoRotate}
                             autoRotateSpeed={2.2}
                         />
@@ -228,19 +228,19 @@ export function Wolf3DCanvas({
 
             {/* ══ INTERACTIVE BOTTOM CONTROLS & HUD FOOTER ══ */}
             {showControls && (
-                <div className="absolute bottom-3 inset-x-4 flex items-center justify-between z-10 pointer-events-auto">
+                <div className="absolute bottom-2.5 sm:bottom-3 inset-x-3 sm:inset-x-4 flex items-center justify-between z-10 pointer-events-auto">
                     {/* 360 Drag Prompt */}
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/85 backdrop-blur-md border border-sky-400/30 text-slate-200 text-xs font-mono">
-                        <Move size={12} className="text-sky-400 animate-pulse" />
-                        <span className="text-[11px]">360° Drag Anywhere</span>
+                    <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-slate-950/85 backdrop-blur-md border border-sky-400/30 text-slate-200 text-[10px] sm:text-xs font-mono">
+                        <Move size={11} className="text-sky-400 animate-pulse" />
+                        <span className="text-[10px] sm:text-[11px]">360° Drag</span>
                     </div>
 
                     {/* Controls: Reset & Auto-Rotate Toggle */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                         <button
                             type="button"
                             onClick={handleResetOrientation}
-                            className="px-2.5 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-900 border border-white/10 text-slate-400 hover:text-white text-xs font-mono transition-all"
+                            className="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-900 border border-white/10 text-slate-400 hover:text-white text-[10px] sm:text-xs font-mono transition-all"
                             title="Reset 3D Orientation"
                         >
                             Reset
@@ -248,15 +248,15 @@ export function Wolf3DCanvas({
                         <button
                             type="button"
                             onClick={() => setAutoRotate(!autoRotate)}
-                            className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border backdrop-blur-md text-xs font-mono transition-all ${
+                            className={`flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl border backdrop-blur-md text-[10px] sm:text-xs font-mono transition-all ${
                                 autoRotate
                                     ? "bg-sky-500/20 border-sky-400 text-sky-300 shadow-[0_0_15px_rgba(56,189,248,0.4)]"
                                     : "bg-slate-950/80 border-white/10 text-slate-400 hover:text-white hover:bg-slate-900"
                             }`}
                             title="Toggle Auto 360 Orbit"
                         >
-                            <RotateCw size={12} className={autoRotate ? "animate-spin" : ""} />
-                            <span className="text-[11px]">{autoRotate ? "Orbiting" : "Orbit"}</span>
+                            <RotateCw size={11} className={autoRotate ? "animate-spin" : ""} />
+                            <span className="text-[10px] sm:text-[11px]">{autoRotate ? "Orbiting" : "Orbit"}</span>
                         </button>
                     </div>
                 </div>

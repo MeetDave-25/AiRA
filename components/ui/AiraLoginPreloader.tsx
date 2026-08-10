@@ -102,7 +102,7 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
         }
     }, [gltf]);
 
-    // Exact Choreographed Camera & 3D Wolf Actions
+    // Exact Choreographed Camera & 3D Wolf Actions with safe framing margins
     useEffect(() => {
         if (!groupRef.current) return;
 
@@ -112,7 +112,7 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
             // ═══════════════════════════════════════════════════════════
             gsap.fromTo(
                 groupRef.current.position,
-                { y: 4.8, z: -0.5 },
+                { y: 4.5, z: -0.4 },
                 { y: 0, z: 0, duration: 0.95, ease: "bounce.out" }
             );
             gsap.fromTo(
@@ -125,14 +125,14 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
                 { y: -0.8, x: 0.3 },
                 { y: -0.3, x: 0, duration: 0.95, ease: "power2.out" }
             );
-            gsap.to(camera.position, { x: 0, y: 0.05, z: 3.2, duration: 0.8, ease: "power2.out" });
+            gsap.to(camera.position, { x: 0, y: 0.05, z: 3.4, duration: 0.8, ease: "power2.out" });
         } else if (currentStep === 1) {
             // ═══════════════════════════════════════════════════════════
-            // 2. ZOOM ON FACE (Close-up on the Wolf's head & face)
+            // 2. ZOOM ON FACE (Close-up on Wolf's head with full ear clearance)
             // ═══════════════════════════════════════════════════════════
             gsap.to(groupRef.current.rotation, { y: 0.05, x: -0.04, duration: 0.75, ease: "power2.out" });
-            // Camera zooms tightly onto the face (y: 0.38, z: 1.62)
-            gsap.to(camera.position, { x: 0, y: 0.38, z: 1.62, duration: 0.85, ease: "power3.inOut" });
+            // Camera zooms with generous breathing room so face & ears are never cut
+            gsap.to(camera.position, { x: 0, y: 0.28, z: 2.15, duration: 0.85, ease: "power3.inOut" });
             gsap.fromTo(
                 groupRef.current.scale,
                 { x: 0.96, y: 0.96, z: 0.96 },
@@ -140,10 +140,9 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
             );
         } else if (currentStep === 2) {
             // ═══════════════════════════════════════════════════════════
-            // 3. IN THAT ZOOM, 360° SPIN (High-speed 360 spin right in face zoom)
+            // 3. IN THAT ZOOM, 360° SPIN (High-speed 360 spin in face zoom)
             // ═══════════════════════════════════════════════════════════
-            // Keep camera in tight zoom (z: 1.7)
-            gsap.to(camera.position, { x: 0, y: 0.36, z: 1.7, duration: 0.3, ease: "power2.out" });
+            gsap.to(camera.position, { x: 0, y: 0.26, z: 2.2, duration: 0.3, ease: "power2.out" });
             // 360 degree spin right inside the zoom
             gsap.to(groupRef.current.rotation, {
                 y: `+=${Math.PI * 2}`,
@@ -159,27 +158,27 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
             // ═══════════════════════════════════════════════════════════
             // 4. AIRA LABS REVEAL (Camera pulls back, hero stance)
             // ═══════════════════════════════════════════════════════════
-            gsap.to(camera.position, { x: 0, y: 0.05, z: 3.25, duration: 0.7, ease: "power2.out" });
+            gsap.to(camera.position, { x: 0, y: 0.05, z: 3.4, duration: 0.7, ease: "power2.out" });
             gsap.to(groupRef.current.rotation, { y: -0.15, x: 0, duration: 0.8, ease: "back.out(1.8)" });
             gsap.to(groupRef.current.position, { y: 0, z: 0, duration: 0.6, ease: "power2.out" });
             gsap.fromTo(
                 groupRef.current.scale,
                 { x: 0.9, y: 0.9, z: 0.9 },
-                { x: 1.15, y: 1.15, z: 1.15, duration: 0.75, ease: "elastic.out(1.2, 0.4)" }
+                { x: 1.12, y: 1.12, z: 1.12, duration: 0.75, ease: "elastic.out(1.2, 0.4)" }
             );
         } else if (currentStep === 4) {
             // ═══════════════════════════════════════════════════════════
             // 5. WOLF FACE FINAL CLOSE-UP BEFORE FADE TO BLACK
             // ═══════════════════════════════════════════════════════════
             gsap.to(groupRef.current.rotation, { y: 0, x: 0, duration: 0.5, ease: "power2.out" });
-            gsap.to(camera.position, { x: 0, y: 0.38, z: 1.35, duration: 0.6, ease: "power2.in" });
+            gsap.to(camera.position, { x: 0, y: 0.28, z: 1.85, duration: 0.6, ease: "power2.in" });
         }
     }, [currentStep, camera]);
 
     // Continuous subtle floating breathing bob
     useFrame((state) => {
         if (groupRef.current && currentStep !== 2 && currentStep !== 0) {
-            groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.8) * 0.035;
+            groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.8) * 0.03;
         }
     });
 
@@ -189,9 +188,9 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
 
     return (
         <group ref={groupRef} position={[0, 0, 0]}>
-            {/* Centered Wolf */}
-            <Center position={[0, 0.05, 0]}>
-                <primitive object={gltf.scene} scale={1.22} />
+            {/* Centered Wolf with safe scale margin */}
+            <Center position={[0, 0.03, 0]}>
+                <primitive object={gltf.scene} scale={1.12} />
             </Center>
 
             {/* Glowing Holographic Base Platform */}
@@ -555,7 +554,7 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
             <div className="absolute bottom-4 right-4 w-7 h-7 border-b-2 border-r-2 border-purple-500/80 pointer-events-none" />
 
             {/* TOP BAR CONTROLS */}
-            <div className="absolute top-6 right-6 z-30 flex items-center gap-2.5">
+            <div className="absolute top-4 sm:top-6 right-4 sm:right-6 z-30 flex items-center gap-1.5 sm:gap-2.5">
                 <button
                     type="button"
                     onClick={() => {
@@ -563,7 +562,7 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
                         setSoundEnabled(next);
                         if (next) playCyberBeep(659, "triangle", 0.1);
                     }}
-                    className="px-3.5 py-1.5 bg-slate-900/80 hover:bg-slate-800 text-xs font-mono text-slate-300 rounded-xl border border-sky-400/30 transition flex items-center gap-1.5 cursor-pointer backdrop-blur-md"
+                    className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 bg-slate-900/80 hover:bg-slate-800 text-[11px] sm:text-xs font-mono text-slate-300 rounded-xl border border-sky-400/30 transition flex items-center gap-1.5 cursor-pointer backdrop-blur-md"
                 >
                     {soundEnabled ? <Volume2 size={13} className="text-sky-300 animate-pulse" /> : <VolumeX size={13} className="text-slate-500" />}
                     <span>{soundEnabled ? "AUDIO ON" : "AUDIO OFF"}</span>
@@ -572,7 +571,7 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
                 <button
                     type="button"
                     onClick={startAnimation}
-                    className="px-3.5 py-1.5 bg-purple-950/70 hover:bg-purple-900/90 text-purple-300 border border-purple-500/40 text-xs font-mono font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer backdrop-blur-md"
+                    className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 bg-purple-950/70 hover:bg-purple-900/90 text-purple-300 border border-purple-500/40 text-[11px] sm:text-xs font-mono font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer backdrop-blur-md"
                     title="Replay Animation"
                 >
                     <RotateCcw size={12} />
@@ -582,7 +581,7 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
                 <button
                     type="button"
                     onClick={handleSkip}
-                    className="px-4 py-1.5 bg-sky-500/20 hover:bg-sky-500 text-sky-300 hover:text-slate-950 border border-sky-400/50 text-xs font-mono font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(56,189,248,0.3)] backdrop-blur-md"
+                    className="px-3 sm:px-4 py-1 sm:py-1.5 bg-sky-500/20 hover:bg-sky-500 text-sky-300 hover:text-slate-950 border border-sky-400/50 text-[11px] sm:text-xs font-mono font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(56,189,248,0.3)] backdrop-blur-md"
                 >
                     <FastForward size={12} />
                     <span>ENTER PORTAL</span>
@@ -590,131 +589,134 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
             </div>
 
             {/* Top-Left Telemetry with Mascot Indicator */}
-            <div className="absolute top-6 left-6 z-30 flex items-center gap-2.5 text-xs font-mono text-slate-400 pointer-events-none">
+            <div className="absolute top-4 sm:top-6 left-4 sm:left-6 z-30 hidden xs:flex items-center gap-2 text-xs font-mono text-slate-400 pointer-events-none">
                 <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span className="font-orbitron font-bold text-sky-300 text-[10px] tracking-wider">
+                <span className="font-orbitron font-bold text-sky-300 text-[9px] sm:text-[10px] tracking-wider">
                     MEVY 3D MASCOT · CINEMATIC AIRA
                 </span>
             </div>
 
-            {/* ══ 3D WOLF MASCOT (MEVY) CENTER STAGE WITH REAL-TIME CAMERA CHOREOGRAPHY ══ */}
-            <div className="relative z-20 w-[260px] h-[260px] sm:w-[300px] sm:h-[300px] mb-2 pointer-events-none flex items-center justify-center">
-                <Suspense fallback={null}>
-                    <Canvas
-                        camera={{ position: [0, 0.05, 3.2], fov: 40 }}
-                        className="w-full h-full"
-                        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-                        onCreated={({ gl }) => {
-                            gl.toneMapping = THREE.ACESFilmicToneMapping;
-                            gl.toneMappingExposure = 1.25;
-                        }}
-                    >
-                        {/* Dynamic Studio Lighting */}
-                        <ambientLight intensity={1.2} />
-                        <directionalLight position={[5, 6, 4]} intensity={2.2} color="#ffffff" />
-                        <directionalLight position={[-5, 3, -2]} intensity={1.9} color={currentStepIndex === 0 ? "#38BDF8" : currentStepIndex === 1 ? "#C084FC" : "#FB7185"} />
-                        <pointLight position={[0, -2, 2]} intensity={1.5} color="#A855F7" />
-                        <pointLight position={[0, 4, 0]} intensity={1.2} color="#00D4FF" />
-
-                        {/* Choreographed 3D Wolf Scene */}
-                        <Preloader3DWolfScene currentStep={currentStepIndex} />
-                    </Canvas>
-                </Suspense>
-            </div>
-
-            {/* ══ MAIN TYPOGRAPHY STAGE ══ */}
-            <div className="relative z-20 flex flex-col items-center justify-center px-4 w-full max-w-6xl">
-                {/* ══ SCENE 1: 3-STEP ROLLING SLOTS (INNOVATION ➔ RESEARCH ➔ IMPACT) ══ */}
-                <div
-                    ref={logoSceneRef}
-                    className="flex flex-col items-center justify-center relative w-full"
-                >
-                    <div className="inline-flex flex-col items-center relative">
-                        {/* 3-STEP ROLLING SLOTS CONTAINER */}
-                        <div
-                            id="topRollSlotsContainer"
-                            className="py-1 px-2 flex items-center justify-center font-orbitron font-black uppercase tracking-tight text-4xl sm:text-6xl md:text-7xl lg:text-8xl select-none"
+            {/* ══ CENTER STAGE CONTAINER (PROPER VERTICAL SPACING & NEVER OVERLAPS) ══ */}
+            <div className="relative z-20 flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 my-auto pt-14 sm:pt-0">
+                {/* ══ 3D WOLF MASCOT (MEVY) CENTER STAGE WITH REAL-TIME CAMERA CHOREOGRAPHY ══ */}
+                <div className="relative z-20 w-[190px] h-[190px] xs:w-[230px] xs:h-[230px] sm:w-[290px] sm:h-[290px] mb-1 sm:mb-2 pointer-events-none flex items-center justify-center shrink-0">
+                    <Suspense fallback={null}>
+                        <Canvas
+                            camera={{ position: [0, 0.05, 3.4], fov: 40 }}
+                            className="w-full h-full"
+                            gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+                            onCreated={({ gl }) => {
+                                gl.toneMapping = THREE.ACESFilmicToneMapping;
+                                gl.toneMappingExposure = 1.25;
+                            }}
                         >
-                            {topCharSlots.map((slot, idx) => (
-                                <div
-                                    key={`slot_${idx}`}
-                                    className={`aira-roll-window inline-block overflow-hidden h-[1.05em] leading-[1.05em] align-top relative top-slot-${idx}`}
-                                >
-                                    {/* 3-Row Vertical Track */}
-                                    <div className={`aira-slot-track aira-track-${idx} flex flex-col will-change-transform`}>
-                                        {/* Step 1: INNOVATION */}
-                                        <div className={`flex items-center justify-center h-[1.05em] leading-[1.05em] drop-shadow-[0_0_20px_rgba(56,189,248,0.6)] ${slot.c1Class}`}>
-                                            {slot.c1}
-                                        </div>
-                                        {/* Step 2: RESEARCH */}
-                                        <div className={`flex items-center justify-center h-[1.05em] leading-[1.05em] drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] ${slot.c2Class}`}>
-                                            {slot.c2}
-                                        </div>
-                                        {/* Step 3: IMPACT */}
-                                        <div className={`flex items-center justify-center h-[1.05em] leading-[1.05em] drop-shadow-[0_0_20px_rgba(244,63,94,0.6)] ${slot.c3Class}`}>
-                                            {slot.c3}
+                            {/* Dynamic Studio Lighting */}
+                            <ambientLight intensity={1.2} />
+                            <directionalLight position={[5, 6, 4]} intensity={2.2} color="#ffffff" />
+                            <directionalLight position={[-5, 3, -2]} intensity={1.9} color={currentStepIndex === 0 ? "#38BDF8" : currentStepIndex === 1 ? "#C084FC" : "#FB7185"} />
+                            <pointLight position={[0, -2, 2]} intensity={1.5} color="#A855F7" />
+                            <pointLight position={[0, 4, 0]} intensity={1.2} color="#00D4FF" />
+
+                            {/* Choreographed 3D Wolf Scene */}
+                            <Preloader3DWolfScene currentStep={currentStepIndex} />
+                        </Canvas>
+                    </Suspense>
+                </div>
+
+                {/* ══ MAIN TYPOGRAPHY STAGE ══ */}
+                <div className="relative z-20 flex flex-col items-center justify-center px-2 sm:px-4 w-full">
+                    {/* ══ SCENE 1: 3-STEP ROLLING SLOTS (INNOVATION ➔ RESEARCH ➔ IMPACT) ══ */}
+                    <div
+                        ref={logoSceneRef}
+                        className="flex flex-col items-center justify-center relative w-full"
+                    >
+                        <div className="inline-flex flex-col items-center relative w-full">
+                            {/* 3-STEP ROLLING SLOTS CONTAINER */}
+                            <div
+                                id="topRollSlotsContainer"
+                                className="py-0.5 sm:py-1 px-1 sm:px-2 flex items-center justify-center font-orbitron font-black uppercase tracking-tight text-2xl xs:text-3xl sm:text-5xl md:text-6xl lg:text-7xl select-none"
+                            >
+                                {topCharSlots.map((slot, idx) => (
+                                    <div
+                                        key={`slot_${idx}`}
+                                        className={`aira-roll-window inline-block overflow-hidden h-[1.1em] leading-[1.1em] align-top relative top-slot-${idx}`}
+                                    >
+                                        {/* 3-Row Vertical Track */}
+                                        <div className={`aira-slot-track aira-track-${idx} flex flex-col will-change-transform`}>
+                                            {/* Step 1: INNOVATION */}
+                                            <div className={`flex items-center justify-center h-[1.1em] leading-[1.1em] drop-shadow-[0_0_20px_rgba(56,189,248,0.6)] ${slot.c1Class}`}>
+                                                {slot.c1}
+                                            </div>
+                                            {/* Step 2: RESEARCH */}
+                                            <div className={`flex items-center justify-center h-[1.1em] leading-[1.1em] drop-shadow-[0_0_20px_rgba(168,85,247,0.6)] ${slot.c2Class}`}>
+                                                {slot.c2}
+                                            </div>
+                                            {/* Step 3: IMPACT */}
+                                            <div className={`flex items-center justify-center h-[1.1em] leading-[1.1em] drop-shadow-[0_0_20px_rgba(244,63,94,0.6)] ${slot.c3Class}`}>
+                                                {slot.c3}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
 
-                        {/* SUBTITLE BADGE PILL */}
-                        <div
-                            id="stageSubtitlePill"
-                            className="mt-3 sm:mt-4 transition-all duration-300"
-                        >
-                            <div className={`px-4 sm:px-6 py-1.5 sm:py-2 rounded-full border backdrop-blur-2xl font-orbitron font-bold text-xs sm:text-sm tracking-wider shadow-lg transition-all duration-500 flex items-center gap-2 ${currentSubtitle.color}`}>
-                                <Sparkles size={13} className="text-amber-400 animate-spin [animation-duration:8s]" />
-                                <span>{currentSubtitle.text}</span>
+                            {/* SUBTITLE BADGE PILL */}
+                            <div
+                                id="stageSubtitlePill"
+                                className="mt-2 sm:mt-4 transition-all duration-300 max-w-full px-2 text-center"
+                            >
+                                <div className={`px-3 sm:px-6 py-1 sm:py-2 rounded-full border backdrop-blur-2xl font-orbitron font-bold text-[10px] xs:text-xs sm:text-sm tracking-wider shadow-lg transition-all duration-500 inline-flex items-center gap-1.5 sm:gap-2 ${currentSubtitle.color}`}>
+                                    <Sparkles size={12} className="text-amber-400 shrink-0 animate-spin [animation-duration:8s]" />
+                                    <span className="truncate max-w-[270px] xs:max-w-none">{currentSubtitle.text}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* ══ SCENE 2: GRAND AIRA LABS PRODUCT FINALE ══ */}
-                <div
-                    ref={presentsSceneRef}
-                    className="hidden flex-col items-center justify-center text-center relative py-2 w-full"
-                >
-                    {/* AIRA LABS MAIN LOGO TITLE */}
-                    <div className="relative overflow-hidden py-1 px-6">
-                        <h2
-                            ref={airaTitleRef}
-                            className="text-5xl sm:text-7xl md:text-8xl font-black uppercase tracking-tight font-orbitron opacity-0"
-                        >
-                            <span className="text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">AiRA</span>{" "}
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-500 drop-shadow-[0_0_40px_rgba(56,189,248,0.8)]">
-                                LABS
+                    {/* ══ SCENE 2: GRAND AIRA LABS PRODUCT FINALE ══ */}
+                    <div
+                        ref={presentsSceneRef}
+                        className="hidden flex-col items-center justify-center text-center relative py-1 sm:py-2 w-full max-w-3xl px-2"
+                    >
+                        {/* AIRA LABS MAIN LOGO TITLE */}
+                        <div className="relative overflow-hidden py-1 px-3 sm:px-6">
+                            <h2
+                                ref={airaTitleRef}
+                                className="text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase tracking-tight font-orbitron opacity-0"
+                            >
+                                <span className="text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">AiRA</span>{" "}
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-500 drop-shadow-[0_0_40px_rgba(56,189,248,0.8)]">
+                                    LABS
+                                </span>
+                            </h2>
+                        </div>
+
+                        {/* 4 FRONTIER LAB WINGS BADGES */}
+                        <div ref={wingsRef} className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-2 sm:mt-3 max-w-2xl px-2">
+                            <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg bg-sky-500/10 border border-sky-400/30 text-sky-300 text-[9px] sm:text-xs font-mono">
+                                🧠 AI & Autonomous Agents
                             </span>
-                        </h2>
-                    </div>
+                            <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[9px] sm:text-xs font-mono">
+                                🤖 Robotics Systems
+                            </span>
+                            <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-[9px] sm:text-xs font-mono">
+                                🌐 Web3 / Cloud Systems
+                            </span>
+                            <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg bg-pink-500/10 border border-pink-500/30 text-pink-300 text-[9px] sm:text-xs font-mono">
+                                🛡️ Cyber Defense
+                            </span>
+                        </div>
 
-                    {/* 4 FRONTIER LAB WINGS BADGES */}
-                    <div ref={wingsRef} className="flex flex-wrap items-center justify-center gap-2 mt-3 max-w-2xl px-2">
-                        <span className="px-3 py-1 rounded-lg bg-sky-500/10 border border-sky-400/30 text-sky-300 text-[10px] sm:text-xs font-mono">
-                            🧠 AI & Autonomous Agents
-                        </span>
-                        <span className="px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[10px] sm:text-xs font-mono">
-                            🤖 Robotics Systems
-                        </span>
-                        <span className="px-3 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-[10px] sm:text-xs font-mono">
-                            🌐 Web3 / Cloud Systems
-                        </span>
-                        <span className="px-3 py-1 rounded-lg bg-pink-500/10 border border-pink-500/30 text-pink-300 text-[10px] sm:text-xs font-mono">
-                            🛡️ Cyber Defense
-                        </span>
-                    </div>
-
-                    {/* SIGNATURE TAGLINE */}
-                    <div className="overflow-hidden mt-4">
-                        <p
-                            ref={taglineRef}
-                            className="text-xs sm:text-base font-orbitron font-bold text-slate-200 tracking-[0.2em] uppercase flex items-center justify-center gap-2"
-                        >
-                            <Zap size={14} className="text-amber-400 animate-bounce" />
-                            A New Mind · A New Energy · A New Impact ⚡
-                        </p>
+                        {/* SIGNATURE TAGLINE */}
+                        <div className="overflow-hidden mt-3 sm:mt-4">
+                            <p
+                                ref={taglineRef}
+                                className="text-[10px] xs:text-xs sm:text-sm md:text-base font-orbitron font-bold text-slate-200 tracking-[0.12em] sm:tracking-[0.2em] uppercase flex items-center justify-center gap-1.5 sm:gap-2"
+                            >
+                                <Zap size={13} className="text-amber-400 shrink-0 animate-bounce" />
+                                <span>A New Mind · A New Energy · A New Impact ⚡</span>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

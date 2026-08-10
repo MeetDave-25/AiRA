@@ -596,22 +596,22 @@ export default function AboutPage() {
             </section>
 
             {/* ═══════════════════════════════════════════════════════════
-                4. 3D CYBER MASCOT SHOWCASE (MEET MD)
+                4. 3D CYBER MASCOT SHOWCASE (MEET MEVY)
                ═══════════════════════════════════════════════════════════ */}
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
+            <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-12 sm:py-20 relative z-10">
                 <ScrollReveal direction="up">
                     <SpotlightCard
                         spotlightColor="rgba(168, 85, 247, 0.22)"
-                        className="p-8 sm:p-12 border-purple-500/30 rounded-3xl"
+                        className="p-4 xs:p-6 sm:p-8 lg:p-12 border-purple-500/30 rounded-3xl"
                     >
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 items-center">
                             {/* Left: 3D Parallax Mascot Card */}
-                            <div className="lg:col-span-5 flex justify-center">
+                            <div className="lg:col-span-5 flex justify-center w-full overflow-hidden">
                                 <Interactive3DMascot
                                     size="lg"
                                     showSpeechBubble={true}
                                     speechText="A New Mind. A New Energy. A New Impact. ⚡"
-                                    className="mx-auto"
+                                    className="mx-auto w-full"
                                 />
                             </div>
 

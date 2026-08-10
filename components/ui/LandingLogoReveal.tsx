@@ -194,7 +194,7 @@ export function LandingLogoReveal({ onComplete, forceShow = false }: LandingLogo
                                 WebkitBackfaceVisibility: "hidden",
                                 willChange: "transform, opacity",
                             }}
-                            className={`w-full h-full object-cover sm:object-contain bg-black pointer-events-none transition-opacity duration-500 ${
+                            className={`w-full h-full object-contain bg-black pointer-events-none transition-opacity duration-500 ${
                                 isVideoReady ? "opacity-100" : "opacity-0"
                             }`}
                         />
@@ -208,12 +208,12 @@ export function LandingLogoReveal({ onComplete, forceShow = false }: LandingLogo
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="absolute top-6 left-6 sm:bottom-8 sm:left-8 sm:top-auto z-40 pointer-events-auto"
+                        className="absolute top-4 left-4 sm:bottom-8 sm:left-8 sm:top-auto z-40 pointer-events-auto"
                     >
                         <button
                             type="button"
                             onClick={handleToggleSound}
-                            className={`flex items-center gap-2.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full border backdrop-blur-xl transition-all shadow-xl ${
+                            className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-full border backdrop-blur-xl transition-all shadow-xl ${
                                 isMuted
                                     ? "bg-amber-500/20 border-amber-400/50 text-amber-300 animate-pulse hover:bg-amber-500/30"
                                     : "bg-black/60 hover:bg-black/80 border-sky-400/40 text-sky-300"
@@ -222,21 +222,21 @@ export function LandingLogoReveal({ onComplete, forceShow = false }: LandingLogo
                         >
                             {isMuted ? (
                                 <>
-                                    <VolumeX size={16} className="text-amber-400" />
-                                    <span className="text-xs font-mono font-medium tracking-wide">
+                                    <VolumeX size={15} className="text-amber-400" />
+                                    <span className="text-[11px] sm:text-xs font-mono font-medium tracking-wide">
                                         Tap for Sound 🔊
                                     </span>
                                 </>
                             ) : (
                                 <>
-                                    <Volume2 size={16} className="text-sky-400" />
+                                    <Volume2 size={15} className="text-sky-400" />
                                     <div className="flex items-center gap-0.5 h-3 px-0.5">
                                         <span className="w-0.5 h-3 bg-sky-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
                                         <span className="w-0.5 h-2 bg-sky-300 rounded-full animate-bounce [animation-delay:-0.15s]" />
                                         <span className="w-0.5 h-3.5 bg-cyan-400 rounded-full animate-bounce" />
                                         <span className="w-0.5 h-1.5 bg-sky-300 rounded-full animate-bounce [animation-delay:-0.2s]" />
                                     </div>
-                                    <span className="text-xs font-mono font-medium tracking-wide text-slate-200">
+                                    <span className="text-[11px] sm:text-xs font-mono font-medium tracking-wide text-slate-200">
                                         Music On
                                     </span>
                                 </>
@@ -249,7 +249,7 @@ export function LandingLogoReveal({ onComplete, forceShow = false }: LandingLogo
                         initial={{ opacity: 0 }}
                         animate={{ opacity: showSkipHint ? 1 : 0.6 }}
                         transition={{ duration: 0.3 }}
-                        className="absolute bottom-6 right-6 sm:bottom-8 sm:right-8 z-40 pointer-events-auto"
+                        className="absolute bottom-4 right-4 sm:bottom-8 sm:right-8 z-40 pointer-events-auto"
                     >
                         <button
                             type="button"
@@ -257,7 +257,7 @@ export function LandingLogoReveal({ onComplete, forceShow = false }: LandingLogo
                                 e.stopPropagation();
                                 finishReveal();
                             }}
-                            className="group flex items-center gap-1.5 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 border border-white/20 text-white text-xs sm:text-sm font-mono tracking-wider uppercase backdrop-blur-xl shadow-2xl transition-all cursor-pointer"
+                            className="group flex items-center gap-1.5 px-3.5 py-1.5 sm:px-5 sm:py-2.5 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 border border-white/20 text-white text-[11px] sm:text-sm font-mono tracking-wider uppercase backdrop-blur-xl shadow-2xl transition-all cursor-pointer"
                         >
                             <span>Skip</span>
                             <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>

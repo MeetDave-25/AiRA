@@ -115,16 +115,16 @@ export function Interactive3DMascot({
         return () => clearInterval(timer);
     }, [isSpeakingVoice]);
 
-    // Dimensions map
+    // Dimensions map with responsive scaling on mobile
     const sizeClasses = {
-        sm: "w-full max-w-[280px] h-[340px]",
-        md: "w-full max-w-[360px] h-[400px]",
-        lg: "w-full max-w-[440px] h-[480px]",
-        xl: "w-full max-w-[520px] h-[540px]",
+        sm: "w-full max-w-[260px] sm:max-w-[280px] h-[300px] sm:h-[340px]",
+        md: "w-full max-w-[300px] sm:max-w-[360px] h-[340px] sm:h-[400px]",
+        lg: "w-full max-w-[320px] xs:max-w-[360px] sm:max-w-[440px] h-[360px] sm:h-[460px]",
+        xl: "w-full max-w-[340px] xs:max-w-[400px] sm:max-w-[520px] h-[380px] sm:h-[500px]",
     }[size];
 
     return (
-        <div className={`relative flex flex-col items-center select-none ${className}`}>
+        <div className={`relative flex flex-col items-center select-none w-full max-w-full ${className}`}>
             {/* ══ INTERACTIVE 3D SPEECH BUBBLE & VOICE CONTROLS ══ */}
             {showSpeechBubble && (
                 <AnimatePresence mode="wait">
@@ -134,13 +134,13 @@ export function Interactive3DMascot({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.94 }}
                         transition={{ duration: 0.3 }}
-                        className="w-full max-w-[420px] mb-4 p-4 rounded-2xl bg-slate-950/95 backdrop-blur-2xl border border-sky-400/40 shadow-[0_10px_35px_rgba(56,189,248,0.25)] text-white relative z-30 pointer-events-auto"
+                        className="w-full max-w-[400px] mb-3 sm:mb-4 p-3.5 sm:p-4 rounded-2xl bg-slate-950/95 backdrop-blur-2xl border border-sky-400/40 shadow-[0_10px_35px_rgba(56,189,248,0.25)] text-white relative z-30 pointer-events-auto"
                     >
                         {/* Header: AI Status & Audio Voice Toggle */}
                         <div className="flex items-center justify-between pb-2 mb-2 border-b border-sky-400/20">
                             <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                                <span className="font-orbitron font-bold text-[11px] tracking-wider text-sky-300">
+                                <span className="font-orbitron font-bold text-[10px] sm:text-[11px] tracking-wider text-sky-300">
                                     MEVY 3D WOLF · AI BRIEFING
                                 </span>
                             </div>
