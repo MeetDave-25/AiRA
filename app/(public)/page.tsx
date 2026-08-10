@@ -255,14 +255,8 @@ export default function HomePage() {
                 {/* 1. Deep 3D Parallax Video Background (Continuous Loop) */}
                 <motion.div
                     style={{
-                        x: pointer.x * -10,
-                        y: pointer.y * -6,
-                    }}
-                    animate={{
-                        scale: [1, 1.015, 1],
-                    }}
-                    transition={{
-                        scale: { duration: 16, repeat: Infinity, ease: "easeInOut" }
+                        x: pointer.x * -6,
+                        y: pointer.y * -4,
                     }}
                     className="absolute inset-0 z-0 pointer-events-none select-none"
                 >
@@ -279,20 +273,19 @@ export default function HomePage() {
                             transform: "translate3d(0,0,0)",
                             backfaceVisibility: "hidden",
                             WebkitBackfaceVisibility: "hidden",
-                            willChange: "transform",
                         }}
-                        className="w-full h-full object-cover object-[80%_35%] sm:object-[78%_35%] md:object-[76%_38%] lg:object-[80%_40%] opacity-95 lg:opacity-100 filter contrast-[1.04] brightness-[1.02]"
+                        className="w-full h-full object-cover object-center sm:object-[60%_center] lg:object-[62%_center] opacity-95 lg:opacity-100 filter contrast-[1.03] brightness-[1.02]"
                         onEnded={(e) => {
                             e.currentTarget.currentTime = 0;
                             e.currentTarget.play().catch(() => {});
                         }}
                     />
 
-                    {/* Gradient depth masks: Seamlessly balances narrative readability on the left with full cinematic panorama */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-aira-bg/95 via-aira-bg/80 via-45% sm:via-42% to-transparent lg:w-[52%] w-full" />
+                    {/* Gradient depth masks: Balances narrative readability on the left with full cinematic panorama */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-aira-bg/95 via-aira-bg/60 via-40% to-transparent lg:w-[48%] w-full" />
                     
                     {/* Bottom gradient fade into main content */}
-                    <div className="absolute inset-x-0 bottom-0 h-28 sm:h-36 bg-gradient-to-t from-aira-bg via-aira-bg/85 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 h-24 sm:h-32 bg-gradient-to-t from-aira-bg via-aira-bg/80 to-transparent" />
                     
                     {/* Top gradient fade under navbar */}
                     <div className="absolute inset-x-0 top-0 h-20 sm:h-24 bg-gradient-to-b from-aira-bg/90 via-aira-bg/30 to-transparent" />
@@ -368,6 +361,18 @@ export default function HomePage() {
                             </Link>
                         </motion.div>
                     </motion.div>
+                </div>
+
+                {/* Bottom Right: Mevy AI Guide Floating Pill */}
+                <div className="absolute bottom-6 right-4 sm:bottom-10 sm:right-8 z-10 hidden xs:flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-sky-400/30 bg-slate-950/75 backdrop-blur-xl shadow-[0_0_20px_rgba(56,189,248,0.2)] select-none">
+                    <div className="relative w-5 h-5 rounded-full overflow-hidden border border-sky-400/50 shadow-[0_0_8px_#38bdf8]">
+                        <img src="/mevy_1.png" alt="Mevy" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <span className="font-orbitron font-bold text-[11px] text-sky-300">MEVY</span>
+                        <Sparkles size={11} className="text-sky-400" />
+                        <span className="text-[10px] font-mono text-slate-400">AI GUIDE · v4.2</span>
+                    </div>
                 </div>
             </motion.section>
 
