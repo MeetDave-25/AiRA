@@ -47,7 +47,7 @@ export function HeroKineticTitle() {
                 initial={{ opacity: 0, y: -20, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
-                className="inline-flex max-w-full items-center gap-1.5 sm:gap-2.5 px-2.5 py-1 sm:px-4 sm:py-2 rounded-full glass border border-sky-400/30 text-slate-200 text-[9px] xs:text-[10px] sm:text-xs font-semibold mb-3 sm:mb-5 font-orbitron tracking-wider sm:tracking-widest bg-slate-950/80 backdrop-blur-xl shadow-[0_0_25px_rgba(56,189,248,0.2)] select-none relative overflow-hidden group"
+                className="inline-flex max-w-full items-center gap-1.5 sm:gap-2.5 px-2.5 py-1 sm:px-4 sm:py-2 rounded-full glass border border-sky-400/30 text-slate-200 text-[9px] xs:text-[10px] sm:text-xs font-semibold mt-1 sm:mt-3 mb-4 sm:mb-6 font-orbitron tracking-wider sm:tracking-widest bg-slate-950/80 backdrop-blur-xl shadow-[0_0_25px_rgba(56,189,248,0.2)] select-none relative overflow-hidden group"
             >
                 {/* Glowing Laser Scan Across Pill */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-sky-400/20 to-transparent -translate-x-full group-hover:translate-x-full duration-1000 transition-transform pointer-events-none" />

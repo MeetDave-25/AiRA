@@ -1,43 +1,63 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { v4 as uuidv4 } from "uuid";
 
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
     try {
-        const reviews = await prisma.blogReview.findMany({
-            where: { postId: params.id },
-            include: { author: { select: { id: true, name: true, avatar: true } } },
-            orderBy: { createdAt: "desc" },
-        });
-        return NextResponse.json(reviews);
+        const { data: reviews, error } = await db
+            .from("BlogReview")
+            .select(`
+                *,
+                author:User(id, name, avatar)
+            `)
+            .eq("postId", params.id)
+            .order("createdAt", { ascending: false });
+
+        if (error) throw error;
+
+        return NextResponse.json(reviews || []);
     } catch (e: any) {
+        console.error("Error fetching blog reviews:", e);
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session) return NextResponse.json({ error: "Login to review" }, { status: 401 });
+        const session: any = await getServerSession(authOptions as any);
+        if (!session?.user?.id) return NextResponse.json({ error: "Please log in to review" }, { status: 401 });
 
-        const { body, rating } = await req.json();
+        const { body, rating } = await req.json().catch(() => ({}));
         if (!body?.trim()) return NextResponse.json({ error: "Review text required" }, { status: 400 });
 
-        const review = await prisma.blogReview.create({
-            data: {
-                postId:   params.id,
+        const newReviewId = uuidv4();
+        const { data: review, error } = await db
+            .from("BlogReview")
+            .insert({
+                id: newReviewId,
+                postId: params.id,
                 authorId: session.user.id,
-                body:     body.trim(),
-                rating:   Math.min(5, Math.max(1, Number(rating) || 5)),
-            },
-            include: { author: { select: { id: true, name: true, avatar: true } } },
-        });
+                body: body.trim(),
+                rating: Math.min(5, Math.max(1, Number(rating) || 5)),
+            })
+            .select(`
+                *,
+                author:User(id, name, avatar)
+            `)
+            .single();
+
+        if (error) {
+            if (error.code === "23505") { // unique constraint
+                return NextResponse.json({ error: "You already reviewed this post" }, { status: 409 });
+            }
+            throw error;
+        }
+
         return NextResponse.json(review, { status: 201 });
     } catch (e: any) {
-        if (e.code === "P2002") {
-            return NextResponse.json({ error: "You already reviewed this post" }, { status: 409 });
-        }
+        console.error("Error creating blog review:", e);
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

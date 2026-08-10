@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { v4 as uuidv4 } from "uuid";
 
 const AUTHORIZED_ROLES = ["ADMIN", "SUPER_ADMIN", "CONTENT_MANAGER", "TEAM_LEAD", "LEAD", "PRESIDENT", "VICE_PRESIDENT"];
 
@@ -16,17 +17,31 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const includeAll = searchParams.get("all") === "true";
 
-        const topics = await prisma.blogTopic.findMany({
-            where: includeAll ? {} : { isActive: true },
-            include: {
-                _count: {
-                    select: { posts: true },
-                },
-            },
-            orderBy: { createdAt: "desc" },
-        });
+        let query = db
+            .from("BlogTopic")
+            .select("*, posts:BlogPost(id)");
 
-        return NextResponse.json(topics);
+        if (!includeAll) {
+            query = query.eq("isActive", true);
+        }
+
+        const { data: topics, error } = await query.order("createdAt", { ascending: false });
+
+        if (error) throw error;
+
+        // Map count of posts
+        const formatted = (topics || []).map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            description: t.description,
+            isActive: t.isActive,
+            createdAt: t.createdAt,
+            _count: {
+                posts: Array.isArray(t.posts) ? t.posts.length : 0,
+            },
+        }));
+
+        return NextResponse.json(formatted);
     } catch (e: any) {
         console.error("Error fetching blog topics:", e);
         return NextResponse.json({ error: e.message || "Failed to load topics" }, { status: 500 });
@@ -54,41 +69,48 @@ export async function POST(req: NextRequest) {
         }
 
         // Check if topic already exists (case-insensitive)
-        const existing = await prisma.blogTopic.findFirst({
-            where: {
-                title: {
-                    equals: title,
-                    mode: "insensitive",
-                },
-            },
-        });
+        const { data: existingList } = await db
+            .from("BlogTopic")
+            .select("*")
+            .ilike("title", title)
+            .limit(1);
+
+        const existing = existingList?.[0];
 
         if (existing) {
             if (!existing.isActive) {
                 // Reactivate existing inactive topic
-                const reactivated = await prisma.blogTopic.update({
-                    where: { id: existing.id },
-                    data: { isActive: true, description: description || existing.description },
-                });
+                const { data: reactivated, error: reactError } = await db
+                    .from("BlogTopic")
+                    .update({ isActive: true, description: description || existing.description })
+                    .eq("id", existing.id)
+                    .select()
+                    .single();
+
+                if (reactError) throw reactError;
                 return NextResponse.json(reactivated, { status: 200 });
             }
             return NextResponse.json({ error: "A topic with this title already exists" }, { status: 409 });
         }
 
-        const topic = await prisma.blogTopic.create({
-            data: {
+        const newTopicId = uuidv4();
+        const { data: topic, error: insertError } = await db
+            .from("BlogTopic")
+            .insert({
+                id: newTopicId,
                 title,
                 description,
                 isActive: true,
-            },
-            include: {
-                _count: {
-                    select: { posts: true },
-                },
-            },
-        });
+            })
+            .select()
+            .single();
 
-        return NextResponse.json(topic, { status: 201 });
+        if (insertError) throw insertError;
+
+        return NextResponse.json({
+            ...topic,
+            _count: { posts: 0 },
+        }, { status: 201 });
     } catch (e: any) {
         console.error("Error creating blog topic:", e);
         return NextResponse.json({ error: e.message || "Failed to create topic" }, { status: 500 });
@@ -120,15 +142,14 @@ export async function PATCH(req: NextRequest) {
         if (description !== undefined) dataToUpdate.description = description ? description.trim() : null;
         if (isActive !== undefined) dataToUpdate.isActive = Boolean(isActive);
 
-        const topic = await prisma.blogTopic.update({
-            where: { id },
-            data: dataToUpdate,
-            include: {
-                _count: {
-                    select: { posts: true },
-                },
-            },
-        });
+        const { data: topic, error: updateError } = await db
+            .from("BlogTopic")
+            .update(dataToUpdate)
+            .eq("id", id)
+            .select()
+            .single();
+
+        if (updateError) throw updateError;
 
         return NextResponse.json(topic);
     } catch (e: any) {
@@ -163,22 +184,26 @@ export async function DELETE(req: NextRequest) {
         }
 
         // Check if there are posts attached
-        const postCount = await prisma.blogPost.count({
-            where: { topicId: id },
-        });
+        const { count, error: countError } = await db
+            .from("BlogPost")
+            .select("*", { count: "exact", head: true })
+            .eq("topicId", id);
 
-        if (postCount > 0) {
+        if (count && count > 0) {
             // Deactivate instead of hard deleting to preserve post references
-            await prisma.blogTopic.update({
-                where: { id },
-                data: { isActive: false },
-            });
+            await db
+                .from("BlogTopic")
+                .update({ isActive: false })
+                .eq("id", id);
             return NextResponse.json({ ok: true, message: "Topic has posts and was deactivated" });
         }
 
-        await prisma.blogTopic.delete({
-            where: { id },
-        });
+        const { error: deleteError } = await db
+            .from("BlogTopic")
+            .delete()
+            .eq("id", id);
+
+        if (deleteError) throw deleteError;
 
         return NextResponse.json({ ok: true, message: "Topic deleted successfully" });
     } catch (e: any) {

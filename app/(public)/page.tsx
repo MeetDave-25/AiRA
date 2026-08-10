@@ -246,7 +246,7 @@ export default function HomePage() {
                     setPointer({ x, y });
                 }}
                 onMouseLeave={() => setPointer({ x: 0, y: 0 })}
-                className="relative min-h-[88vh] sm:min-h-[92vh] lg:min-h-screen flex items-center overflow-hidden pt-20 pb-12 sm:pt-24 sm:pb-16 lg:py-0"
+                className="relative min-h-[92vh] lg:min-h-screen flex items-center overflow-hidden pt-32 pb-16 sm:pt-40 sm:pb-24 lg:pt-44 lg:pb-32"
             >
                 {/* Dynamic Aurora Ambient Light Beams */}
                 <div className="absolute top-0 inset-x-0 h-[450px] sm:h-[500px] bg-[radial-gradient(ellipse_75%_55%_at_65%_-10%,rgba(56,189,248,0.25),rgba(6,182,212,0.14)_45%,transparent_70%)] pointer-events-none z-[1]" />

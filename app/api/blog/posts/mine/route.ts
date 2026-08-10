@@ -1,24 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 // Member: fetch only their own posts (all statuses)
 export async function GET() {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const session: any = await getServerSession(authOptions as any);
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-        const posts = await prisma.blogPost.findMany({
-            where: { authorId: session.user.id },
-            include: {
-                topic:  { select: { id: true, title: true } },
-                _count: { select: { reviews: true } },
+        const { data: posts, error } = await db
+            .from("BlogPost")
+            .select(`
+                *,
+                topic:BlogTopic(id, title),
+                reviews:BlogReview(id)
+            `)
+            .eq("authorId", session.user.id)
+            .order("createdAt", { ascending: false });
+
+        if (error) throw error;
+
+        const formatted = (posts || []).map((p: any) => ({
+            ...p,
+            _count: {
+                reviews: Array.isArray(p.reviews) ? p.reviews.length : 0,
             },
-            orderBy: { createdAt: "desc" },
-        });
-        return NextResponse.json(posts);
+        }));
+
+        return NextResponse.json(formatted);
     } catch (e: any) {
+        console.error("Error fetching user's posts:", e);
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

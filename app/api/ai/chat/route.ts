@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/lib/db";
 import Groq from "groq-sdk";
 
 // Fast available models on Groq in priority order
@@ -32,38 +32,20 @@ export async function POST(req: NextRequest) {
 
         try {
             const results = await Promise.allSettled([
-                prisma.teamMemberProfile.findMany({
-                    orderBy: [{ isPresident: "desc" }, { sortOrder: "asc" }],
-                    take: 30,
-                }),
-                prisma.event.findMany({
-                    orderBy: { date: "desc" },
-                    take: 12,
-                }),
-                prisma.achievement.findMany({
-                    orderBy: { createdAt: "desc" },
-                    take: 8,
-                }),
-                prisma.labSetting.findMany(),
-                prisma.blogPost.findMany({
-                    where: { status: "PUBLISHED" },
-                    include: { author: true },
-                    orderBy: { createdAt: "desc" },
-                    take: 6,
-                }),
-                prisma.magazine.findMany({
-                    where: { status: "PUBLISHED" },
-                    orderBy: { createdAt: "desc" },
-                    take: 4,
-                }),
+                db.from("TeamMemberProfile").select("*").order("isPresident", { ascending: false }).order("sortOrder", { ascending: true }).limit(30),
+                db.from("Event").select("*").order("date", { ascending: false }).limit(12),
+                db.from("Achievement").select("*").order("createdAt", { ascending: false }).limit(8),
+                db.from("LabSetting").select("*"),
+                db.from("BlogPost").select("*, author:User(name, avatar)").eq("status", "PUBLISHED").order("createdAt", { ascending: false }).limit(6),
+                db.from("Magazine").select("*").eq("status", "PUBLISHED").order("createdAt", { ascending: false }).limit(4),
             ]);
 
-            if (results[0].status === "fulfilled") teamMembers = (results[0].value as any[]) || [];
-            if (results[1].status === "fulfilled") events = (results[1].value as any[]) || [];
-            if (results[2].status === "fulfilled") achievements = (results[2].value as any[]) || [];
-            if (results[3].status === "fulfilled") settings = (results[3].value as any[]) || [];
-            if (results[4].status === "fulfilled") blogs = (results[4].value as any[]) || [];
-            if (results[5].status === "fulfilled") magazines = (results[5].value as any[]) || [];
+            if (results[0].status === "fulfilled" && results[0].value.data) teamMembers = results[0].value.data;
+            if (results[1].status === "fulfilled" && results[1].value.data) events = results[1].value.data;
+            if (results[2].status === "fulfilled" && results[2].value.data) achievements = results[2].value.data;
+            if (results[3].status === "fulfilled" && results[3].value.data) settings = results[3].value.data;
+            if (results[4].status === "fulfilled" && results[4].value.data) blogs = results[4].value.data;
+            if (results[5].status === "fulfilled" && results[5].value.data) magazines = results[5].value.data;
         } catch (dbErr) {
             console.warn("DB fetch warning in AI route:", dbErr);
         }
