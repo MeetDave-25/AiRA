@@ -16,10 +16,14 @@ import {
     Trophy,
     CheckSquare,
     Sparkles,
+    BookOpen,
+    Newspaper,
 } from "lucide-react";
 
 const adminLinks = [
     { label: "Analytics", href: "/admin", icon: BarChart3 },
+    { label: "Blog & Topics", href: "/portal/admin/blog", icon: BookOpen },
+    { label: "Magazine Studio", href: "/portal/admin/magazine", icon: Newspaper },
     { label: "People", href: "/admin/team-members", icon: Users },
     { label: "Teams", href: "/admin/teams", icon: UsersRound },
     { label: "Tasks", href: "/admin/tasks", icon: CheckSquare },

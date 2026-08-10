@@ -29,10 +29,13 @@ export default function BlogWritePage() {
     const fileRef                   = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        fetch("/api/blog/topics").then(r => r.json()).then((topics: any[]) => {
-            const t = topics.find(t => t.id === topicId);
-            setTopic(t ?? null);
-        });
+        fetch("/api/blog/topics?all=true")
+            .then(r => r.json())
+            .then((topics: any[]) => {
+                const t = Array.isArray(topics) ? topics.find(t => t.id === topicId) : null;
+                setTopic(t ?? null);
+            })
+            .catch(() => setTopic(null));
     }, [topicId]);
 
     useEffect(() => {

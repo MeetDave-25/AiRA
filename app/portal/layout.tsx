@@ -80,9 +80,9 @@ export default function PortalLayout({
         { href: "/portal/team-members", label: "Team Members", icon: Users, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
         { href: "/portal/team-updates", label: "Team Updates", icon: MessageSquare, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
         // Blog & Magazine
-        { href: "/portal/blog", label: "Blog", icon: BookOpen, roles: ["ADMIN", "TEAM_LEAD", "TEAM_MEMBER"] },
-        { href: "/portal/admin/blog", label: "Blog Management", icon: BookOpen, roles: ["ADMIN"] },
-        { href: "/portal/admin/magazine", label: "Magazine Studio", icon: Newspaper, roles: ["ADMIN"] },
+        { href: "/portal/blog", label: "Blog", icon: BookOpen, roles: ["ADMIN", "CONTENT_MANAGER", "TEAM_LEAD", "TEAM_MEMBER"] },
+        { href: "/portal/admin/blog", label: "Blog Management", icon: BookOpen, roles: ["ADMIN", "CONTENT_MANAGER", "TEAM_LEAD"] },
+        { href: "/portal/admin/magazine", label: "Magazine Studio", icon: Newspaper, roles: ["ADMIN", "CONTENT_MANAGER", "TEAM_LEAD"] },
         // Reports & Admin
         { href: "/admin/reports", label: "Team Reports", icon: FileText, roles: ["ADMIN"] },
         { href: "/admin/applications", label: "Applications", icon: FileText, roles: ["ADMIN"] },
