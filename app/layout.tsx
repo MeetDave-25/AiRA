@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import SessionProvider from "@/components/providers/SessionProvider";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
 import PwaProvider from "@/components/providers/PwaProvider";
+
 export const metadata: Metadata = {
     title: "AiRA Lab — Innovation & Research Laboratory",
     description: "AiRA Lab is a premier college innovation lab fostering creativity, technology, and excellence through events, research, and collaborative projects.",
@@ -24,6 +26,9 @@ export const metadata: Metadata = {
         description: "Where Innovation Meets Excellence",
         type: "website",
     },
+    other: {
+        "google-adsense-account": "ca-pub-3747182240775238",
+    },
 };
 
 export const viewport: Viewport = {
@@ -38,6 +43,15 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en" className="dark">
+            <head>
+                {/* ══ GOOGLE ADSENSE SCRIPT ══ */}
+                <Script
+                    async
+                    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3747182240775238"
+                    crossOrigin="anonymous"
+                    strategy="afterInteractive"
+                />
+            </head>
             <body className="bg-aira-bg text-slate-100 font-grotesk antialiased">
                 <SessionProvider>
                     <NotificationProvider>
