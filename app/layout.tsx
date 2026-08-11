@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import SessionProvider from "@/components/providers/SessionProvider";
@@ -44,12 +43,12 @@ export default function RootLayout({
     return (
         <html lang="en" className="dark">
             <head>
-                {/* ══ GOOGLE ADSENSE SCRIPT ══ */}
-                <Script
+                {/* ══ GOOGLE ADSENSE VERIFICATION META & SCRIPT ══ */}
+                <meta name="google-adsense-account" content="ca-pub-3747182240775238" />
+                <script
                     async
                     src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3747182240775238"
                     crossOrigin="anonymous"
-                    strategy="afterInteractive"
                 />
             </head>
             <body className="bg-aira-bg text-slate-100 font-grotesk antialiased">
