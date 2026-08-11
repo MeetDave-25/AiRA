@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import AnimatedModal from "@/components/ui/AnimatedModal";
 import { uploadDirectFile } from "@/lib/upload-client";
 
 export default function AdminMagazinePage() {
@@ -277,281 +276,299 @@ export default function AdminMagazinePage() {
             </div>
 
             {/* ══ MODAL: CREATE NEW MAGAZINE ══ */}
-            <AnimatedModal isOpen={showCreate} onClose={() => setShowCreate(false)}>
-                <div className="glass p-6 sm:p-8 rounded-3xl border border-white/15 max-w-lg w-full space-y-5 bg-slate-950/95">
-                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                        <div className="flex items-center gap-2.5">
-                            <span className="p-2 rounded-xl bg-aira-magenta/20 text-aira-magenta border border-aira-magenta/40">
-                                <BookOpen size={18} />
-                            </span>
-                            <h2 className="font-orbitron font-bold text-lg text-white">
-                                Create Magazine Edition
-                            </h2>
-                        </div>
-                        <button onClick={() => setShowCreate(false)} className="text-slate-400 hover:text-white p-1 rounded-lg">
-                            <X size={18} />
-                        </button>
-                    </div>
-
-                    <form onSubmit={createMagazine} className="space-y-4">
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-slate-300">
-                                Magazine Title <span className="text-rose-400">*</span>
-                            </label>
-                            <input
-                                value={formTitle}
-                                onChange={e => setFormTitle(e.target.value)}
-                                placeholder="e.g. AiRA Lab Quarterly: Frontiers of Robotics"
-                                required
-                                className="w-full bg-slate-900/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-aira-magenta"
-                            />
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-slate-300">
-                                Edition / Volume Tag <span className="text-rose-400">*</span>
-                            </label>
-                            <input
-                                value={formEdition}
-                                onChange={e => setFormEdition(e.target.value)}
-                                placeholder="e.g. Vol. 1 · Issue 4 (Q3 2026)"
-                                required
-                                className="w-full bg-slate-900/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-aira-magenta"
-                            />
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-slate-300">
-                                Description / Editorial Abstract
-                            </label>
-                            <textarea
-                                value={formDesc}
-                                onChange={e => setFormDesc(e.target.value)}
-                                rows={3}
-                                placeholder="Short synopsis about this magazine edition..."
-                                className="w-full bg-slate-900/80 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-aira-magenta resize-none"
-                            />
-                        </div>
-
-                        {/* Cover Image Upload */}
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-slate-300">
-                                Cover Photo
-                            </label>
-                            {formCover ? (
-                                <div className="relative rounded-2xl overflow-hidden aspect-[16/8] border border-white/10 group">
-                                    <img src={formCover} alt="Cover preview" className="w-full h-full object-cover" />
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormCover("")}
-                                        className="absolute top-2 right-2 p-1.5 bg-black/70 rounded-full text-white hover:bg-rose-600 transition-colors"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                </div>
-                            ) : (
-                                <button
-                                    type="button"
-                                    onClick={() => createCoverFileRef.current?.click()}
-                                    disabled={uploadingCover}
-                                    className="w-full py-4 border-2 border-dashed border-white/15 hover:border-aira-magenta/50 rounded-2xl flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:text-white transition-all bg-white/[0.02]"
-                                >
-                                    {uploadingCover ? (
-                                        <Loader2 size={20} className="animate-spin text-aira-magenta" />
-                                    ) : (
-                                        <UploadCloud size={20} className="text-aira-magenta" />
-                                    )}
-                                    <span className="text-xs font-medium">
-                                        {uploadingCover ? "Uploading Cover..." : "Click to Upload Magazine Cover Photo"}
+            <AnimatePresence>
+                {showCreate && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="glass-strong p-6 sm:p-8 rounded-3xl border border-white/15 max-w-lg w-full space-y-5 bg-slate-950/95 shadow-2xl max-h-[90vh] overflow-y-auto"
+                        >
+                            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                                <div className="flex items-center gap-2.5">
+                                    <span className="p-2 rounded-xl bg-aira-magenta/20 text-aira-magenta border border-aira-magenta/40">
+                                        <BookOpen size={18} />
                                     </span>
-                                </button>
-                            )}
-                            <input
-                                ref={createCoverFileRef}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={e => e.target.files?.[0] && void handleCreateCoverUpload(e.target.files[0])}
-                            />
-                        </div>
-
-                        <div className="pt-2 flex items-center justify-end gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setShowCreate(false)}
-                                className="px-4 py-2.5 rounded-xl border border-white/10 text-xs text-slate-400 hover:text-white"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={creating || uploadingCover}
-                                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-aira-magenta to-pink-500 text-white font-semibold text-xs flex items-center gap-2 hover:scale-105 transition-transform disabled:opacity-50"
-                            >
-                                {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-                                <span>Create Edition</span>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </AnimatedModal>
-
-            {/* ══ MODAL: EDIT EXISTING MAGAZINE ══ */}
-            <AnimatedModal isOpen={Boolean(editingMag)} onClose={() => setEditingMag(null)}>
-                <div className="glass p-6 sm:p-8 rounded-3xl border border-white/15 max-w-lg w-full space-y-5 bg-slate-950/95">
-                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                        <div className="flex items-center gap-2.5">
-                            <span className="p-2 rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/40">
-                                <Edit2 size={18} />
-                            </span>
-                            <h2 className="font-orbitron font-bold text-lg text-white">
-                                Edit Magazine Edition
-                            </h2>
-                        </div>
-                        <button onClick={() => setEditingMag(null)} className="text-slate-400 hover:text-white p-1 rounded-lg">
-                            <X size={18} />
-                        </button>
-                    </div>
-
-                    <form onSubmit={handleSaveEdit} className="space-y-4">
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-slate-300">
-                                Magazine Title <span className="text-rose-400">*</span>
-                            </label>
-                            <input
-                                value={editTitle}
-                                onChange={e => setEditTitle(e.target.value)}
-                                required
-                                className="w-full bg-slate-900/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400"
-                            />
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-slate-300">
-                                Edition / Volume Tag <span className="text-rose-400">*</span>
-                            </label>
-                            <input
-                                value={editEdition}
-                                onChange={e => setEditEdition(e.target.value)}
-                                required
-                                className="w-full bg-slate-900/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400"
-                            />
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-slate-300">
-                                Description
-                            </label>
-                            <textarea
-                                value={editDesc}
-                                onChange={e => setEditDesc(e.target.value)}
-                                rows={3}
-                                className="w-full bg-slate-900/80 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 resize-none"
-                            />
-                        </div>
-
-                        {/* Status Switch */}
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-slate-300">
-                                Publication Status
-                            </label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setEditStatus("DRAFT")}
-                                    className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                                        editStatus === "DRAFT"
-                                            ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                                            : "bg-white/5 border-white/10 text-slate-400"
-                                    }`}
-                                >
-                                    <Clock size={14} /> Draft
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setEditStatus("PUBLISHED")}
-                                    className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                                        editStatus === "PUBLISHED"
-                                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                                            : "bg-white/5 border-white/10 text-slate-400"
-                                    }`}
-                                >
-                                    <CheckCircle2 size={14} /> Published
+                                    <h2 className="font-orbitron font-bold text-lg text-white">
+                                        Create Magazine Edition
+                                    </h2>
+                                </div>
+                                <button onClick={() => setShowCreate(false)} className="text-slate-400 hover:text-white p-1 rounded-lg">
+                                    <X size={18} />
                                 </button>
                             </div>
-                        </div>
 
-                        {/* Cover Image Upload */}
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-slate-300">
-                                Cover Photo
-                            </label>
-                            {editCover ? (
-                                <div className="relative rounded-2xl overflow-hidden aspect-[16/8] border border-white/10 group">
-                                    <img src={editCover} alt="Cover preview" className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <form onSubmit={createMagazine} className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <label className="block text-xs font-semibold text-slate-300">
+                                        Magazine Title <span className="text-rose-400">*</span>
+                                    </label>
+                                    <input
+                                        value={formTitle}
+                                        onChange={e => setFormTitle(e.target.value)}
+                                        placeholder="e.g. AiRA Lab Quarterly: Frontiers of Robotics"
+                                        required
+                                        className="w-full bg-slate-900/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-aira-magenta"
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="block text-xs font-semibold text-slate-300">
+                                        Edition / Volume Tag <span className="text-rose-400">*</span>
+                                    </label>
+                                    <input
+                                        value={formEdition}
+                                        onChange={e => setFormEdition(e.target.value)}
+                                        placeholder="e.g. Vol. 1 · Issue 4 (Q3 2026)"
+                                        required
+                                        className="w-full bg-slate-900/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-aira-magenta"
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="block text-xs font-semibold text-slate-300">
+                                        Description / Editorial Abstract
+                                    </label>
+                                    <textarea
+                                        value={formDesc}
+                                        onChange={e => setFormDesc(e.target.value)}
+                                        rows={3}
+                                        placeholder="Short synopsis about this magazine edition..."
+                                        className="w-full bg-slate-900/80 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-aira-magenta resize-none"
+                                    />
+                                </div>
+
+                                {/* Cover Image Upload */}
+                                <div className="space-y-1.5">
+                                    <label className="block text-xs font-semibold text-slate-300">
+                                        Cover Photo
+                                    </label>
+                                    {formCover ? (
+                                        <div className="relative rounded-2xl overflow-hidden aspect-[16/8] border border-white/10 group">
+                                            <img src={formCover} alt="Cover preview" className="w-full h-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormCover("")}
+                                                className="absolute top-2 right-2 p-1.5 bg-black/70 rounded-full text-white hover:bg-rose-600 transition-colors"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ) : (
                                         <button
                                             type="button"
-                                            onClick={() => editCoverFileRef.current?.click()}
-                                            className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-xl text-white text-xs font-medium"
+                                            onClick={() => createCoverFileRef.current?.click()}
+                                            disabled={uploadingCover}
+                                            className="w-full py-4 border-2 border-dashed border-white/15 hover:border-aira-magenta/50 rounded-2xl flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:text-white transition-all bg-white/[0.02]"
                                         >
-                                            Change Photo
+                                            {uploadingCover ? (
+                                                <Loader2 size={20} className="animate-spin text-aira-magenta" />
+                                            ) : (
+                                                <UploadCloud size={20} className="text-aira-magenta" />
+                                            )}
+                                            <span className="text-xs font-medium">
+                                                {uploadingCover ? "Uploading Cover..." : "Click to Upload Magazine Cover Photo"}
+                                            </span>
+                                        </button>
+                                    )}
+                                    <input
+                                        ref={createCoverFileRef}
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={e => e.target.files?.[0] && void handleCreateCoverUpload(e.target.files[0])}
+                                    />
+                                </div>
+
+                                <div className="pt-2 flex items-center justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCreate(false)}
+                                        className="px-4 py-2.5 rounded-xl border border-white/10 text-xs text-slate-400 hover:text-white"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={creating || uploadingCover}
+                                        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-aira-magenta to-pink-500 text-white font-semibold text-xs flex items-center gap-2 hover:scale-105 transition-transform disabled:opacity-50"
+                                    >
+                                        {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                                        <span>Create Edition</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* ══ MODAL: EDIT EXISTING MAGAZINE ══ */}
+            <AnimatePresence>
+                {Boolean(editingMag) && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="glass-strong p-6 sm:p-8 rounded-3xl border border-white/15 max-w-lg w-full space-y-5 bg-slate-950/95 shadow-2xl max-h-[90vh] overflow-y-auto"
+                        >
+                            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                                <div className="flex items-center gap-2.5">
+                                    <span className="p-2 rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/40">
+                                        <Edit2 size={18} />
+                                    </span>
+                                    <h2 className="font-orbitron font-bold text-lg text-white">
+                                        Edit Magazine Edition
+                                    </h2>
+                                </div>
+                                <button onClick={() => setEditingMag(null)} className="text-slate-400 hover:text-white p-1 rounded-lg">
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSaveEdit} className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <label className="block text-xs font-semibold text-slate-300">
+                                        Magazine Title <span className="text-rose-400">*</span>
+                                    </label>
+                                    <input
+                                        value={editTitle}
+                                        onChange={e => setEditTitle(e.target.value)}
+                                        required
+                                        className="w-full bg-slate-900/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400"
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="block text-xs font-semibold text-slate-300">
+                                        Edition / Volume Tag <span className="text-rose-400">*</span>
+                                    </label>
+                                    <input
+                                        value={editEdition}
+                                        onChange={e => setEditEdition(e.target.value)}
+                                        required
+                                        className="w-full bg-slate-900/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400"
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="block text-xs font-semibold text-slate-300">
+                                        Description
+                                    </label>
+                                    <textarea
+                                        value={editDesc}
+                                        onChange={e => setEditDesc(e.target.value)}
+                                        rows={3}
+                                        className="w-full bg-slate-900/80 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 resize-none"
+                                    />
+                                </div>
+
+                                {/* Status Switch */}
+                                <div className="space-y-1.5">
+                                    <label className="block text-xs font-semibold text-slate-300">
+                                        Publication Status
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditStatus("DRAFT")}
+                                            className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                                                editStatus === "DRAFT"
+                                                    ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                                    : "bg-white/5 border-white/10 text-slate-400"
+                                            }`}
+                                        >
+                                            <Clock size={14} /> Draft
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => setEditCover("")}
-                                            className="p-1.5 bg-rose-600 rounded-xl text-white text-xs"
+                                            onClick={() => setEditStatus("PUBLISHED")}
+                                            className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                                                editStatus === "PUBLISHED"
+                                                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                                    : "bg-white/5 border-white/10 text-slate-400"
+                                            }`}
                                         >
-                                            <Trash2 size={14} />
+                                            <CheckCircle2 size={14} /> Published
                                         </button>
                                     </div>
                                 </div>
-                            ) : (
-                                <button
-                                    type="button"
-                                    onClick={() => editCoverFileRef.current?.click()}
-                                    disabled={isUploadingEditCover}
-                                    className="w-full py-4 border-2 border-dashed border-white/15 hover:border-sky-400/50 rounded-2xl flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:text-white transition-all bg-white/[0.02]"
-                                >
-                                    {isUploadingEditCover ? (
-                                        <Loader2 size={20} className="animate-spin text-sky-400" />
-                                    ) : (
-                                        <UploadCloud size={20} className="text-sky-400" />
-                                    )}
-                                    <span className="text-xs font-medium">
-                                        {isUploadingEditCover ? "Uploading Cover..." : "Upload New Magazine Cover Photo"}
-                                    </span>
-                                </button>
-                            )}
-                            <input
-                                ref={editCoverFileRef}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={e => e.target.files?.[0] && void handleEditCoverUpload(e.target.files[0])}
-                            />
-                        </div>
 
-                        <div className="pt-2 flex items-center justify-end gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setEditingMag(null)}
-                                className="px-4 py-2.5 rounded-xl border border-white/10 text-xs text-slate-400 hover:text-white"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={isSavingEdit || isUploadingEditCover}
-                                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-400 to-cyan-300 text-slate-950 font-bold text-xs flex items-center gap-2 hover:scale-105 transition-transform disabled:opacity-50"
-                            >
-                                {isSavingEdit ? <Loader2 size={14} className="animate-spin text-slate-950" /> : <Save size={14} />}
-                                <span>Save Changes</span>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </AnimatedModal>
+                                {/* Cover Image Upload */}
+                                <div className="space-y-1.5">
+                                    <label className="block text-xs font-semibold text-slate-300">
+                                        Cover Photo
+                                    </label>
+                                    {editCover ? (
+                                        <div className="relative rounded-2xl overflow-hidden aspect-[16/8] border border-white/10 group">
+                                            <img src={editCover} alt="Cover preview" className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => editCoverFileRef.current?.click()}
+                                                    className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-xl text-white text-xs font-medium"
+                                                >
+                                                    Change Photo
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditCover("")}
+                                                    className="p-1.5 bg-rose-600 rounded-xl text-white text-xs"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => editCoverFileRef.current?.click()}
+                                            disabled={isUploadingEditCover}
+                                            className="w-full py-4 border-2 border-dashed border-white/15 hover:border-sky-400/50 rounded-2xl flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:text-white transition-all bg-white/[0.02]"
+                                        >
+                                            {isUploadingEditCover ? (
+                                                <Loader2 size={20} className="animate-spin text-sky-400" />
+                                            ) : (
+                                                <UploadCloud size={20} className="text-sky-400" />
+                                            )}
+                                            <span className="text-xs font-medium">
+                                                {isUploadingEditCover ? "Uploading Cover..." : "Upload New Magazine Cover Photo"}
+                                            </span>
+                                        </button>
+                                    )}
+                                    <input
+                                        ref={editCoverFileRef}
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={e => e.target.files?.[0] && void handleEditCoverUpload(e.target.files[0])}
+                                    />
+                                </div>
+
+                                <div className="pt-2 flex items-center justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditingMag(null)}
+                                        className="px-4 py-2.5 rounded-xl border border-white/10 text-xs text-slate-400 hover:text-white"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isSavingEdit || isUploadingEditCover}
+                                        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-400 to-cyan-300 text-slate-950 font-bold text-xs flex items-center gap-2 hover:scale-105 transition-transform disabled:opacity-50"
+                                    >
+                                        {isSavingEdit ? <Loader2 size={14} className="animate-spin text-slate-950" /> : <Save size={14} />}
+                                        <span>Save Changes</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* ══ TWO COLUMN WORKSPACE ══ */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
