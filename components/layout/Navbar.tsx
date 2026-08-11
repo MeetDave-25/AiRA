@@ -13,6 +13,7 @@ import { Logo } from "@/components/ui/Logo";
 const navLinks = [
     { href: "/", label: "Home" },
     { href: "/about", label: "About Us" },
+    { href: "/projects", label: "Projects" },
     { href: "/leadership", label: "Leadership" },
     { href: "/events", label: "Events" },
     { href: "/blog", label: "Blog" },

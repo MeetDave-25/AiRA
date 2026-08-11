@@ -701,43 +701,9 @@ export default function AboutPage() {
                     {/* Orbit 2 closed */}
                 </div>
 
-                {/* ══ QUICK WING / LEADER SELECTOR TABS ══ */}
-                <div className="mt-12 text-center z-20 w-full max-w-4xl px-4 space-y-4">
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                        {/* All Team Leaders Button */}
-                        <button
-                            onClick={() => setActiveLeader(null)}
-                            className={`px-4 py-2 rounded-xl text-xs font-orbitron font-bold transition-all border ${
-                                !activeLeader
-                                    ? "bg-gradient-to-r from-aira-cyan to-blue-500 text-slate-950 shadow-md shadow-aira-cyan/20 border-transparent scale-105"
-                                    : "glass border-white/10 text-slate-300 hover:text-white hover:bg-white/5"
-                            }`}
-                        >
-                            🌐 All Team Leaders Orbit
-                        </button>
-
-                        {/* Each Individual Team Leader Tab */}
-                        {teamLeaders.map((lead: any) => {
-                            const isSelected = activeLeader?.id === lead.id;
-                            return (
-                                <button
-                                    key={lead.id}
-                                    onClick={() => setActiveLeader(lead)}
-                                    className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all border flex items-center gap-1.5 ${
-                                        isSelected
-                                            ? "bg-gradient-to-r from-amber-400 to-amber-600 text-slate-950 font-bold shadow-md shadow-amber-500/20 border-transparent scale-105"
-                                            : "glass border-white/10 text-slate-300 hover:text-white hover:bg-white/5"
-                                    }`}
-                                >
-                                    <span>👑 {lead.name}</span>
-                                    <span className="text-[10px] opacity-75 font-mono">({lead.teamGroup || "Lead"})</span>
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* Orbit Speed & Interaction Hint Controls */}
-                    <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-400 pt-2">
+                {/* ══ ORBIT CONTROLS & HINTS ══ */}
+                <div className="mt-10 text-center z-20 w-full max-w-2xl px-4">
+                    <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-400">
                         <span className="px-3.5 py-1.5 rounded-full glass border border-white/10 inline-flex items-center gap-1.5 shadow-lg shadow-black/40">
                             <Sparkles size={13} className="text-aira-cyan animate-pulse" /> 
                             {activeLeader 

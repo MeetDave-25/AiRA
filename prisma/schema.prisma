@@ -287,3 +287,44 @@ model MagazinePost {
   @@index([magazineId, sortOrder])
 }
 
+// ═══════════════════════════════════════════
+// COMMUNITY PROJECT SHOWCASE & REVIEWS
+// ═══════════════════════════════════════════
+
+model Project {
+  id          String          @id @default(cuid())
+  title       String
+  tagline     String?
+  description String
+  category    String          @default("General")
+  coverImage  String?
+  demoUrl     String?
+  githubUrl   String?
+  tags        String[]        @default([])
+  featured    Boolean         @default(false)
+  status      String          @default("PUBLISHED")
+  authorId    String?
+  authorName  String?
+  likes       Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  reviews     ProjectReview[]
+
+  @@index([status, category])
+  @@index([featured])
+}
+
+model ProjectReview {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  authorName  String
+  authorEmail String?
+  rating      Int      @default(5)
+  comment     String
+  createdAt   DateTime @default(now())
+
+  @@index([projectId, createdAt])
+}
+
+
