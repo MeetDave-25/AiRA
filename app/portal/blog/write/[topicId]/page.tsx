@@ -31,6 +31,8 @@ import {
     FileText
 } from "lucide-react";
 import MediumArticleContent from "@/components/ui/MediumArticleContent";
+import { uploadDirectFile } from "@/lib/upload-client";
+import toast from "react-hot-toast";
 
 export default function BlogWritePage() {
     const { topicId }    = useParams<{ topicId: string }>();
@@ -49,10 +51,12 @@ export default function BlogWritePage() {
     const [saving, setSaving]       = useState(false);
     const [publishing, setPublishing] = useState(false);
     const [msg, setMsg]             = useState("");
-    const [postId, setPostId]       = useState<string | null>(editId);
+    const [isUploadingCover, setIsUploadingCover] = useState(false);
+    const [isUploadingInline, setIsUploadingInline] = useState(false);
     
-    const fileRef                   = useRef<HTMLInputElement>(null);
-    const textareaRef               = useRef<HTMLTextAreaElement>(null);
+    const coverFileRef = useRef<HTMLInputElement>(null);
+    const inlineFileRef = useRef<HTMLInputElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         fetch("/api/blog/topics?all=true")
@@ -78,12 +82,43 @@ export default function BlogWritePage() {
             });
     }, [editId]);
 
-    const handleImageUpload = async (file: File) => {
-        const form = new FormData();
-        form.append("file", file);
-        const res = await fetch("/api/blog/upload", { method: "POST", body: form });
-        const data = await res.json();
-        if (data.url) setCoverUrl(data.url);
+    const handleCoverUpload = async (file: File) => {
+        if (!file) return;
+        setIsUploadingCover(true);
+        const toastId = toast.loading("Uploading cover photo...");
+        try {
+            const uploaded = await uploadDirectFile(file, { bucket: "uploads", folder: "blog" });
+            if (uploaded?.url) {
+                setCoverUrl(uploaded.url);
+                toast.success("Cover image attached!", { id: toastId });
+            } else {
+                throw new Error("Upload failed");
+            }
+        } catch (error: any) {
+            toast.error(error?.message || "Failed to upload cover photo", { id: toastId });
+        } finally {
+            setIsUploadingCover(false);
+        }
+    };
+
+    const handleInlineImageUpload = async (file: File) => {
+        if (!file) return;
+        setIsUploadingInline(true);
+        const toastId = toast.loading("Uploading article image...");
+        try {
+            const uploaded = await uploadDirectFile(file, { bucket: "uploads", folder: "blog" });
+            if (uploaded?.url) {
+                const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+                insertBlock(`\n\n![${fileNameWithoutExt}](${uploaded.url})\n\n`);
+                toast.success("Image inserted into article!", { id: toastId });
+            } else {
+                throw new Error("Upload failed");
+            }
+        } catch (error: any) {
+            toast.error(error?.message || "Failed to upload image", { id: toastId });
+        } finally {
+            setIsUploadingInline(false);
+        }
     };
 
     const addTag = () => {
@@ -243,12 +278,24 @@ export default function BlogWritePage() {
             <div className="flex flex-wrap items-center justify-between gap-3 p-4 glass rounded-2xl border border-white/10">
                 <div className="flex items-center gap-2 flex-wrap">
                     <button
-                        onClick={() => fileRef.current?.click()}
-                        className="flex items-center gap-1.5 px-3 py-2 glass border border-white/10 hover:border-aira-cyan/40 rounded-xl text-xs text-slate-200 hover:text-white transition-all shadow-sm"
+                        type="button"
+                        onClick={() => coverFileRef.current?.click()}
+                        disabled={isUploadingCover}
+                        className="flex items-center gap-1.5 px-3.5 py-2 glass border border-white/10 hover:border-aira-cyan/40 rounded-xl text-xs text-slate-200 hover:text-white transition-all shadow-sm disabled:opacity-50"
                     >
-                        <ImageIcon size={14} className="text-aira-cyan" /> {coverUrl ? "Change Cover" : "Add Cover Image"}
+                        {isUploadingCover ? <Loader2 size={14} className="animate-spin text-aira-cyan" /> : <ImageIcon size={14} className="text-aira-cyan" />}
+                        <span>{isUploadingCover ? "Uploading..." : coverUrl ? "Change Cover Photo" : "Add Cover Photo"}</span>
                     </button>
-                    <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0])} />
+                    <input 
+                        ref={coverFileRef} 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) void handleCoverUpload(file);
+                        }} 
+                    />
 
                     <div className="h-4 w-px bg-white/10 mx-1 hidden sm:block" />
 

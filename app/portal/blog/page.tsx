@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PenLine, BookOpen, Users, Clock, Star, CheckCircle, XCircle, FileText, Plus, X, Loader2, Sparkles, ShieldCheck } from "lucide-react";
@@ -71,6 +72,8 @@ export default function MemberBlogPage() {
         }
     }, [activeTab, session]);
 
+    const router = useRouter();
+
     const handleCreateTopic = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newTitle.trim()) {
@@ -90,12 +93,12 @@ export default function MemberBlogPage() {
             });
 
             const data = await res.json().catch(() => ({}));
-            if (res.ok) {
-                toast.success("Topic created successfully!");
+            if (res.ok && data.id) {
+                toast.success("Topic created! Opening writing studio...");
                 setNewTitle("");
                 setNewDesc("");
                 setShowCreateModal(false);
-                loadTopics();
+                router.push(`/portal/blog/write/${data.id}`);
             } else {
                 toast.error(data.error || "Failed to create topic");
             }
@@ -120,7 +123,7 @@ export default function MemberBlogPage() {
                         className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-400 to-cyan-300 hover:from-sky-300 hover:to-cyan-200 text-slate-950 font-bold text-xs font-orbitron tracking-wider shadow-md shadow-sky-400/20 transition-all cursor-pointer"
                     >
                         <Plus size={14} />
-                        <span>Create Topic</span>
+                        <span>Create Topic &amp; Write</span>
                     </button>
 
                     {isPrivileged && (

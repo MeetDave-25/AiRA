@@ -40,9 +40,17 @@ export default function BlogPage() {
                 <h1 className="font-orbitron font-black text-4xl sm:text-6xl text-white mb-4">
                     AiRA <span className="gradient-text">Blog</span>
                 </h1>
-                <p className="text-slate-400 max-w-xl mx-auto text-sm leading-relaxed">
+                <p className="text-slate-400 max-w-xl mx-auto text-sm leading-relaxed mb-6">
                     Insights, research notes, and innovation stories written by AiRA Lab members.
                 </p>
+                <div className="flex items-center justify-center gap-3">
+                    <Link
+                        href="/portal/blog"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-aira-cyan via-sky-400 to-indigo-500 text-slate-950 font-orbitron font-bold text-xs hover:scale-105 transition-all shadow-lg shadow-aira-cyan/20"
+                    >
+                        <span>✍️ Write an Article</span>
+                    </Link>
+                </div>
             </motion.div>
 
             {/* ── Search + Tag filters ── */}

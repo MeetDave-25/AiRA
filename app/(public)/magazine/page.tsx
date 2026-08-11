@@ -30,9 +30,17 @@ export default function MagazinePage() {
                 <h1 className="font-orbitron font-black text-4xl sm:text-6xl text-white mb-4">
                     AiRA <span className="gradient-text-magenta">Magazine</span>
                 </h1>
-                <p className="text-slate-400 max-w-lg mx-auto text-sm leading-relaxed">
+                <p className="text-slate-400 max-w-lg mx-auto text-sm leading-relaxed mb-6">
                     Curated editions of our best community blog posts — selected and compiled by the AiRA Lab team.
                 </p>
+                <div className="flex items-center justify-center gap-3">
+                    <Link
+                        href="/portal/admin/magazine"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-aira-magenta to-pink-500 text-white font-orbitron font-bold text-xs hover:scale-105 transition-all shadow-lg shadow-pink-500/20"
+                    >
+                        <span>📖 Magazine Studio (Curate)</span>
+                    </Link>
+                </div>
             </motion.div>
 
             {loading ? (

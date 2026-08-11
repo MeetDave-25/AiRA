@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { requireAdmin } from "@/lib/admin-guard";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase";
 
 const ALLOWED_BUCKETS = new Set(["uploads", "events"]);
@@ -12,15 +13,21 @@ function sanitizeSegment(input: string) {
 }
 
 export async function POST(req: NextRequest) {
-    const auth = await requireAdmin();
-    if (auth.error) return auth.error;
-
     try {
         const body = await req.json();
         const bucket = typeof body.bucket === "string" && ALLOWED_BUCKETS.has(body.bucket) ? body.bucket : "uploads";
         const folder = typeof body.folder === "string" ? sanitizeSegment(body.folder) : "general";
         const filename = typeof body.filename === "string" ? body.filename : "";
         const contentType = typeof body.contentType === "string" ? body.contentType : "";
+
+        // Check authentication: allow public for application photos, require login for members
+        const isPublicAllowed = folder.startsWith("applications") || folder.startsWith("applicant");
+        if (!isPublicAllowed) {
+            const session = await getServerSession(authOptions);
+            if (!session?.user) {
+                return NextResponse.json({ error: "Unauthorized: Please log in to upload" }, { status: 401 });
+            }
+        }
 
         if (!filename) {
             return NextResponse.json({ error: "Filename is required" }, { status: 400 });

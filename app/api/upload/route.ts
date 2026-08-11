@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { requireAdmin } from "@/lib/admin-guard";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
@@ -12,26 +13,24 @@ export async function POST(req: NextRequest) {
         const isPublicApplicationUpload = type === "applications" || type === "applicant";
 
         if (!isPublicApplicationUpload) {
-            const auth = await requireAdmin();
-            if (auth.error) return auth.error;
+            const session = await getServerSession(authOptions);
+            if (!session?.user) {
+                return NextResponse.json({ error: "Unauthorized: Please log in to upload files" }, { status: 401 });
+            }
         }
 
         if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
-        // If public upload, validate that it's an image and reasonable size (< 8MB)
-        if (isPublicApplicationUpload) {
-            if (!file.type.startsWith("image/")) {
-                return NextResponse.json({ error: "Only image files are allowed for application profile pictures" }, { status: 400 });
-            }
-            if (file.size > 8 * 1024 * 1024) {
-                return NextResponse.json({ error: "Image size must be less than 8MB" }, { status: 400 });
-            }
+        // Validate image/file size (< 15MB)
+        if (file.size > 15 * 1024 * 1024) {
+            return NextResponse.json({ error: "File size must be less than 15MB" }, { status: 400 });
         }
 
         const supabase = createSupabaseAdmin();
         const ext = file.name.split(".").pop();
-        const filename = `${uuidv4()}.${ext}`;
-        const uploadPath = `${type}/${filename}`; // Type defines the subfolder
+        const safeExt = ext ? `.${ext.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()}` : "";
+        const filename = `${uuidv4()}${safeExt}`;
+        const uploadPath = `${type}/${filename}`;
 
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
@@ -41,7 +40,7 @@ export async function POST(req: NextRequest) {
             .upload(uploadPath, buffer, {
                 cacheControl: "3600",
                 upsert: false,
-                contentType: file.type,
+                contentType: file.type || "application/octet-stream",
             });
 
         if (storageError) {
@@ -51,7 +50,7 @@ export async function POST(req: NextRequest) {
 
         const { data: publicUrlData } = supabase.storage.from("uploads").getPublicUrl(uploadPath);
 
-        return NextResponse.json({ url: publicUrlData.publicUrl });
+        return NextResponse.json({ url: publicUrlData.publicUrl, path: uploadPath });
     } catch (error: any) {
         console.error("Upload error:", error);
         return NextResponse.json({ error: error?.message || "Upload failed" }, { status: 500 });
