@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Star, Clock, User, BookOpen, Send } from "lucide-react";
+import { ArrowLeft, Star, Clock, User, BookOpen, Send, Share2 } from "lucide-react";
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import MediumArticleContent from "@/components/ui/MediumArticleContent";
 
 export default function BlogPostPage() {
     const { id }       = useParams<{ id: string }>();
@@ -136,16 +135,14 @@ export default function BlogPostPage() {
                 </div>
             </motion.div>
 
-            {/* Content */}
+            {/* Content (Medium-style Typography & Spacing) */}
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="prose prose-invert prose-sm sm:prose-base max-w-none prose-headings:font-orbitron prose-headings:text-white prose-a:text-aira-cyan prose-code:bg-white/10 prose-code:rounded prose-pre:bg-black/40 prose-pre:rounded-xl prose-blockquote:border-l-aira-cyan prose-blockquote:text-slate-300 mb-12"
+                className="mb-14"
             >
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {post.content}
-                </ReactMarkdown>
+                <MediumArticleContent content={post.content} />
             </motion.div>
 
             {/* ── Reviews Section ── */}

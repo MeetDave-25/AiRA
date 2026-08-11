@@ -5,8 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ChevronLeft, ChevronRight, Star, Clock, User, BookOpen } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import MediumArticleContent from "@/components/ui/MediumArticleContent";
 
 export default function MagazineReaderPage() {
     const { id }        = useParams<{ id: string }>();
@@ -122,11 +121,9 @@ export default function MagazineReaderPage() {
                                         )}
                                     </div>
 
-                                    {/* Content */}
-                                    <div className="prose prose-invert prose-sm sm:prose-base max-w-none prose-headings:font-orbitron prose-a:text-aira-cyan prose-code:bg-white/10 prose-code:rounded prose-pre:bg-black/40 prose-pre:rounded-xl prose-blockquote:border-aira-cyan prose-blockquote:text-slate-300">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                            {current.content}
-                                        </ReactMarkdown>
+                                    {/* Content (Medium-style Typography & Spacing) */}
+                                    <div className="mb-10">
+                                        <MediumArticleContent content={current.content} />
                                     </div>
 
                                     {/* Read full article link */}
