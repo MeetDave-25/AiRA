@@ -51,6 +51,7 @@ export default function BlogWritePage() {
     const [saving, setSaving]       = useState(false);
     const [publishing, setPublishing] = useState(false);
     const [msg, setMsg]             = useState("");
+    const [postId, setPostId]       = useState<string | null>(editId);
     const [isUploadingCover, setIsUploadingCover] = useState(false);
     const [isUploadingInline, setIsUploadingInline] = useState(false);
     
