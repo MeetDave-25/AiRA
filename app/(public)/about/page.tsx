@@ -524,8 +524,6 @@ export default function AboutPage() {
                 {/* Interactive Orbit System Container */}
                 <div
                     className="relative w-[340px] h-[340px] sm:w-[480px] sm:h-[480px] md:w-[620px] md:h-[620px] flex items-center justify-center z-10"
-                    onMouseEnter={() => setIsOrbitPaused(true)}
-                    onMouseLeave={() => setIsOrbitPaused(false)}
                 >
                     {/* Concentric Glowing Orbit Rings */}
                     <div
