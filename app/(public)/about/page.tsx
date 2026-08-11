@@ -353,33 +353,56 @@ export default function AboutPage() {
         return members.find((m) => m.isPresident) || members[0] || null;
     }, [members]);
 
-    // All Team Leaders (Distinct list)
+    // All Team Leaders (Distinct list of wing leads & domain heads)
     const teamLeaders = useMemo(() => {
-        const leaders = members.filter((m) => isLeaderMember(m) && !m.isPresident);
-        if (leaders.length > 0) return leaders;
-
-        // Fallback: If no explicit lead titles, pick one member from each distinct teamGroup
+        const explicitLeaders = members.filter((m) => isLeaderMember(m) && !m.isPresident);
+        
+        // Ensure each major wing has its representative lead
         const map = new Map<string, any>();
-        members.forEach((m) => {
-            if (!m.isPresident) {
-                const grp = m.teamGroup || "Core Division";
-                if (!map.has(grp)) map.set(grp, m);
-            }
+        explicitLeaders.forEach((l) => {
+            const grp = (l.teamGroup || "Core").trim();
+            map.set(grp, l);
         });
+
+        // If fewer than 4 leaders, pick top member from distinct domain groups
+        if (map.size < 4) {
+            members.forEach((m) => {
+                if (!m.isPresident) {
+                    const grp = (m.teamGroup || "Core").trim();
+                    if (!map.has(grp) && map.size < 7) {
+                        map.set(grp, m);
+                    }
+                }
+            });
+        }
+
         return Array.from(map.values());
     }, [members]);
 
-    // Sub-team members for the currently focused leader (Strict Wing Isolation)
+    // Sub-team members for the currently focused leader (Smart Domain & Wing Isolation)
     const activeSubMembers = useMemo(() => {
         if (!activeLeader) return [];
-        const leaderGroup = (activeLeader.teamGroup || "").trim().toLowerCase();
-        if (!leaderGroup) return [];
-        
-        // Return ONLY members belonging to this specific leader's teamGroup
+        const rawGroup = (activeLeader.teamGroup || "").trim().toLowerCase();
+        const baseGroup = rawGroup.replace(/(\s+wing|\s+team|\s+division|\s+group|\s+department)$/i, "").trim();
+        const isTechLeader = baseGroup.includes("tech") || baseGroup.includes("technology") || baseGroup.includes("engineering");
+
         return members.filter((m) => {
             if (m.id === activeLeader.id || m.isPresident) return false;
-            const mGroup = (m.teamGroup || "").trim().toLowerCase();
-            return mGroup === leaderGroup;
+            const mRaw = (m.teamGroup || "").trim().toLowerCase();
+            const mBase = mRaw.replace(/(\s+wing|\s+team|\s+division|\s+group|\s+department)$/i, "").trim();
+
+            // 1. Direct or partial base match (e.g. "management" === "management")
+            if (baseGroup && mBase && (baseGroup === mBase || baseGroup.includes(mBase) || mBase.includes(baseGroup))) {
+                return true;
+            }
+
+            // 2. If Tech/CTO leader, include technical domain members
+            if (isTechLeader) {
+                const isTechDomain = ["web", "app", "ai", "ml", "robotics", "cybersecurity", "data science", "tech", "hackathons"].some((d) => mBase.includes(d));
+                if (isTechDomain) return true;
+            }
+
+            return false;
         });
     }, [members, activeLeader]);
 
@@ -677,15 +700,7 @@ export default function AboutPage() {
                         </div>
                     )}
 
-                    {/* ══ EMPTY WING NOTICE IF 0 SUB-MEMBERS ══ */}
-                    {activeLeader && currentOrbitingItems.length === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-                            <div className="mt-56 sm:mt-64 px-4 py-2 rounded-2xl glass-strong border border-amber-400/40 text-center shadow-2xl backdrop-blur-md">
-                                <p className="text-amber-300 font-orbitron font-bold text-xs">👑 {activeLeader.name} · Active Wing Lead</p>
-                                <p className="text-slate-400 text-[10px] mt-0.5 font-mono">No sub-team members in this specific group yet</p>
-                            </div>
-                        </div>
-                    )}
+                    {/* Orbit 2 closed */}
                 </div>
 
                 {/* ══ QUICK WING / LEADER SELECTOR TABS ══ */}
