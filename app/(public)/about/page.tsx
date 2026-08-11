@@ -24,6 +24,14 @@ import {
     Quote,
     Flame,
     ShieldCheck,
+    RotateCcw,
+    Play,
+    Pause,
+    ChevronLeft,
+    Layers,
+    UserCheck,
+    Orbit as OrbitIcon,
+    ArrowLeft
 } from "lucide-react";
 import { Interactive3DMascot } from "@/components/ui/Interactive3DMascot";
 import {
@@ -63,7 +71,7 @@ function MemberModal({ member, onClose }: { member: any; onClose: () => void }) 
 
                     {/* Top Bar with Badge & Close button */}
                     <div className="flex items-center justify-between px-5 sm:px-8 py-3.5 sm:py-4 border-b border-white/10 bg-slate-950/40 shrink-0 relative z-20">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                             {member.isPresident ? (
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-orbitron font-bold">
                                     👑 Executive Leader Profile
@@ -74,7 +82,7 @@ function MemberModal({ member, onClose }: { member: any; onClose: () => void }) 
                                 </span>
                             )}
                             {member.teamGroup && (
-                                <span className="hidden sm:inline-block text-[11px] text-slate-400 font-mono">
+                                <span className="text-[11px] text-slate-400 font-mono">
                                     • {member.teamGroup}
                                 </span>
                             )}
@@ -89,7 +97,7 @@ function MemberModal({ member, onClose }: { member: any; onClose: () => void }) 
                         </button>
                     </div>
 
-                    {/* Modal Main Body (2 Columns on Laptop / 1 Column on Mobile) */}
+                    {/* Modal Main Body */}
                     <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] divide-y md:divide-y-0 md:divide-x divide-white/10 overflow-y-auto overscroll-contain flex-1">
                         {/* Left Sidebar: Photo, Identity & Social Links */}
                         <div className="p-5 sm:p-7 flex flex-col items-center md:items-start text-center md:text-left space-y-4 bg-slate-950/20">
@@ -213,41 +221,70 @@ function MemberModal({ member, onClose }: { member: any; onClose: () => void }) 
     );
 }
 
-// Orbiting member card with hover tooltip
-function OrbitCard({ member, onClick }: { member: any; onClick: () => void }) {
+// Orbiting planet card with glowing aura and tooltip
+function OrbitPlanetCard({
+    member,
+    isLeaderView,
+    onClick,
+}: {
+    member: any;
+    isLeaderView: boolean;
+    onClick: () => void;
+}) {
     return (
         <button
             onClick={onClick}
-            className="group block relative focus:outline-none"
+            className="group block relative focus:outline-none cursor-pointer"
             title={member.name}
         >
             <div className="relative">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex items-center justify-center bg-slate-900 border-2 border-aira-cyan/40 group-hover:border-aira-cyan group-hover:shadow-[0_0_20px_#00D4FF] transition-all duration-300 transform group-hover:scale-125 active:scale-95 text-[10px] text-white">
+                {/* Glowing Aura Ring */}
+                <div className={`w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden flex items-center justify-center bg-slate-900 border-2 transition-all duration-300 transform group-hover:scale-125 active:scale-95 text-[10px] text-white shadow-xl ${
+                    isLeaderView
+                        ? "border-amber-400/80 group-hover:border-amber-300 shadow-amber-400/20 group-hover:shadow-[0_0_25px_#f59e0b]"
+                        : "border-aira-cyan/70 group-hover:border-aira-cyan shadow-aira-cyan/20 group-hover:shadow-[0_0_25px_#00D4FF]"
+                }`}>
                     <img
                         src={
                             member.photo ||
                             `https://ui-avatars.com/api/?name=${encodeURIComponent(
                                 member.name
-                            )}&background=0d1526&color=00D4FF&size=120`
+                            )}&background=0d1526&color=${isLeaderView ? "F59E0B" : "00D4FF"}&size=140`
                         }
                         alt={member.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                             (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
                                 member.name
-                            )}&background=0d1526&color=00D4FF&size=120`;
+                            )}&background=0d1526&color=${isLeaderView ? "F59E0B" : "00D4FF"}&size=140`;
                         }}
                     />
                 </div>
-                {member.isPresident && (
-                    <div className="absolute -top-1 -right-1 text-xs z-10">👑</div>
-                )}
-                {/* Floating Tooltip */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 rounded-xl glass border border-white/10 text-xs text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 shadow-lg">
-                    <div className="font-semibold text-white">{member.name}</div>
-                    <div className="text-aira-cyan text-[10px]">
-                        {(member.role || "").slice(0, 24)}
+
+                {/* Badge Crown/Lead indicator */}
+                {isLeaderView && (
+                    <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-gradient-to-tr from-amber-400 to-amber-600 border border-slate-950 flex items-center justify-center text-[10px] shadow-lg z-10">
+                        👑
                     </div>
+                )}
+
+                {/* Hover Action Tooltip */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 rounded-xl glass-strong border border-white/20 text-xs text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-40 shadow-2xl scale-90 group-hover:scale-100">
+                    <div className="font-bold text-white font-orbitron text-xs flex items-center gap-1.5">
+                        {member.name}
+                    </div>
+                    <div className="text-aira-cyan text-[10px] font-mono">
+                        {(member.role || "Team Member").slice(0, 28)}
+                    </div>
+                    {isLeaderView ? (
+                        <div className="text-[10px] text-amber-300 font-semibold mt-0.5 flex items-center gap-1">
+                            <span>✨ Click to focus &amp; spin sub-team</span>
+                        </div>
+                    ) : (
+                        <div className="text-[10px] text-slate-300 font-normal mt-0.5">
+                            <span>Click to view bio</span>
+                        </div>
+                    )}
                 </div>
             </div>
         </button>
@@ -259,8 +296,12 @@ export default function AboutPage() {
     const [settings, setSettings] = useState<Record<string, string>>({});
     const [selectedMember, setSelectedMember] = useState<any>(null);
     const [activeGroup, setActiveGroup] = useState<string>("ALL");
+    
+    // ── Solar Orbital State ──
+    const [activeLeader, setActiveLeader] = useState<any | null>(null);
     const [isOrbitPaused, setIsOrbitPaused] = useState(false);
-    const [orbitRadius, setOrbitRadius] = useState(200);
+    const [orbitSpeed, setOrbitSpeed] = useState<"normal" | "slow" | "fast">("normal");
+    const [orbitRadius, setOrbitRadius] = useState(210);
 
     useEffect(() => {
         fetch("/api/team-members")
@@ -276,11 +317,11 @@ export default function AboutPage() {
         const handleResize = () => {
             const width = window.innerWidth;
             if (width < 640) {
-                setOrbitRadius(125);
+                setOrbitRadius(135);
             } else if (width < 1024) {
-                setOrbitRadius(175);
+                setOrbitRadius(185);
             } else {
-                setOrbitRadius(215);
+                setOrbitRadius(230);
             }
         };
 
@@ -289,10 +330,80 @@ export default function AboutPage() {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    const nonPresidents = useMemo(() => members.filter((m) => !m.isPresident), [members]);
-    const president = useMemo(() => members.find((m) => m.isPresident) || members[0], [members]);
+    // Helper: Determine if a member is a Team Leader
+    const isLeaderMember = (m: any) => {
+        if (!m) return false;
+        if (m.isPresident) return true;
+        const role = (m.role || "").toLowerCase();
+        return (
+            role.includes("lead") ||
+            role.includes("head") ||
+            role.includes("leader") ||
+            role.includes("director") ||
+            role.includes("captain") ||
+            role.includes("coordinator") ||
+            role.includes("president") ||
+            role.includes("chief") ||
+            role.includes("manager")
+        );
+    };
 
-    // Unique groups for filtering
+    // Overall President / Founder
+    const president = useMemo(() => {
+        return members.find((m) => m.isPresident) || members[0] || null;
+    }, [members]);
+
+    // All Team Leaders (Distinct list)
+    const teamLeaders = useMemo(() => {
+        const leaders = members.filter((m) => isLeaderMember(m) && !m.isPresident);
+        if (leaders.length > 0) return leaders;
+
+        // Fallback: If no explicit lead titles, pick one member from each distinct teamGroup
+        const map = new Map<string, any>();
+        members.forEach((m) => {
+            if (!m.isPresident) {
+                const grp = m.teamGroup || "Core Division";
+                if (!map.has(grp)) map.set(grp, m);
+            }
+        });
+        return Array.from(map.values());
+    }, [members]);
+
+    // Sub-team members for the currently focused leader
+    const activeSubMembers = useMemo(() => {
+        if (!activeLeader) return [];
+        const group = activeLeader.teamGroup || "";
+        
+        // Members in the same group excluding the leader
+        let subs = members.filter(
+            (m) => m.id !== activeLeader.id && !m.isPresident && (group ? m.teamGroup === group : true)
+        );
+
+        // Fallback: if this specific team has 0 sub-members, show other non-president engineers
+        if (subs.length === 0) {
+            subs = members.filter((m) => m.id !== activeLeader.id && !m.isPresident);
+        }
+
+        return subs;
+    }, [members, activeLeader]);
+
+    // All Orbiting Items depending on current Mode:
+    // Mode 1: Leadership Orbit (activeLeader is null) -> All Team Leaders spin around President/Core
+    // Mode 2: Team Orbit (activeLeader is set) -> Sub-team members spin around that Team Leader
+    const currentOrbitingItems = useMemo(() => {
+        if (!activeLeader) {
+            return teamLeaders;
+        }
+        return activeSubMembers;
+    }, [activeLeader, teamLeaders, activeSubMembers]);
+
+    // Center Display Person
+    const centerPerson = useMemo(() => {
+        if (activeLeader) return activeLeader;
+        return president;
+    }, [activeLeader, president]);
+
+    // Unique groups for directory filter
     const teamGroups = useMemo(() => {
         const groups = new Set<string>();
         members.forEach((m) => {
@@ -307,6 +418,10 @@ export default function AboutPage() {
         if (activeGroup === "ALL") return members;
         return members.filter((m) => m.teamGroup === activeGroup);
     }, [members, activeGroup]);
+
+    // Orbit Animation Speed
+    const spinDuration = orbitSpeed === "fast" ? "20s" : orbitSpeed === "slow" ? "48s" : "32s";
+    const outerSpinDuration = orbitSpeed === "fast" ? "30s" : orbitSpeed === "slow" ? "70s" : "48s";
 
     const corePillars = [
         {
@@ -344,9 +459,9 @@ export default function AboutPage() {
             <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
 
             {/* ═══════════════════════════════════════════════════════════
-                1. CINEMATIC HERO SECTION WITH INTERACTIVE 3D ORBIT SYSTEM
+                1. CINEMATIC INTERACTIVE 3D SOLAR / ORBIT SYSTEM
                ═══════════════════════════════════════════════════════════ */}
-            <section className="relative min-h-[580px] sm:min-h-[700px] flex flex-col items-center justify-center overflow-hidden px-4">
+            <section className="relative min-h-[640px] sm:min-h-[780px] flex flex-col items-center justify-center overflow-hidden px-4 pt-4">
                 {/* Background 3D Typography */}
                 <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center justify-between w-full max-w-5xl pointer-events-none select-none z-0 px-4 opacity-10">
                     <motion.span
@@ -367,89 +482,129 @@ export default function AboutPage() {
                     </motion.span>
                 </div>
 
-                {/* Interactive Orbit System */}
+                {/* Orbit Navigation & Status Bar */}
+                <div className="z-30 mb-6 flex flex-wrap items-center justify-center gap-3 max-w-2xl px-2 text-center">
+                    {activeLeader ? (
+                        <motion.button
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            onClick={() => setActiveLeader(null)}
+                            className="px-4 py-2 rounded-2xl bg-gradient-to-r from-aira-cyan via-sky-400 to-indigo-600 text-slate-950 font-orbitron font-bold text-xs flex items-center gap-2 hover:scale-105 transition-all shadow-lg shadow-aira-cyan/25 cursor-pointer"
+                        >
+                            <ArrowLeft size={14} />
+                            <span>Return to All Team Leaders Orbit</span>
+                        </motion.button>
+                    ) : (
+                        <div className="px-4 py-1.5 rounded-full glass border border-aira-cyan/30 text-xs font-orbitron font-bold text-aira-cyan flex items-center gap-2 shadow-lg shadow-aira-cyan/10">
+                            <OrbitIcon size={14} className="animate-spin text-aira-cyan" />
+                            <span>Leadership Orbit: Team Leaders Spinning Around Founder</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Interactive Orbit System Container */}
                 <div
-                    className="relative w-[320px] h-[320px] sm:w-[460px] sm:h-[460px] md:w-[580px] md:h-[580px] flex items-center justify-center z-10"
+                    className="relative w-[340px] h-[340px] sm:w-[480px] sm:h-[480px] md:w-[620px] md:h-[620px] flex items-center justify-center z-10"
                     onMouseEnter={() => setIsOrbitPaused(true)}
                     onMouseLeave={() => setIsOrbitPaused(false)}
                 >
                     {/* Concentric Glowing Orbit Rings */}
                     <div
-                        className="absolute rounded-full border border-aira-cyan/30 pointer-events-none shadow-[0_0_25px_rgba(0,212,255,0.15)] animate-pulse"
+                        className="absolute rounded-full border border-aira-cyan/40 pointer-events-none shadow-[0_0_30px_rgba(0,212,255,0.2)] animate-pulse"
                         style={{ width: orbitRadius * 2, height: orbitRadius * 2 }}
                     />
                     <div
-                        className="absolute rounded-full border border-white/10 pointer-events-none"
-                        style={{ width: orbitRadius * 2 + 30, height: orbitRadius * 2 + 30 }}
+                        className="absolute rounded-full border border-dashed border-white/15 pointer-events-none"
+                        style={{ width: orbitRadius * 2 + 36, height: orbitRadius * 2 + 36 }}
                     />
 
-                    {/* Orbit 2 Ring */}
-                    {nonPresidents.length > 6 && (
+                    {/* Orbit 2 Outer Ring for Teams with > 6 members */}
+                    {currentOrbitingItems.length > 6 && (
                         <>
                             <div
-                                className="absolute rounded-full border border-dashed border-purple-500/35 pointer-events-none shadow-[0_0_30px_rgba(168,85,247,0.2)]"
+                                className="absolute rounded-full border border-dashed border-purple-500/40 pointer-events-none shadow-[0_0_35px_rgba(168,85,247,0.2)]"
                                 style={{ width: orbitRadius * 2.8, height: orbitRadius * 2.8 }}
                             />
                             <div
                                 className="absolute rounded-full border border-white/10 pointer-events-none"
-                                style={{ width: orbitRadius * 2.8 + 35, height: orbitRadius * 2.8 + 35 }}
+                                style={{ width: orbitRadius * 2.8 + 40, height: orbitRadius * 2.8 + 40 }}
                             />
                         </>
                     )}
 
-                    {/* Central Hero Card / President with 3D Float */}
+                    {/* ══ CENTRAL HERO / LEADER CARD (Smooth spring swap) ══ */}
                     <motion.div
-                        animate={{ y: [-5, 5, -5] }}
-                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                        key={centerPerson?.id || "center"}
+                        initial={{ scale: 0.85, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1, y: [-4, 4, -4] }}
+                        transition={{
+                            scale: { type: "spring", stiffness: 300, damping: 25 },
+                            y: { duration: 4, repeat: Infinity, ease: "easeInOut" }
+                        }}
                         className="relative z-20 cursor-pointer group"
-                        onClick={() => president && setSelectedMember(president)}
+                        onClick={() => {
+                            if (centerPerson) setSelectedMember(centerPerson);
+                        }}
                     >
                         <div className="relative">
-                            <div className="w-36 h-48 sm:w-48 sm:h-60 md:w-52 md:h-64 rounded-3xl overflow-hidden border-2 border-aira-cyan/60 glow-cyan bg-slate-950 shadow-2xl transition-transform duration-300 group-hover:scale-105">
+                            {/* Card Frame with Glowing Aura */}
+                            <div className={`w-36 h-48 sm:w-48 sm:h-60 md:w-56 md:h-68 rounded-3xl overflow-hidden border-2 bg-slate-950 shadow-2xl transition-all duration-300 group-hover:scale-105 ${
+                                activeLeader
+                                    ? "border-amber-400/80 shadow-amber-500/25 ring-2 ring-amber-400/30"
+                                    : "border-aira-cyan/80 glow-cyan ring-2 ring-aira-cyan/30"
+                            }`}>
                                 <img
                                     src={
-                                        president?.photo ||
+                                        centerPerson?.photo ||
                                         settings.lab_main_image ||
-                                        "https://placehold.co/300x400/020817/00D4FF?text=AiRA+Lab"
+                                        `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                            centerPerson?.name || "AiRA Lead"
+                                        )}&background=0d1526&color=00D4FF&size=400`
                                     }
-                                    alt={president?.name || "AiRA Lab"}
+                                    alt={centerPerson?.name || "Leader"}
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
                                         (e.target as HTMLImageElement).src =
                                             "https://placehold.co/300x400/020817/00D4FF?text=AiRA+Lab";
                                     }}
                                 />
+
+                                {/* Center Floating Badge Tag */}
+                                <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-white/20 text-[10px] font-orbitron font-bold text-white flex items-center gap-1 shadow-lg">
+                                    {centerPerson?.isPresident ? "👑 Founder" : "⭐ Wing Leader"}
+                                </div>
                             </div>
 
-                            {/* Label */}
-                            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full glass-panel-glow border border-aira-cyan/40 text-center whitespace-nowrap shadow-xl">
-                                <p className="font-orbitron font-bold text-xs text-white">
-                                    {president?.name || "AiRA Lab"}
+                            {/* Label under center card */}
+                            <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-2xl glass-strong border border-white/20 text-center whitespace-nowrap shadow-2xl min-w-[140px]">
+                                <p className="font-orbitron font-bold text-xs sm:text-sm text-white">
+                                    {centerPerson?.name || "AiRA Lab"}
                                 </p>
-                                <p className="text-[10px] text-aira-cyan font-medium">
-                                    {president?.role || "Innovation Center"}
+                                <p className="text-[10px] text-aira-cyan font-medium truncate max-w-[160px]">
+                                    {centerPerson?.role || "Core Lead"}
                                 </p>
                             </div>
                         </div>
                     </motion.div>
 
-                    {/* Orbit 1: Inner Orbit */}
-                    {nonPresidents.length > 0 && (
+                    {/* ══ ORBIT 1: INNER RING MEMBERS/LEADERS ══ */}
+                    {currentOrbitingItems.length > 0 && (
                         <div
+                            key={`orbit-inner-${activeLeader?.id || "leaders"}`}
                             className="absolute inset-0 z-20 pointer-events-none"
                             style={{
-                                animation: isOrbitPaused ? "none" : "spin 32s linear infinite",
+                                animation: isOrbitPaused ? "none" : `spin ${spinDuration} linear infinite`,
                             }}
                         >
-                            {(nonPresidents.length <= 6
-                                ? nonPresidents
-                                : nonPresidents.slice(0, 6)
-                            ).map((member, i, arr) => {
+                            {(currentOrbitingItems.length <= 6
+                                ? currentOrbitingItems
+                                : currentOrbitingItems.slice(0, 6)
+                            ).map((member: any, i: number, arr: any[]) => {
                                 const angle = (360 / arr.length) * i;
                                 return (
                                     <div
                                         key={member.id}
-                                        className="absolute left-1/2 top-1/2 -ml-6 -mt-6 sm:-ml-8 sm:-mt-8 pointer-events-auto"
+                                        className="absolute left-1/2 top-1/2 -ml-7 -mt-7 sm:-ml-8 sm:-mt-8 md:-ml-10 md:-mt-10 pointer-events-auto"
                                         style={{
                                             transform: `rotate(${angle}deg) translate(${orbitRadius}px) rotate(-${angle}deg)`,
                                         }}
@@ -458,12 +613,21 @@ export default function AboutPage() {
                                             style={{
                                                 animation: isOrbitPaused
                                                     ? "none"
-                                                    : "counterspin 32s linear infinite",
+                                                    : `counterspin ${spinDuration} linear infinite`,
                                             }}
                                         >
-                                            <OrbitCard
+                                            <OrbitPlanetCard
                                                 member={member}
-                                                onClick={() => setSelectedMember(member)}
+                                                isLeaderView={!activeLeader}
+                                                onClick={() => {
+                                                    if (!activeLeader) {
+                                                        // In leadership mode: clicking a team leader focuses that leader in center & spins sub-team!
+                                                        setActiveLeader(member);
+                                                    } else {
+                                                        // In team mode: clicking a sub-member opens full bio modal
+                                                        setSelectedMember(member);
+                                                    }
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -472,21 +636,22 @@ export default function AboutPage() {
                         </div>
                     )}
 
-                    {/* Orbit 2: Outer Orbit */}
-                    {nonPresidents.length > 6 && (
+                    {/* ══ ORBIT 2: OUTER RING (IF > 6 MEMBERS) ══ */}
+                    {currentOrbitingItems.length > 6 && (
                         <div
+                            key={`orbit-outer-${activeLeader?.id || "leaders"}`}
                             className="absolute inset-0 z-20 pointer-events-none"
                             style={{
-                                animation: isOrbitPaused ? "none" : "counterspin 50s linear infinite",
+                                animation: isOrbitPaused ? "none" : `counterspin ${outerSpinDuration} linear infinite`,
                             }}
                         >
-                            {nonPresidents.slice(6).map((member, i, arr) => {
+                            {currentOrbitingItems.slice(6).map((member: any, i: number, arr: any[]) => {
                                 const angle = (360 / arr.length) * i;
-                                const radius2 = orbitRadius * 1.4;
+                                const radius2 = orbitRadius * 1.42;
                                 return (
                                     <div
                                         key={member.id}
-                                        className="absolute left-1/2 top-1/2 -ml-6 -mt-6 sm:-ml-8 sm:-mt-8 pointer-events-auto"
+                                        className="absolute left-1/2 top-1/2 -ml-7 -mt-7 sm:-ml-8 sm:-mt-8 md:-ml-10 md:-mt-10 pointer-events-auto"
                                         style={{
                                             transform: `rotate(${angle}deg) translate(${radius2}px) rotate(-${angle}deg)`,
                                         }}
@@ -495,12 +660,19 @@ export default function AboutPage() {
                                             style={{
                                                 animation: isOrbitPaused
                                                     ? "none"
-                                                    : "spin 50s linear infinite",
+                                                    : `spin ${outerSpinDuration} linear infinite`,
                                             }}
                                         >
-                                            <OrbitCard
+                                            <OrbitPlanetCard
                                                 member={member}
-                                                onClick={() => setSelectedMember(member)}
+                                                isLeaderView={!activeLeader}
+                                                onClick={() => {
+                                                    if (!activeLeader) {
+                                                        setActiveLeader(member);
+                                                    } else {
+                                                        setSelectedMember(member);
+                                                    }
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -510,15 +682,69 @@ export default function AboutPage() {
                     )}
                 </div>
 
-                <div className="mt-10 text-center z-10 flex flex-wrap items-center justify-center gap-3">
-                    <span className="text-xs text-slate-300 px-3.5 py-1.5 rounded-full glass border border-white/10 inline-flex items-center gap-1.5 shadow-lg shadow-black/40">
-                        <Sparkles size={13} className="text-aira-cyan animate-pulse" /> Hover to pause orbit • Click profile for bio
-                    </span>
-                    {nonPresidents.length > 6 && (
-                        <span className="text-xs text-purple-300 px-3 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/30 inline-flex items-center gap-1.5 font-mono">
-                            ⚡ 2 Orbits Active ({nonPresidents.length} Members)
+                {/* ══ QUICK WING / LEADER SELECTOR TABS ══ */}
+                <div className="mt-12 text-center z-20 w-full max-w-4xl px-4 space-y-4">
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                        {/* All Team Leaders Button */}
+                        <button
+                            onClick={() => setActiveLeader(null)}
+                            className={`px-4 py-2 rounded-xl text-xs font-orbitron font-bold transition-all border ${
+                                !activeLeader
+                                    ? "bg-gradient-to-r from-aira-cyan to-blue-500 text-slate-950 shadow-md shadow-aira-cyan/20 border-transparent scale-105"
+                                    : "glass border-white/10 text-slate-300 hover:text-white hover:bg-white/5"
+                            }`}
+                        >
+                            🌐 All Team Leaders Orbit
+                        </button>
+
+                        {/* Each Individual Team Leader Tab */}
+                        {teamLeaders.map((lead: any) => {
+                            const isSelected = activeLeader?.id === lead.id;
+                            return (
+                                <button
+                                    key={lead.id}
+                                    onClick={() => setActiveLeader(lead)}
+                                    className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all border flex items-center gap-1.5 ${
+                                        isSelected
+                                            ? "bg-gradient-to-r from-amber-400 to-amber-600 text-slate-950 font-bold shadow-md shadow-amber-500/20 border-transparent scale-105"
+                                            : "glass border-white/10 text-slate-300 hover:text-white hover:bg-white/5"
+                                    }`}
+                                >
+                                    <span>👑 {lead.name}</span>
+                                    <span className="text-[10px] opacity-75 font-mono">({lead.teamGroup || "Lead"})</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Orbit Speed & Interaction Hint Controls */}
+                    <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-400 pt-2">
+                        <span className="px-3.5 py-1.5 rounded-full glass border border-white/10 inline-flex items-center gap-1.5 shadow-lg shadow-black/40">
+                            <Sparkles size={13} className="text-aira-cyan animate-pulse" /> 
+                            {activeLeader 
+                                ? `Spinning ${activeSubMembers.length} team members around ${activeLeader.name}`
+                                : "Click any Team Leader to spin their team around them!"}
                         </span>
-                    )}
+
+                        <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+                            <button
+                                onClick={() => setIsOrbitPaused(!isOrbitPaused)}
+                                className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white"
+                                title={isOrbitPaused ? "Resume Orbit" : "Pause Orbit"}
+                            >
+                                {isOrbitPaused ? <Play size={13} className="text-emerald-400" /> : <Pause size={13} />}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setOrbitSpeed((curr) => (curr === "normal" ? "fast" : curr === "fast" ? "slow" : "normal"));
+                                }}
+                                className="px-2 py-1 rounded-lg hover:bg-white/10 text-[11px] font-mono text-slate-300"
+                                title="Change orbit speed"
+                            >
+                                Speed: <strong className="text-aira-cyan uppercase">{orbitSpeed}</strong>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -688,14 +914,14 @@ export default function AboutPage() {
             </section>
 
             {/* ═══════════════════════════════════════════════════════════
-                5. FULL TEAM SHOWCASE GRID (SPOTLIGHT CARDS)
+                5. FULL TEAM SHOWCASE DIRECTORY GRID
                ═══════════════════════════════════════════════════════════ */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
                 <ScrollReveal direction="up">
                     <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
                         <div>
                             <span className="text-xs font-bold uppercase tracking-[0.25em] text-aira-cyan font-orbitron">
-                                Our Collective
+                                Our Collective Directory
                             </span>
                             <h2 className="font-orbitron font-bold text-3xl sm:text-4xl text-white mt-1">
                                 Meet the <span className="gradient-text-cyan">Team</span>
@@ -707,7 +933,7 @@ export default function AboutPage() {
                             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-bold hover:bg-amber-400/20 hover:scale-105 transition-all shadow-md"
                         >
                             <Crown size={15} className="text-amber-400" />
-                            <span>View Founders & Executive Board →</span>
+                            <span>View Founders &amp; Executive Board →</span>
                         </Link>
 
                         {/* Group Filter Buttons */}
@@ -749,30 +975,31 @@ export default function AboutPage() {
                                                     member.photo ||
                                                     `https://ui-avatars.com/api/?name=${encodeURIComponent(
                                                         member.name
-                                                    )}&background=0d1526&color=00D4FF&size=120`
+                                                    )}&background=0d1526&color=00D4FF&size=200`
                                                 }
                                                 alt={member.name}
                                                 className="w-full h-full object-cover"
                                                 onError={(e) => {
                                                     (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
                                                         member.name
-                                                    )}&background=0d1526&color=00D4FF&size=120`;
+                                                    )}&background=0d1526&color=00D4FF&size=200`;
                                                 }}
                                             />
                                             {member.isPresident && (
-                                                <div className="absolute top-0 right-0 text-xs">👑</div>
+                                                <div className="absolute -top-1 -right-1 text-xs">
+                                                    👑
+                                                </div>
                                             )}
                                         </div>
-                                        <p className="font-semibold text-xs sm:text-sm text-white line-clamp-1 group-hover:text-aira-cyan transition-colors">
+                                        <h3 className="font-orbitron font-bold text-xs sm:text-sm text-white truncate">
                                             {member.name}
-                                        </p>
-                                        <p className="text-aira-cyan text-[11px] mt-0.5 line-clamp-1">
+                                        </h3>
+                                        <p className="text-aira-cyan font-medium text-[11px] mt-0.5 line-clamp-1">
                                             {member.role}
                                         </p>
                                     </div>
-
                                     {member.teamGroup && (
-                                        <span className="text-[10px] text-slate-400 mt-2.5 block truncate w-full font-mono">
+                                        <span className="inline-block mt-3 text-[10px] text-slate-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full truncate max-w-[90%]">
                                             {member.teamGroup}
                                         </span>
                                     )}
@@ -780,58 +1007,14 @@ export default function AboutPage() {
                             </SpotlightCard>
                         </ScrollReveal>
                     ))}
-
-                    {filteredMembers.length === 0 && (
-                        <div className="col-span-full glass p-10 rounded-2xl border border-white/5 text-center text-slate-400">
-                            No team profiles found for this group.
-                        </div>
-                    )}
                 </div>
             </section>
 
-            {/* ═══════════════════════════════════════════════════════════
-                6. JOIN US CTA BANNER (SHIMMER BORDER + MAGNETIC BUTTON)
-               ═══════════════════════════════════════════════════════════ */}
-            <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
-                <ScrollReveal direction="up">
-                    <ShimmerBorder borderRadius="1.5rem">
-                        <div className="relative p-10 sm:p-14 text-center overflow-hidden rounded-[inherit]">
-                            <div className="absolute inset-0 bg-gradient-radial from-aira-cyan/15 via-aira-purple/10 to-transparent pointer-events-none" />
-
-                            <div className="relative z-10 max-w-2xl mx-auto space-y-5">
-                                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass border border-aira-cyan/30 text-aira-cyan text-xs font-orbitron font-bold tracking-widest uppercase">
-                                    <Flame size={14} className="text-aira-magenta" /> Ready to make an impact?
-                                </span>
-
-                                <h2 className="font-orbitron font-black text-3xl sm:text-5xl text-white leading-tight">
-                                    Join the <span className="gradient-text-animated">AiRA Lab</span> Team
-                                </h2>
-
-                                <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
-                                    We are constantly seeking ambitious researchers, developers, and designers to build next-generation technologies together.
-                                </p>
-
-                                <div className="pt-3 flex justify-center">
-                                    <MagneticButton href="/join" magnetStrength={0.3}>
-                                        <span className="inline-flex items-center gap-3 px-10 py-4.5 rounded-xl bg-gradient-to-r from-aira-cyan via-aira-purple to-aira-magenta text-white font-semibold text-base shadow-2xl shadow-aira-cyan/30 hover:shadow-aira-cyan/50 hover:scale-105 transition-all duration-300">
-                                            Apply for Membership
-                                            <ArrowRight size={18} />
-                                        </span>
-                                    </MagneticButton>
-                                </div>
-                            </div>
-                        </div>
-                    </ShimmerBorder>
-                </ScrollReveal>
-            </section>
-
-            {/* ══ Member Profile Details Modal ══ */}
-            {selectedMember && (
-                <MemberModal
-                    member={selectedMember}
-                    onClose={() => setSelectedMember(null)}
-                />
-            )}
+            {/* Member Profile Modal */}
+            <MemberModal
+                member={selectedMember}
+                onClose={() => setSelectedMember(null)}
+            />
         </div>
     );
 }
