@@ -369,22 +369,18 @@ export default function AboutPage() {
         return Array.from(map.values());
     }, [members]);
 
-    // Sub-team members for the currently focused leader
+    // Sub-team members for the currently focused leader (Strict Wing Isolation)
     const activeSubMembers = useMemo(() => {
         if (!activeLeader) return [];
-        const group = activeLeader.teamGroup || "";
+        const leaderGroup = (activeLeader.teamGroup || "").trim().toLowerCase();
+        if (!leaderGroup) return [];
         
-        // Members in the same group excluding the leader
-        let subs = members.filter(
-            (m) => m.id !== activeLeader.id && !m.isPresident && (group ? m.teamGroup === group : true)
-        );
-
-        // Fallback: if this specific team has 0 sub-members, show other non-president engineers
-        if (subs.length === 0) {
-            subs = members.filter((m) => m.id !== activeLeader.id && !m.isPresident);
-        }
-
-        return subs;
+        // Return ONLY members belonging to this specific leader's teamGroup
+        return members.filter((m) => {
+            if (m.id === activeLeader.id || m.isPresident) return false;
+            const mGroup = (m.teamGroup || "").trim().toLowerCase();
+            return mGroup === leaderGroup;
+        });
     }, [members, activeLeader]);
 
     // All Orbiting Items depending on current Mode:
@@ -678,6 +674,16 @@ export default function AboutPage() {
                                     </div>
                                 );
                             })}
+                        </div>
+                    )}
+
+                    {/* ══ EMPTY WING NOTICE IF 0 SUB-MEMBERS ══ */}
+                    {activeLeader && currentOrbitingItems.length === 0 && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                            <div className="mt-56 sm:mt-64 px-4 py-2 rounded-2xl glass-strong border border-amber-400/40 text-center shadow-2xl backdrop-blur-md">
+                                <p className="text-amber-300 font-orbitron font-bold text-xs">👑 {activeLeader.name} · Active Wing Lead</p>
+                                <p className="text-slate-400 text-[10px] mt-0.5 font-mono">No sub-team members in this specific group yet</p>
+                            </div>
                         </div>
                     )}
                 </div>

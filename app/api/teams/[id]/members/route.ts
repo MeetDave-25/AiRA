@@ -99,6 +99,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             }
         }
 
+        const targetRole = role === "TEAM_LEAD" ? "TEAM_LEAD" : "TEAM_MEMBER";
+
+        // Sync role to User table if assigned as TEAM_LEAD and user is not an ADMIN
+        if (targetRole === "TEAM_LEAD" && user.role !== "ADMIN") {
+            await db.from("User").update({
+                role: "TEAM_LEAD",
+                updatedAt: new Date().toISOString()
+            }).eq("id", user.id);
+            user.role = "TEAM_LEAD";
+        }
+
         let membership: any;
         const { data: existingMem } = await db
             .from("TeamMembership")
@@ -108,12 +119,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             .maybeSingle();
 
         if (existingMem) {
-            return NextResponse.json({ error: "User is already a member of this team." }, { status: 409 });
+            // Update role if already in team
+            await db.from("TeamMembership").update({ memberRole: targetRole }).eq("id", existingMem.id);
+            return NextResponse.json({ 
+                message: "Updated existing membership role", 
+                membership: { ...existingMem, memberRole: targetRole },
+                user
+            });
         }
 
         const { data: newMem, error: memErr } = await db
             .from("TeamMembership")
-            .insert({ id: uuidv4(), userId: user.id, teamId: params.id, memberRole: role || "TEAM_MEMBER" })
+            .insert({ id: uuidv4(), userId: user.id, teamId: params.id, memberRole: targetRole })
             .select()
             .single();
         if (memErr) throw memErr;

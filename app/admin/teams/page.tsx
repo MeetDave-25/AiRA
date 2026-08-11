@@ -132,6 +132,25 @@ export default function TeamsAdminPage() {
         }
     };
 
+    const handleToggleRole = async (teamId: string, userId: string, currentMemberRole: string) => {
+        const nextRole = currentMemberRole === "TEAM_LEAD" ? "TEAM_MEMBER" : "TEAM_LEAD";
+        try {
+            const res = await fetch(`/api/teams/${teamId}/members/${userId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ role: nextRole }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || "Failed to update role");
+            }
+            toast.success(nextRole === "TEAM_LEAD" ? "Promoted to Team Lead! 👑" : "Role changed to Member");
+            await fetchTeams();
+        } catch (error: any) {
+            toast.error(error?.message || "Could not update member role");
+        }
+    };
+
     const openAddMemberModal = async (teamId: string) => {
         setMemberTeamId(teamId);
         setSelectedUserId("");
@@ -258,33 +277,60 @@ export default function TeamsAdminPage() {
                         <div className="p-4">
                             <p className="text-xs font-orbitron text-slate-500 mb-3 uppercase">Members</p>
                             <div className="space-y-2">
-                                {team.memberships?.map((m: any, memberIndex: number) => (
-                                    <motion.div
-                                        key={m.id}
-                                        className="flex justify-between items-center p-2 rounded bg-white/5 text-sm"
-                                        initial={shouldReduceMotion ? undefined : { opacity: 0, x: -6 }}
-                                        animate={shouldReduceMotion ? undefined : { opacity: 1, x: 0 }}
-                                        transition={shouldReduceMotion ? { duration: 0 } : { delay: memberIndex * 0.02 }}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded bg-slate-800 flex items-center justify-center text-xs font-bold">{m.user.name[0]}</div>
-                                            <span className="text-slate-300">{m.user.name}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-xs">
-                                            {m.user.role === "ADMIN" && <Shield size={12} className="text-aira-magenta" />}
-                                            <span className="text-slate-500">{m.user.role.replace("_", " ")}</span>
-                                            {m.user.role !== "ADMIN" && (
+                                {team.memberships?.map((m: any, memberIndex: number) => {
+                                    const effectiveRole = m.memberRole || m.user?.role || "TEAM_MEMBER";
+                                    const isLead = effectiveRole === "TEAM_LEAD" || m.user?.role === "TEAM_LEAD";
+                                    return (
+                                        <motion.div
+                                            key={m.id}
+                                            className={`flex justify-between items-center p-2.5 rounded-xl border transition-all ${
+                                                isLead
+                                                    ? "bg-amber-500/10 border-amber-500/30 text-amber-200"
+                                                    : "bg-white/5 border-white/5 text-sm"
+                                            }`}
+                                            initial={shouldReduceMotion ? undefined : { opacity: 0, x: -6 }}
+                                            animate={shouldReduceMotion ? undefined : { opacity: 1, x: 0 }}
+                                            transition={shouldReduceMotion ? { duration: 0 } : { delay: memberIndex * 0.02 }}
+                                        >
+                                            <div className="flex items-center gap-2.5">
+                                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
+                                                    isLead ? "bg-amber-500/20 text-amber-300 border border-amber-500/40" : "bg-slate-800 text-white"
+                                                }`}>
+                                                    {m.user?.name?.[0] || "U"}
+                                                </div>
+                                                <div>
+                                                    <span className="text-white font-medium text-xs sm:text-sm block">{m.user?.name}</span>
+                                                    <span className="text-[10px] text-slate-400 font-mono">{m.user?.email}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 text-xs">
+                                                {/* Role Switcher Button */}
                                                 <button
-                                                    onClick={() => handleDeleteTeamMember(team.id, m.user.id)}
-                                                    className="ml-2 p-1 text-aira-magenta hover:bg-aira-magenta/20 rounded"
-                                                    title="Remove Member"
+                                                    onClick={() => handleToggleRole(team.id, m.user?.id || m.userId, effectiveRole)}
+                                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-orbitron font-bold transition-all border flex items-center gap-1 ${
+                                                        isLead
+                                                            ? "bg-amber-400/20 text-amber-300 border-amber-400/50 shadow-sm shadow-amber-500/20 hover:bg-amber-400/30"
+                                                            : "bg-white/5 text-slate-400 border-white/10 hover:text-white hover:border-aira-cyan/40"
+                                                    }`}
+                                                    title={isLead ? "Click to demote to Member" : "Click to promote to Team Lead"}
                                                 >
-                                                    <Trash2 size={12} />
+                                                    {isLead ? "👑 TEAM LEAD" : "MEMBER"}
                                                 </button>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                ))}
+
+                                                {m.user?.role !== "ADMIN" && (
+                                                    <button
+                                                        onClick={() => handleDeleteTeamMember(team.id, m.user?.id || m.userId)}
+                                                        className="ml-1 p-1 text-aira-magenta hover:bg-aira-magenta/20 rounded-lg transition-colors"
+                                                        title="Remove Member from Team"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
                                 {(!team.memberships || team.memberships.length === 0) && (
                                     <p className="text-xs text-slate-500 text-center py-2">No members</p>
                                 )}
