@@ -321,6 +321,7 @@ export default function AboutPage() {
     const [activeGroup, setActiveGroup] = useState<string>("ALL");
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [adminTeams, setAdminTeams] = useState<any[]>([]);
     
     // ── Solar Orbital State ──
     const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
@@ -332,13 +333,16 @@ export default function AboutPage() {
         setIsLoading(true);
         Promise.all([
             fetch("/api/team-members").then((r) => (r.ok ? r.json() : [])).catch(() => []),
-            fetch("/api/settings").then((r) => (r.ok ? r.json() : {})).catch(() => ({}))
-        ]).then(([membersData, settingsData]) => {
+            fetch("/api/settings").then((r) => (r.ok ? r.json() : {})).catch(() => ({})),
+            fetch("/api/teams").then((r) => (r.ok ? r.json() : [])).catch(() => [])
+        ]).then(([membersData, settingsData, teamsData]) => {
             setMembers(Array.isArray(membersData) ? membersData : []);
             setSettings(settingsData || {});
+            setAdminTeams(Array.isArray(teamsData) ? teamsData : []);
             setIsLoading(false);
         }).catch(() => {
             setMembers([]);
+            setAdminTeams([]);
             setIsLoading(false);
         });
 
@@ -382,28 +386,21 @@ export default function AboutPage() {
         return members.find((m) => m.isPresident) || members[0] || null;
     }, [members]);
 
-    // Structured Team Divisions mapping
+    // Structured Team Divisions mapping - ONLY FROM ADMIN TEAMS
     const teamDivisions = useMemo<TeamDivisionInfo[]>(() => {
-        if (!members.length) return [];
+        if (!adminTeams.length) return [];
 
-        // 1. Group members by their actual teamGroup
-        const groupMap = new Map<string, any[]>();
-        members.forEach((m) => {
-            const raw = (m.teamGroup || "").trim();
-            const grp = raw || (m.isPresident ? "Founders & Executive Board" : "Core Team");
-            if (!groupMap.has(grp)) {
-                groupMap.set(grp, []);
-            }
-            groupMap.get(grp)!.push(m);
-        });
-
-        // 2. Build rich team division metadata for each group based on Admin values
         const result: TeamDivisionInfo[] = [];
 
-        groupMap.forEach((mList, groupName) => {
+        adminTeams.forEach((team) => {
+            const groupName = team.name;
             const lower = groupName.toLowerCase();
-            const customColor = mList.find((m) => m.teamColor)?.teamColor;
-            const customDesc = mList.find((m) => m.teamDescription)?.teamDescription;
+            
+            // Get all members who belong to this exact team
+            const mList = members.filter((m) => {
+                const raw = (m.teamGroup || "").trim().toLowerCase();
+                return raw === lower;
+            });
 
             let icon = Users;
             if (lower.includes("founder") || lower.includes("executive") || lower.includes("board")) icon = Crown;
@@ -412,7 +409,8 @@ export default function AboutPage() {
             else if (lower.includes("embedded") || lower.includes("circuit")) icon = Zap;
             else if (lower.includes("advisor") || lower.includes("research")) icon = Sparkles;
 
-            const accentColor = customColor || "#00D4FF";
+            const accentColor = team.color || "#00D4FF";
+            const customDesc = team.description;
 
             // Identify division lead (Strict Priority: isTeamLead from Admin > isPresident > isLeaderMember > sortOrder)
             const sorted = [...mList].sort((a, b) => {
@@ -437,7 +435,7 @@ export default function AboutPage() {
                 shortName: groupName,
                 icon,
                 accentColor,
-                badgeClass: "", // We will use inline styles instead for dynamic admin colors
+                badgeClass: "", 
                 borderColor: "",
                 glowClass: "",
                 description: customDesc || "AiRA Lab Team Division",
@@ -457,7 +455,7 @@ export default function AboutPage() {
         });
 
         return result;
-    }, [members]);
+    }, [adminTeams, members]);
 
     // Active selected team for Orbit
     const activeTeamDivision = useMemo(() => {
