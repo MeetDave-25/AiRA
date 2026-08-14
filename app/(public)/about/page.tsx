@@ -414,10 +414,10 @@ export default function AboutPage() {
 
             // Identify division lead (Strict Priority: isTeamLead from Admin > isPresident > isLeaderMember > sortOrder)
             const sorted = [...mList].sort((a, b) => {
-                if (a.isPresident && !b.isPresident) return -1;
-                if (!a.isPresident && b.isPresident) return 1;
                 if (a.isTeamLead && !b.isTeamLead) return -1;
                 if (!a.isTeamLead && b.isTeamLead) return 1;
+                if (a.isPresident && !b.isPresident) return -1;
+                if (!a.isPresident && b.isPresident) return 1;
                 const aLead = isLeaderMember(a);
                 const bLead = isLeaderMember(b);
                 if (aLead && !bLead) return -1;
@@ -425,7 +425,12 @@ export default function AboutPage() {
                 return (a.sortOrder || 0) - (b.sortOrder || 0);
             });
 
-            const lead = sorted[0] || null;
+            let lead = sorted[0] || null;
+            // Prevent the President from absorbing the team lead role if someone else can represent the team,
+            // because the President is already the Center and gets filtered out of the orbit.
+            if (lead?.id === president?.id && sorted.length > 1) {
+                lead = sorted[1];
+            }
             // Members are strictly everyone EXCEPT the lead
             const subMembers = sorted.filter((m) => m.id !== lead?.id);
 
@@ -455,7 +460,7 @@ export default function AboutPage() {
         });
 
         return result;
-    }, [adminTeams, members]);
+    }, [adminTeams, members, president]);
 
     // Active selected team for Orbit
     const activeTeamDivision = useMemo(() => {
