@@ -21,7 +21,10 @@ import {
     MessageSquare,
     X,
     Upload,
-    Check
+    Check,
+    Lock,
+    LogIn,
+    UserCheck
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
@@ -36,7 +39,7 @@ const CATEGORIES = [
 ];
 
 function SubmitProjectModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onClose: () => void; onCreated: (p: any) => void }) {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const [title, setTitle] = useState("");
     const [tagline, setTagline] = useState("");
     const [description, setDescription] = useState("");
@@ -50,7 +53,7 @@ function SubmitProjectModal({ isOpen, onClose, onCreated }: { isOpen: boolean; o
     const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
-        if (session?.user?.name && !authorName) {
+        if (session?.user?.name) {
             setAuthorName(session.user.name);
         }
     }, [session]);
@@ -81,6 +84,11 @@ function SubmitProjectModal({ isOpen, onClose, onCreated }: { isOpen: boolean; o
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!session?.user) {
+            toast.error("You must be logged in to submit a project");
+            return;
+        }
+
         if (!title.trim() || !description.trim()) {
             toast.error("Title and description are required");
             return;
@@ -100,13 +108,17 @@ function SubmitProjectModal({ isOpen, onClose, onCreated }: { isOpen: boolean; o
                     demoUrl,
                     githubUrl,
                     tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
-                    authorName: authorName || "AiRA Community Contributor",
+                    authorName: authorName || session.user.name || "AiRA Lab Member",
                 }),
             });
 
-            if (!res.ok) throw new Error("Failed to create project");
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || "Failed to create project");
+            }
+
             const created = await res.json();
-            toast.success("Project published to Community Showcase!");
+            toast.success("Project published to Community Showcase! 🚀");
             onCreated(created);
             onClose();
         } catch (err: any) {
@@ -132,155 +144,195 @@ function SubmitProjectModal({ isOpen, onClose, onCreated }: { isOpen: boolean; o
                     className="glass-strong rounded-3xl border border-white/20 p-6 sm:p-8 max-w-2xl w-full my-8 relative shadow-2xl"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-xl bg-aira-cyan/20 border border-aira-cyan/40 flex items-center justify-center text-aira-cyan">
-                                <Sparkles size={18} />
+                    {/* If user is NOT logged in: Show clear Login Prompt */}
+                    {!session?.user ? (
+                        <div className="text-center py-6 space-y-6">
+                            <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto shadow-lg shadow-amber-500/20">
+                                <Lock size={28} />
                             </div>
-                            <div>
-                                <h3 className="font-orbitron font-bold text-lg text-white">Showcase Your Project</h3>
-                                <p className="text-xs text-slate-400">Share your innovation with the AiRA community</p>
+
+                            <div className="space-y-2">
+                                <h3 className="font-orbitron font-bold text-xl sm:text-2xl text-white">
+                                    Login Required to Upload Projects
+                                </h3>
+                                <p className="text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
+                                    Anyone can browse projects, upvote, and leave reviews! To submit and publish your own engineering project to the AiRA showcase, please sign into your account.
+                                </p>
                             </div>
-                        </div>
-                        <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10">
-                            <X size={18} />
-                        </button>
-                    </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-4 max-h-[72vh] overflow-y-auto pr-1">
-                        <div>
-                            <label className="text-xs font-semibold text-slate-300 block mb-1.5">Project Title *</label>
-                            <input
-                                type="text"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder="e.g. Autonomous Planetary Rover Mk-II"
-                                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60"
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="text-xs font-semibold text-slate-300 block mb-1.5">One-line Tagline</label>
-                            <input
-                                type="text"
-                                value={tagline}
-                                onChange={(e) => setTagline(e.target.value)}
-                                placeholder="e.g. SLAM-based exploration rover with LIDAR mapping & obstacle avoidance"
-                                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-xs font-semibold text-slate-300 block mb-1.5">Category</label>
-                                <select
-                                    value={category}
-                                    onChange={(e) => setCategory(e.target.value)}
-                                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs outline-none focus:border-aira-cyan/60"
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                                <Link
+                                    href="/portal/login?callbackUrl=/projects"
+                                    className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-aira-cyan via-sky-400 to-indigo-600 text-slate-950 font-orbitron font-bold text-xs flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-lg shadow-aira-cyan/25"
                                 >
-                                    <option value="Autonomous Robotics">Autonomous Robotics</option>
-                                    <option value="AI & Machine Learning">AI & Machine Learning</option>
-                                    <option value="Web & Cloud Platforms">Web & Cloud Platforms</option>
-                                    <option value="IoT & Hardware">IoT & Hardware</option>
-                                    <option value="Hackathon Winner">Hackathon Winner</option>
-                                    <option value="Cybersecurity">Cybersecurity</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-semibold text-slate-300 block mb-1.5">Creator / Team Name</label>
-                                <input
-                                    type="text"
-                                    value={authorName}
-                                    onChange={(e) => setAuthorName(e.target.value)}
-                                    placeholder="Your Name or Team Name"
-                                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60"
-                                />
+                                    <LogIn size={15} />
+                                    <span>Log In to Submit Project</span>
+                                </Link>
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold"
+                                >
+                                    Cancel
+                                </button>
                             </div>
                         </div>
-
-                        <div>
-                            <label className="text-xs font-semibold text-slate-300 block mb-1.5">Cover Image URL or Upload</label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="url"
-                                    value={coverImage}
-                                    onChange={(e) => setCoverImage(e.target.value)}
-                                    placeholder="https://images.unsplash.com/... or upload"
-                                    className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60"
-                                />
-                                <label className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer shrink-0">
-                                    <Upload size={14} />
-                                    <span>{uploading ? "Uploading..." : "Upload"}</span>
-                                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                                </label>
+                    ) : (
+                        <>
+                            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-9 h-9 rounded-xl bg-aira-cyan/20 border border-aira-cyan/40 flex items-center justify-center text-aira-cyan">
+                                        <Sparkles size={18} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-orbitron font-bold text-lg text-white">Showcase Your Project</h3>
+                                        <p className="text-xs text-slate-400 flex items-center gap-1">
+                                            <UserCheck size={12} className="text-emerald-400" />
+                                            Posting as <strong className="text-slate-200">{session.user.name}</strong>
+                                        </p>
+                                    </div>
+                                </div>
+                                <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10">
+                                    <X size={18} />
+                                </button>
                             </div>
-                        </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-xs font-semibold text-slate-300 block mb-1.5">Live Demo URL</label>
-                                <input
-                                    type="url"
-                                    value={demoUrl}
-                                    onChange={(e) => setDemoUrl(e.target.value)}
-                                    placeholder="https://yourdemo.com"
-                                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold text-slate-300 block mb-1.5">GitHub Repository URL</label>
-                                <input
-                                    type="url"
-                                    value={githubUrl}
-                                    onChange={(e) => setGithubUrl(e.target.value)}
-                                    placeholder="https://github.com/username/project"
-                                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60"
-                                />
-                            </div>
-                        </div>
+                            <form onSubmit={handleSubmit} className="space-y-4 max-h-[72vh] overflow-y-auto pr-1">
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-300 block mb-1.5">Project Title *</label>
+                                    <input
+                                        type="text"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        placeholder="e.g. Autonomous Planetary Rover Mk-II"
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60"
+                                        required
+                                    />
+                                </div>
 
-                        <div>
-                            <label className="text-xs font-semibold text-slate-300 block mb-1.5">Tech Stack Tags (comma separated)</label>
-                            <input
-                                type="text"
-                                value={tags}
-                                onChange={(e) => setTags(e.target.value)}
-                                placeholder="ROS2, YOLOv8, Python, Three.js, PyTorch"
-                                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60"
-                            />
-                        </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-300 block mb-1.5">One-line Tagline</label>
+                                    <input
+                                        type="text"
+                                        value={tagline}
+                                        onChange={(e) => setTagline(e.target.value)}
+                                        placeholder="e.g. SLAM-based exploration rover with LIDAR mapping & obstacle avoidance"
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60"
+                                    />
+                                </div>
 
-                        <div>
-                            <label className="text-xs font-semibold text-slate-300 block mb-1.5">Detailed Case Study / Description *</label>
-                            <textarea
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                rows={5}
-                                placeholder="Describe the problem, engineering architecture, hardware components, algorithms, and key outcomes..."
-                                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60 resize-y"
-                                required
-                            />
-                        </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs font-semibold text-slate-300 block mb-1.5">Category</label>
+                                        <select
+                                            value={category}
+                                            onChange={(e) => setCategory(e.target.value)}
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs outline-none focus:border-aira-cyan/60"
+                                        >
+                                            <option value="Autonomous Robotics">Autonomous Robotics</option>
+                                            <option value="AI & Machine Learning">AI & Machine Learning</option>
+                                            <option value="Web & Cloud Platforms">Web & Cloud Platforms</option>
+                                            <option value="IoT & Hardware">IoT & Hardware</option>
+                                            <option value="Hackathon Winner">Hackathon Winner</option>
+                                            <option value="Cybersecurity">Cybersecurity</option>
+                                        </select>
+                                    </div>
 
-                        <div className="pt-3 flex items-center justify-end gap-3 border-t border-white/10">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={submitting}
-                                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-aira-cyan via-sky-400 to-indigo-600 text-slate-950 font-orbitron font-bold text-xs hover:scale-105 transition-all shadow-lg shadow-aira-cyan/25 cursor-pointer disabled:opacity-50"
-                            >
-                                {submitting ? "Publishing..." : "Publish Project"}
-                            </button>
-                        </div>
-                    </form>
+                                    <div>
+                                        <label className="text-xs font-semibold text-slate-300 block mb-1.5">Creator / Team Name</label>
+                                        <input
+                                            type="text"
+                                            value={authorName}
+                                            onChange={(e) => setAuthorName(e.target.value)}
+                                            placeholder="Your Name or Team Name"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-300 block mb-1.5">Cover Image URL or Upload</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="url"
+                                            value={coverImage}
+                                            onChange={(e) => setCoverImage(e.target.value)}
+                                            placeholder="https://images.unsplash.com/... or upload"
+                                            className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60"
+                                        />
+                                        <label className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer shrink-0">
+                                            <Upload size={14} />
+                                            <span>{uploading ? "Uploading..." : "Upload"}</span>
+                                            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs font-semibold text-slate-300 block mb-1.5">Live Demo URL</label>
+                                        <input
+                                            type="url"
+                                            value={demoUrl}
+                                            onChange={(e) => setDemoUrl(e.target.value)}
+                                            placeholder="https://yourdemo.com"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-semibold text-slate-300 block mb-1.5">GitHub Repository URL</label>
+                                        <input
+                                            type="url"
+                                            value={githubUrl}
+                                            onChange={(e) => setGithubUrl(e.target.value)}
+                                            placeholder="https://github.com/username/project"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-300 block mb-1.5">Tech Stack Tags (comma separated)</label>
+                                    <input
+                                        type="text"
+                                        value={tags}
+                                        onChange={(e) => setTags(e.target.value)}
+                                        placeholder="ROS2, YOLOv8, Python, Three.js, PyTorch"
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-300 block mb-1.5">Detailed Case Study / Description *</label>
+                                    <textarea
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        rows={5}
+                                        placeholder="Describe the problem, engineering architecture, hardware components, algorithms, and key outcomes..."
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs placeholder-slate-500 outline-none focus:border-aira-cyan/60 resize-y"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="pt-3 flex items-center justify-end gap-3 border-t border-white/10">
+                                    <button
+                                        type="button"
+                                        onClick={onClose}
+                                        className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={submitting}
+                                        className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-aira-cyan via-sky-400 to-indigo-600 text-slate-950 font-orbitron font-bold text-xs hover:scale-105 transition-all shadow-lg shadow-aira-cyan/25 cursor-pointer disabled:opacity-50"
+                                    >
+                                        {submitting ? "Publishing..." : "Publish Project"}
+                                    </button>
+                                </div>
+                            </form>
+                        </>
+                    )}
                 </motion.div>
             </motion.div>
         </AnimatePresence>

@@ -5,15 +5,92 @@ import { v4 as uuidv4 } from "uuid";
 
 export async function GET() {
     try {
-        const { data, error } = await db
+        // 1. Fetch standalone TeamMemberProfile entries
+        const { data: profiles } = await db
             .from("TeamMemberProfile")
             .select("*")
             .order("sortOrder", { ascending: true })
             .order("createdAt", { ascending: true });
 
-        if (error) throw error;
-        return NextResponse.json(data || []);
+        // 2. Fetch all Teams and their Memberships + Users from admin side
+        const { data: teams } = await db
+            .from("Team")
+            .select("*, TeamMembership(*, User(id, name, email, role, avatar))")
+            .order("createdAt", { ascending: true });
+
+        const profileList = Array.isArray(profiles) ? [...profiles] : [];
+        const teamList = Array.isArray(teams) ? teams : [];
+
+        // Track merged member items by normalized user/profile identifier
+        const processedMap = new Map<string, any>();
+
+        // 3. Index existing TeamMemberProfiles
+        profileList.forEach((p) => {
+            const key = (p.name || "").trim().toLowerCase();
+            if (key) {
+                processedMap.set(key, { ...p });
+            }
+        });
+
+        // 4. Merge actual Teams created from /admin/teams
+        teamList.forEach((team: any) => {
+            const teamMemberships = team.TeamMembership || [];
+            
+            teamMemberships.forEach((m: any) => {
+                const user = m.User || {};
+                const userName = (user.name || "").trim();
+                const userKey = userName.toLowerCase();
+                const isLead = m.memberRole === "TEAM_LEAD";
+
+                if (userKey && processedMap.has(userKey)) {
+                    // Update existing profile with Team membership info
+                    const existing = processedMap.get(userKey);
+                    processedMap.set(userKey, {
+                        ...existing,
+                        teamGroup: team.name,
+                        teamColor: team.color || existing.teamColor || "#00D4FF",
+                        teamDescription: team.description || existing.teamDescription || null,
+                        isTeamLead: isLead || existing.isPresident || existing.isTeamLead,
+                        sortOrder: isLead ? 1 : (existing.sortOrder || 10),
+                        role: isLead && (!existing.role || existing.role === "Member" || existing.role === "Team Member")
+                            ? `Team Lead - ${team.name}`
+                            : (existing.role || (isLead ? "Team Lead" : "Team Member")),
+                        photo: existing.photo || user.avatar || null,
+                    });
+                } else if (userName) {
+                    // Create entry for team member from User / Team table
+                    const newEntry = {
+                        id: `team-user-${user.id || m.id}-${team.id}`,
+                        name: userName,
+                        role: isLead ? `Team Lead - ${team.name}` : (user.role === "ADMIN" ? "Admin" : "Team Member"),
+                        bio: null,
+                        photo: user.avatar || null,
+                        linkedin: null,
+                        github: null,
+                        teamGroup: team.name,
+                        teamColor: team.color || "#00D4FF",
+                        teamDescription: team.description || null,
+                        sortOrder: isLead ? 1 : 10,
+                        isPresident: false,
+                        isTeamLead: isLead,
+                        createdAt: m.joinedAt || team.createdAt || new Date().toISOString(),
+                    };
+                    processedMap.set(userKey || `id-${user.id}`, newEntry);
+                }
+            });
+        });
+
+        const merged = Array.from(processedMap.values()).sort((a, b) => {
+            if (a.isPresident && !b.isPresident) return -1;
+            if (!a.isPresident && b.isPresident) return 1;
+            if (a.isTeamLead && !b.isTeamLead) return -1;
+            if (!a.isTeamLead && b.isTeamLead) return 1;
+            return (a.sortOrder || 0) - (b.sortOrder || 0);
+        });
+
+        return NextResponse.json(merged);
     } catch (error) {
+        console.error("Failed to load team members:", error);
         return NextResponse.json([], { status: 200 });
     }
 }

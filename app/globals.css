@@ -318,3 +318,72 @@ body {
     transform: rotate(-360deg);
   }
 }
+
+/* ═══════════════════════════════════════════════
+   AUTHENTIC MAGAZINE EDITORIAL STYLING (PDF STYLE)
+   ═══════════════════════════════════════════════ */
+.magazine-folio-paper {
+  background: radial-gradient(circle at 50% 0%, #0d1527 0%, #060a14 100%);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.magazine-columns-2 {
+  column-count: 2;
+  column-gap: 2.5rem;
+  column-rule: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: justify;
+}
+
+@media (max-width: 1024px) {
+  .magazine-columns-2 {
+    column-count: 1;
+    text-align: left;
+  }
+}
+
+.magazine-dropcap::first-letter {
+  float: left;
+  font-family: 'Orbitron', serif;
+  font-size: 3.4rem;
+  line-height: 2.8rem;
+  padding-top: 4px;
+  padding-right: 12px;
+  padding-bottom: 2px;
+  color: #38BDF8;
+  font-weight: 900;
+  text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+}
+
+.magazine-stripe-top {
+  height: 4px;
+  background: linear-gradient(90deg, #F97316 0%, #38BDF8 50%, #EC4899 100%);
+}
+
+.magazine-stripe-bottom {
+  height: 3px;
+  background: linear-gradient(90deg, #EC4899 0%, #38BDF8 50%, #F97316 100%);
+}
+
+/* Diamond collage clipped vignette */
+.polygon-diamond {
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+/* Print Stylesheet for Exporting Clean Magazine Spreads */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+  header, nav, aside, .no-print {
+    display: none !important;
+  }
+  .magazine-folio-paper {
+    background: #ffffff !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+}
+

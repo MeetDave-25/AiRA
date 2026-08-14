@@ -55,6 +55,13 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const session: any = await getServerSession(authOptions as any);
+        if (!session?.user) {
+            return NextResponse.json(
+                { error: "Unauthorized. You must be logged in to upload a project." },
+                { status: 401 }
+            );
+        }
+
         const body = await req.json();
 
         const title = (body.title || "").trim();
@@ -65,7 +72,7 @@ export async function POST(req: NextRequest) {
         const demoUrl = (body.demoUrl || "").trim() || null;
         const githubUrl = (body.githubUrl || "").trim() || null;
         const tags = Array.isArray(body.tags) ? body.tags : (body.tags ? body.tags.split(",").map((t: string) => t.trim()) : []);
-        const authorName = (body.authorName || session?.user?.name || "AiRA Community Contributor").trim();
+        const authorName = (session.user.name || body.authorName || "AiRA Lab Member").trim();
 
         if (!title || !description) {
             return NextResponse.json({ error: "Project title and description are required" }, { status: 400 });

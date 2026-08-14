@@ -31,7 +31,8 @@ import {
     Layers,
     UserCheck,
     Orbit as OrbitIcon,
-    ArrowLeft
+    ArrowLeft,
+    Search
 } from "lucide-react";
 import { Interactive3DMascot } from "@/components/ui/Interactive3DMascot";
 import {
@@ -225,10 +226,12 @@ function MemberModal({ member, onClose }: { member: any; onClose: () => void }) 
 function OrbitPlanetCard({
     member,
     isLeaderView,
+    teamBadge,
     onClick,
 }: {
     member: any;
     isLeaderView: boolean;
+    teamBadge?: string;
     onClick: () => void;
 }) {
     return (
@@ -269,19 +272,24 @@ function OrbitPlanetCard({
                 )}
 
                 {/* Hover Action Tooltip */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 rounded-xl glass-strong border border-white/20 text-xs text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-40 shadow-2xl scale-90 group-hover:scale-100">
-                    <div className="font-bold text-white font-orbitron text-xs flex items-center gap-1.5">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3.5 py-2 rounded-2xl glass-strong border border-white/20 text-xs text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-40 shadow-2xl scale-90 group-hover:scale-100 min-w-[140px] text-center">
+                    <div className="font-bold text-white font-orbitron text-xs flex items-center justify-center gap-1.5">
                         {member.name}
                     </div>
-                    <div className="text-aira-cyan text-[10px] font-mono">
-                        {(member.role || "Team Member").slice(0, 28)}
+                    <div className="text-aira-cyan text-[10px] font-mono truncate max-w-[180px]">
+                        {member.role || "Team Member"}
                     </div>
+                    {teamBadge && (
+                        <div className="text-[9px] text-violet-300 font-semibold mt-0.5 px-2 py-0.5 rounded-full bg-white/10 w-fit mx-auto">
+                            {teamBadge}
+                        </div>
+                    )}
                     {isLeaderView ? (
-                        <div className="text-[10px] text-amber-300 font-semibold mt-0.5 flex items-center gap-1">
-                            <span>✨ Click to focus &amp; spin sub-team</span>
+                        <div className="text-[10px] text-amber-300 font-semibold mt-1 flex items-center justify-center gap-1">
+                            <span>✨ Focus team orbit</span>
                         </div>
                     ) : (
-                        <div className="text-[10px] text-slate-300 font-normal mt-0.5">
+                        <div className="text-[10px] text-slate-300 font-normal mt-1">
                             <span>Click to view bio</span>
                         </div>
                     )}
@@ -291,28 +299,48 @@ function OrbitPlanetCard({
     );
 }
 
+interface TeamDivisionInfo {
+    id: string;
+    name: string;
+    shortName: string;
+    icon: any;
+    accentColor: string;
+    badgeClass: string;
+    borderColor: string;
+    glowClass: string;
+    description: string;
+    lead: any | null;
+    members: any[];
+    allMembers: any[];
+}
+
 export default function AboutPage() {
     const [members, setMembers] = useState<any[]>([]);
     const [settings, setSettings] = useState<Record<string, string>>({});
     const [selectedMember, setSelectedMember] = useState<any>(null);
     const [activeGroup, setActiveGroup] = useState<string>("ALL");
+    const [searchQuery, setSearchQuery] = useState<string>("");
+    const [isLoading, setIsLoading] = useState<boolean>(true);
     
     // ── Solar Orbital State ──
-    const [activeLeader, setActiveLeader] = useState<any | null>(null);
+    const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
     const [isOrbitPaused, setIsOrbitPaused] = useState(false);
     const [orbitSpeed, setOrbitSpeed] = useState<"normal" | "slow" | "fast">("normal");
     const [orbitRadius, setOrbitRadius] = useState(210);
 
     useEffect(() => {
-        fetch("/api/team-members")
-            .then((r) => (r.ok ? r.json() : []))
-            .then((d) => setMembers(Array.isArray(d) ? d : []))
-            .catch(() => setMembers([]));
-
-        fetch("/api/settings")
-            .then((r) => (r.ok ? r.json() : {}))
-            .then((d) => setSettings(d))
-            .catch(() => setSettings({}));
+        setIsLoading(true);
+        Promise.all([
+            fetch("/api/team-members").then((r) => (r.ok ? r.json() : [])).catch(() => []),
+            fetch("/api/settings").then((r) => (r.ok ? r.json() : {})).catch(() => ({}))
+        ]).then(([membersData, settingsData]) => {
+            setMembers(Array.isArray(membersData) ? membersData : []);
+            setSettings(settingsData || {});
+            setIsLoading(false);
+        }).catch(() => {
+            setMembers([]);
+            setIsLoading(false);
+        });
 
         const handleResize = () => {
             const width = window.innerWidth;
@@ -333,7 +361,7 @@ export default function AboutPage() {
     // Helper: Determine if a member is a Team Leader
     const isLeaderMember = (m: any) => {
         if (!m) return false;
-        if (m.isPresident) return true;
+        if (m.isPresident || m.isTeamLead) return true;
         const role = (m.role || "").toLowerCase();
         return (
             role.includes("lead") ||
@@ -344,6 +372,7 @@ export default function AboutPage() {
             role.includes("coordinator") ||
             role.includes("president") ||
             role.includes("chief") ||
+            role.includes("founder") ||
             role.includes("manager")
         );
     };
@@ -353,90 +382,143 @@ export default function AboutPage() {
         return members.find((m) => m.isPresident) || members[0] || null;
     }, [members]);
 
-    // All Team Leaders (Distinct list of wing leads & domain heads)
-    const teamLeaders = useMemo(() => {
-        const explicitLeaders = members.filter((m) => isLeaderMember(m) && !m.isPresident);
-        
-        // Ensure each major wing has its representative lead
-        const map = new Map<string, any>();
-        explicitLeaders.forEach((l) => {
-            const grp = (l.teamGroup || "Core").trim();
-            map.set(grp, l);
-        });
+    // Structured Team Divisions mapping
+    const teamDivisions = useMemo<TeamDivisionInfo[]>(() => {
+        if (!members.length) return [];
 
-        // If fewer than 4 leaders, pick top member from distinct domain groups
-        if (map.size < 4) {
-            members.forEach((m) => {
-                if (!m.isPresident) {
-                    const grp = (m.teamGroup || "Core").trim();
-                    if (!map.has(grp) && map.size < 7) {
-                        map.set(grp, m);
-                    }
-                }
-            });
-        }
-
-        return Array.from(map.values());
-    }, [members]);
-
-    // Sub-team members for the currently focused leader (Smart Domain & Wing Isolation)
-    const activeSubMembers = useMemo(() => {
-        if (!activeLeader) return [];
-        const rawGroup = (activeLeader.teamGroup || "").trim().toLowerCase();
-        const baseGroup = rawGroup.replace(/(\s+wing|\s+team|\s+division|\s+group|\s+department)$/i, "").trim();
-        const isTechLeader = baseGroup.includes("tech") || baseGroup.includes("technology") || baseGroup.includes("engineering");
-
-        return members.filter((m) => {
-            if (m.id === activeLeader.id || m.isPresident) return false;
-            const mRaw = (m.teamGroup || "").trim().toLowerCase();
-            const mBase = mRaw.replace(/(\s+wing|\s+team|\s+division|\s+group|\s+department)$/i, "").trim();
-
-            // 1. Direct or partial base match (e.g. "management" === "management")
-            if (baseGroup && mBase && (baseGroup === mBase || baseGroup.includes(mBase) || mBase.includes(baseGroup))) {
-                return true;
-            }
-
-            // 2. If Tech/CTO leader, include technical domain members
-            if (isTechLeader) {
-                const isTechDomain = ["web", "app", "ai", "ml", "robotics", "cybersecurity", "data science", "tech", "hackathons"].some((d) => mBase.includes(d));
-                if (isTechDomain) return true;
-            }
-
-            return false;
-        });
-    }, [members, activeLeader]);
-
-    // All Orbiting Items depending on current Mode:
-    // Mode 1: Leadership Orbit (activeLeader is null) -> All Team Leaders spin around President/Core
-    // Mode 2: Team Orbit (activeLeader is set) -> Sub-team members spin around that Team Leader
-    const currentOrbitingItems = useMemo(() => {
-        if (!activeLeader) {
-            return teamLeaders;
-        }
-        return activeSubMembers;
-    }, [activeLeader, teamLeaders, activeSubMembers]);
-
-    // Center Display Person
-    const centerPerson = useMemo(() => {
-        if (activeLeader) return activeLeader;
-        return president;
-    }, [activeLeader, president]);
-
-    // Unique groups for directory filter
-    const teamGroups = useMemo(() => {
-        const groups = new Set<string>();
+        // 1. Group members by their actual teamGroup
+        const groupMap = new Map<string, any[]>();
         members.forEach((m) => {
-            if (m.teamGroup && m.teamGroup.trim()) {
-                groups.add(m.teamGroup.trim());
+            const raw = (m.teamGroup || "").trim();
+            const grp = raw || (m.isPresident ? "Founders & Executive Board" : "Core Team");
+            if (!groupMap.has(grp)) {
+                groupMap.set(grp, []);
             }
+            groupMap.get(grp)!.push(m);
         });
-        return ["ALL", ...Array.from(groups)];
+
+        // 2. Build rich team division metadata for each group based on Admin values
+        const result: TeamDivisionInfo[] = [];
+
+        groupMap.forEach((mList, groupName) => {
+            const lower = groupName.toLowerCase();
+            const customColor = mList.find((m) => m.teamColor)?.teamColor;
+            const customDesc = mList.find((m) => m.teamDescription)?.teamDescription;
+
+            let icon = Users;
+            if (lower.includes("founder") || lower.includes("executive") || lower.includes("board")) icon = Crown;
+            else if (lower.includes("robotics") || lower.includes("hardware")) icon = Cpu;
+            else if (lower.includes("ai") || lower.includes("software") || lower.includes("cloud")) icon = Code2;
+            else if (lower.includes("embedded") || lower.includes("circuit")) icon = Zap;
+            else if (lower.includes("advisor") || lower.includes("research")) icon = Sparkles;
+
+            const accentColor = customColor || "#00D4FF";
+
+            // Identify division lead (Strict Priority: isTeamLead from Admin > isPresident > isLeaderMember > sortOrder)
+            const sorted = [...mList].sort((a, b) => {
+                if (a.isPresident && !b.isPresident) return -1;
+                if (!a.isPresident && b.isPresident) return 1;
+                if (a.isTeamLead && !b.isTeamLead) return -1;
+                if (!a.isTeamLead && b.isTeamLead) return 1;
+                const aLead = isLeaderMember(a);
+                const bLead = isLeaderMember(b);
+                if (aLead && !bLead) return -1;
+                if (!aLead && bLead) return 1;
+                return (a.sortOrder || 0) - (b.sortOrder || 0);
+            });
+
+            const lead = sorted[0] || null;
+            // Members are strictly everyone EXCEPT the lead
+            const subMembers = sorted.filter((m) => m.id !== lead?.id);
+
+            result.push({
+                id: groupName.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+                name: groupName,
+                shortName: groupName,
+                icon,
+                accentColor,
+                badgeClass: "", // We will use inline styles instead for dynamic admin colors
+                borderColor: "",
+                glowClass: "",
+                description: customDesc || "AiRA Lab Team Division",
+                lead,
+                members: subMembers,
+                allMembers: sorted,
+            });
+        });
+
+        // Ensure Executive/Leadership comes first
+        result.sort((a, b) => {
+            const aIsExec = a.name.toLowerCase().includes("founder") || a.name.toLowerCase().includes("executive");
+            const bIsExec = b.name.toLowerCase().includes("founder") || b.name.toLowerCase().includes("executive");
+            if (aIsExec && !bIsExec) return -1;
+            if (!aIsExec && bIsExec) return 1;
+            return b.allMembers.length - a.allMembers.length;
+        });
+
+        return result;
     }, [members]);
 
-    const filteredMembers = useMemo(() => {
-        if (activeGroup === "ALL") return members;
-        return members.filter((m) => m.teamGroup === activeGroup);
-    }, [members, activeGroup]);
+    // Active selected team for Orbit
+    const activeTeamDivision = useMemo(() => {
+        if (!selectedTeamId) return null;
+        return teamDivisions.find((d) => d.id === selectedTeamId) || null;
+    }, [selectedTeamId, teamDivisions]);
+
+    // Center Display Person in the Solar Orbit
+    const centerPerson = useMemo(() => {
+        if (activeTeamDivision) {
+            return activeTeamDivision.lead || president;
+        }
+        return president;
+    }, [activeTeamDivision, president]);
+
+    // Orbiting satellites depending on selected team
+    // Mode 1: All Teams View -> Orbiting items are Team Leads of each respective team
+    // Mode 2: Specific Team View -> Orbiting items are the members belonging STRICTLY to that selected team!
+    const currentOrbitingItems = useMemo(() => {
+        if (!activeTeamDivision) {
+            // Mode 1: Representative lead for each team
+            return teamDivisions
+                .map((div) => div.lead)
+                .filter((lead) => lead && lead.id !== president?.id);
+        }
+
+        // Mode 2: Members of this team. If there are no assigned members, it stays completely blank!
+        return activeTeamDivision.members;
+    }, [activeTeamDivision, teamDivisions, president]);
+
+    // Filtered members for directory showcase
+    const filteredDivisions = useMemo(() => {
+        let list = teamDivisions;
+
+        if (activeGroup !== "ALL") {
+            list = list.filter((div) => div.name === activeGroup || div.id === activeGroup);
+        }
+
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase().trim();
+            list = list
+                .map((div) => {
+                    const matchedMembers = div.allMembers.filter(
+                        (m) =>
+                            (m.name || "").toLowerCase().includes(q) ||
+                            (m.role || "").toLowerCase().includes(q) ||
+                            (m.bio || "").toLowerCase().includes(q)
+                    );
+                    if (matchedMembers.length === 0) return null;
+                    return {
+                        ...div,
+                        allMembers: matchedMembers,
+                        lead: matchedMembers.find((m) => m.id === div.lead?.id) || matchedMembers[0],
+                        members: matchedMembers.filter((m) => m.id !== div.lead?.id),
+                    };
+                })
+                .filter(Boolean) as TeamDivisionInfo[];
+        }
+
+        return list;
+    }, [teamDivisions, activeGroup, searchQuery]);
 
     // Orbit Animation Speed
     const spinDuration = orbitSpeed === "fast" ? "20s" : orbitSpeed === "slow" ? "48s" : "32s";
@@ -478,9 +560,9 @@ export default function AboutPage() {
             <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
 
             {/* ═══════════════════════════════════════════════════════════
-                1. CINEMATIC INTERACTIVE 3D SOLAR / ORBIT SYSTEM
+                1. CINEMATIC INTERACTIVE 3D SOLAR / ORBIT SYSTEM (BY TEAM)
                ═══════════════════════════════════════════════════════════ */}
-            <section className="relative min-h-[640px] sm:min-h-[780px] flex flex-col items-center justify-center overflow-hidden px-4 pt-4">
+            <section className="relative min-h-[680px] sm:min-h-[820px] flex flex-col items-center justify-center overflow-hidden px-4 pt-4">
                 {/* Background 3D Typography */}
                 <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center justify-between w-full max-w-5xl pointer-events-none select-none z-0 px-4 opacity-10">
                     <motion.span
@@ -501,25 +583,21 @@ export default function AboutPage() {
                     </motion.span>
                 </div>
 
-                {/* Orbit Navigation & Status Bar */}
-                <div className="z-30 mb-6 flex flex-wrap items-center justify-center gap-3 max-w-2xl px-2 text-center">
-                    {activeLeader ? (
-                        <motion.button
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            onClick={() => setActiveLeader(null)}
-                            className="px-4 py-2 rounded-2xl bg-gradient-to-r from-aira-cyan via-sky-400 to-indigo-600 text-slate-950 font-orbitron font-bold text-xs flex items-center gap-2 hover:scale-105 transition-all shadow-lg shadow-aira-cyan/25 cursor-pointer"
+                {/* Active Team Orbit Status Indicator (Shown only when a team orbit is isolated) */}
+                {activeTeamDivision && (
+                    <div className="z-30 mb-6 flex items-center gap-2 text-xs text-slate-300 font-mono bg-slate-950/80 px-4 py-1.5 rounded-full border border-amber-500/30 shadow-lg shadow-black/50">
+                        <span className="text-amber-300 font-bold">✨ Team Orbit:</span>
+                        <span className="text-white font-semibold">{activeTeamDivision.name}</span>
+                        <span className="text-slate-500">•</span>
+                        <span className="text-aira-cyan">{activeTeamDivision.allMembers.length} Members</span>
+                        <button
+                            onClick={() => setSelectedTeamId(null)}
+                            className="ml-2 px-2 py-0.5 rounded bg-white/10 text-[10px] text-amber-300 hover:bg-white/20 transition-colors"
                         >
-                            <ArrowLeft size={14} />
-                            <span>Return to All Team Leaders Orbit</span>
-                        </motion.button>
-                    ) : (
-                        <div className="px-4 py-1.5 rounded-full glass border border-aira-cyan/30 text-xs font-orbitron font-bold text-aira-cyan flex items-center gap-2 shadow-lg shadow-aira-cyan/10">
-                            <OrbitIcon size={14} className="animate-spin text-aira-cyan" />
-                            <span>Leadership Orbit: Team Leaders Spinning Around Founder</span>
-                        </div>
-                    )}
-                </div>
+                            Reset to All Leads ✕
+                        </button>
+                    </div>
+                )}
 
                 {/* Interactive Orbit System Container */}
                 <div
@@ -566,7 +644,7 @@ export default function AboutPage() {
                         <div className="relative">
                             {/* Card Frame with Glowing Aura */}
                             <div className={`w-36 h-48 sm:w-48 sm:h-60 md:w-56 md:h-68 rounded-3xl overflow-hidden border-2 bg-slate-950 shadow-2xl transition-all duration-300 group-hover:scale-105 ${
-                                activeLeader
+                                activeTeamDivision
                                     ? "border-amber-400/80 shadow-amber-500/25 ring-2 ring-amber-400/30"
                                     : "border-aira-cyan/80 glow-cyan ring-2 ring-aira-cyan/30"
                             }`}>
@@ -587,8 +665,8 @@ export default function AboutPage() {
                                 />
 
                                 {/* Center Floating Badge Tag */}
-                                <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-white/20 text-[10px] font-orbitron font-bold text-white flex items-center gap-1 shadow-lg">
-                                    {centerPerson?.isPresident ? "👑 Founder" : "⭐ Wing Leader"}
+                                <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-slate-950/85 backdrop-blur-md border border-white/20 text-[10px] font-orbitron font-bold text-white flex items-center gap-1 shadow-lg">
+                                    {centerPerson?.isPresident ? "👑 Founder" : "⭐ Team Lead"}
                                 </div>
                             </div>
 
@@ -600,6 +678,11 @@ export default function AboutPage() {
                                 <p className="text-[10px] text-aira-cyan font-medium truncate max-w-[160px]">
                                     {centerPerson?.role || "Core Lead"}
                                 </p>
+                                {activeTeamDivision && (
+                                    <p className="text-[9px] text-amber-300 font-semibold font-mono">
+                                        {activeTeamDivision.name}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </motion.div>
@@ -607,7 +690,7 @@ export default function AboutPage() {
                     {/* ══ ORBIT 1: INNER RING MEMBERS/LEADERS ══ */}
                     {currentOrbitingItems.length > 0 && (
                         <div
-                            key={`orbit-inner-${activeLeader?.id || "leaders"}`}
+                            key={`orbit-inner-${selectedTeamId || "all-leaders"}`}
                             className="absolute inset-0 z-20 pointer-events-none"
                             style={{
                                 animation: isOrbitPaused ? "none" : `spin ${spinDuration} linear infinite`,
@@ -618,6 +701,9 @@ export default function AboutPage() {
                                 : currentOrbitingItems.slice(0, 6)
                             ).map((member: any, i: number, arr: any[]) => {
                                 const angle = (360 / arr.length) * i;
+                                const isAllTeamsMode = selectedTeamId === null;
+                                const memberDiv = teamDivisions.find((d) => d.lead?.id === member.id || d.allMembers.some((m) => m.id === member.id));
+
                                 return (
                                     <div
                                         key={member.id}
@@ -635,13 +721,14 @@ export default function AboutPage() {
                                         >
                                             <OrbitPlanetCard
                                                 member={member}
-                                                isLeaderView={!activeLeader}
+                                                isLeaderView={isAllTeamsMode}
+                                                teamBadge={memberDiv?.shortName}
                                                 onClick={() => {
-                                                    if (!activeLeader) {
-                                                        // In leadership mode: clicking a team leader focuses that leader in center & spins sub-team!
-                                                        setActiveLeader(member);
+                                                    if (isAllTeamsMode && memberDiv) {
+                                                        // In all teams mode: clicking a team leader switches orbit to that team!
+                                                        setSelectedTeamId(memberDiv.id);
                                                     } else {
-                                                        // In team mode: clicking a sub-member opens full bio modal
+                                                        // In team mode: clicking member opens full bio modal
                                                         setSelectedMember(member);
                                                     }
                                                 }}
@@ -656,7 +743,7 @@ export default function AboutPage() {
                     {/* ══ ORBIT 2: OUTER RING (IF > 6 MEMBERS) ══ */}
                     {currentOrbitingItems.length > 6 && (
                         <div
-                            key={`orbit-outer-${activeLeader?.id || "leaders"}`}
+                            key={`orbit-outer-${selectedTeamId || "all-leaders"}`}
                             className="absolute inset-0 z-20 pointer-events-none"
                             style={{
                                 animation: isOrbitPaused ? "none" : `counterspin ${outerSpinDuration} linear infinite`,
@@ -665,6 +752,9 @@ export default function AboutPage() {
                             {currentOrbitingItems.slice(6).map((member: any, i: number, arr: any[]) => {
                                 const angle = (360 / arr.length) * i;
                                 const radius2 = orbitRadius * 1.42;
+                                const isAllTeamsMode = selectedTeamId === null;
+                                const memberDiv = teamDivisions.find((d) => d.lead?.id === member.id || d.allMembers.some((m) => m.id === member.id));
+
                                 return (
                                     <div
                                         key={member.id}
@@ -682,10 +772,11 @@ export default function AboutPage() {
                                         >
                                             <OrbitPlanetCard
                                                 member={member}
-                                                isLeaderView={!activeLeader}
+                                                isLeaderView={isAllTeamsMode}
+                                                teamBadge={memberDiv?.shortName}
                                                 onClick={() => {
-                                                    if (!activeLeader) {
-                                                        setActiveLeader(member);
+                                                    if (isAllTeamsMode && memberDiv) {
+                                                        setSelectedTeamId(memberDiv.id);
                                                     } else {
                                                         setSelectedMember(member);
                                                     }
@@ -697,8 +788,6 @@ export default function AboutPage() {
                             })}
                         </div>
                     )}
-
-                    {/* Orbit 2 closed */}
                 </div>
 
                 {/* ══ ORBIT CONTROLS & HINTS ══ */}
@@ -706,9 +795,9 @@ export default function AboutPage() {
                     <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-400">
                         <span className="px-3.5 py-1.5 rounded-full glass border border-white/10 inline-flex items-center gap-1.5 shadow-lg shadow-black/40">
                             <Sparkles size={13} className="text-aira-cyan animate-pulse" /> 
-                            {activeLeader 
-                                ? `Spinning ${activeSubMembers.length} team members around ${activeLeader.name}`
-                                : "Click any Team Leader to spin their team around them!"}
+                            {activeTeamDivision 
+                                ? `Spinning ${currentOrbitingItems.length} team members belonging strictly to ${activeTeamDivision.name}`
+                                : "Click any Team Leader to isolate their team orbit!"}
                         </span>
 
                         <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
@@ -899,100 +988,260 @@ export default function AboutPage() {
             </section>
 
             {/* ═══════════════════════════════════════════════════════════
-                5. FULL TEAM SHOWCASE DIRECTORY GRID
+                5. FULL TEAM SHOWCASE DIRECTORY (STRUCTURED BY TEAM)
                ═══════════════════════════════════════════════════════════ */}
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10 space-y-12">
+                {/* Header & Filter Controls */}
                 <ScrollReveal direction="up">
-                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/10 pb-8">
                         <div>
                             <span className="text-xs font-bold uppercase tracking-[0.25em] text-aira-cyan font-orbitron">
-                                Our Collective Directory
+                                Directory by Division &amp; Wing
                             </span>
                             <h2 className="font-orbitron font-bold text-3xl sm:text-4xl text-white mt-1">
-                                Meet the <span className="gradient-text-cyan">Team</span>
+                                Meet Our <span className="gradient-text-cyan">Teams</span>
                             </h2>
+                            <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-xl">
+                                Explore our talented researchers, engineers, and creators organized by their specialized laboratory divisions.
+                            </p>
                         </div>
 
-                        <Link
-                            href="/leadership"
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-bold hover:bg-amber-400/20 hover:scale-105 transition-all shadow-md"
-                        >
-                            <Crown size={15} className="text-amber-400" />
-                            <span>View Founders &amp; Executive Board →</span>
-                        </Link>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <Link
+                                href="/leadership"
+                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-bold hover:bg-amber-400/20 hover:scale-105 transition-all shadow-md"
+                            >
+                                <Crown size={15} className="text-amber-400" />
+                                <span>Founders &amp; Executive Board →</span>
+                            </Link>
 
-                        {/* Group Filter Buttons */}
-                        {teamGroups.length > 2 && (
-                            <div className="flex flex-wrap gap-2">
-                                {teamGroups.map((grp) => (
-                                    <button
-                                        key={grp}
-                                        onClick={() => setActiveGroup(grp)}
-                                        className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
-                                            activeGroup === grp
-                                                ? "bg-aira-cyan/20 text-aira-cyan border-aira-cyan/50 shadow-md shadow-aira-cyan/20"
-                                                : "bg-slate-900/40 text-slate-400 border-white/5 hover:bg-white/5"
-                                        }`}
-                                    >
-                                        {grp}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                            <Link
+                                href="/join"
+                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-aira-cyan text-slate-950 text-xs font-orbitron font-bold hover:scale-105 transition-all shadow-md shadow-aira-cyan/20"
+                            >
+                                <Rocket size={14} />
+                                <span>Join a Team</span>
+                            </Link>
+                        </div>
                     </div>
                 </ScrollReveal>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {filteredMembers.map((member, i) => (
-                        <ScrollReveal key={member.id} delay={i * 0.03} direction="up">
-                            <SpotlightCard
-                                spotlightColor="rgba(0, 212, 255, 0.16)"
-                                className="p-4 text-center cursor-pointer border-white/[0.08] hover:border-aira-cyan/50 transition-all duration-300 hover:scale-[1.03]"
-                            >
+                {/* Search & Team Filter Bar */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                    {/* Team Filter Pills */}
+                    <div className="flex flex-wrap gap-2 items-center">
+                        <button
+                            onClick={() => setActiveGroup("ALL")}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-orbitron font-bold transition-all border ${
+                                activeGroup === "ALL"
+                                    ? "bg-aira-cyan text-slate-950 border-aira-cyan shadow-md shadow-aira-cyan/20"
+                                    : "bg-slate-900/60 text-slate-400 border-white/10 hover:bg-white/10 hover:text-white"
+                            }`}
+                        >
+                            All Divisions ({members.length})
+                        </button>
+
+                        {teamDivisions.map((div) => {
+                            const isSelected = activeGroup === div.name || activeGroup === div.id;
+                            const Icon = div.icon;
+                            return (
                                 <button
-                                    onClick={() => setSelectedMember(member)}
-                                    className="w-full text-center flex flex-col items-center justify-between h-full"
+                                    key={div.id}
+                                    onClick={() => setActiveGroup(div.name)}
+                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+                                        isSelected
+                                            ? "bg-white/15 text-white border-white/40 shadow-md shadow-white/10"
+                                            : "bg-slate-900/60 text-slate-400 border-white/5 hover:bg-white/5 hover:text-slate-200"
+                                    }`}
                                 >
-                                    <div className="w-full">
-                                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-aira-cyan/60 mx-auto mb-3 transition-all flex items-center justify-center bg-slate-900 text-xs text-white relative shadow-lg">
-                                            <img
-                                                src={
-                                                    member.photo ||
-                                                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                                                        member.name
-                                                    )}&background=0d1526&color=00D4FF&size=200`
-                                                }
-                                                alt={member.name}
-                                                className="w-full h-full object-cover"
-                                                onError={(e) => {
-                                                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                                                        member.name
-                                                    )}&background=0d1526&color=00D4FF&size=200`;
-                                                }}
-                                            />
-                                            {member.isPresident && (
-                                                <div className="absolute -top-1 -right-1 text-xs">
-                                                    👑
-                                                </div>
-                                            )}
-                                        </div>
-                                        <h3 className="font-orbitron font-bold text-xs sm:text-sm text-white truncate">
-                                            {member.name}
-                                        </h3>
-                                        <p className="text-aira-cyan font-medium text-[11px] mt-0.5 line-clamp-1">
-                                            {member.role}
-                                        </p>
-                                    </div>
-                                    {member.teamGroup && (
-                                        <span className="inline-block mt-3 text-[10px] text-slate-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full truncate max-w-[90%]">
-                                            {member.teamGroup}
-                                        </span>
-                                    )}
+                                    <Icon size={13} style={{ color: div.accentColor }} />
+                                    <span>{div.shortName}</span>
+                                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-slate-300">
+                                        {div.allMembers.length}
+                                    </span>
                                 </button>
-                            </SpotlightCard>
-                        </ScrollReveal>
-                    ))}
+                            );
+                        })}
+                    </div>
+
+                    {/* Search Bar */}
+                    <div className="relative min-w-[240px] sm:w-72">
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search members by name..."
+                            className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-900/80 border border-white/10 text-white text-xs outline-none focus:border-aira-cyan transition-all"
+                        />
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery("")}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                            >
+                                <X size={13} />
+                            </button>
+                        )}
+                    </div>
                 </div>
+
+                {/* ══ TEAM-BY-TEAM SECTIONS SHOWCASE ══ */}
+                {isLoading ? (
+                    <div className="py-20 text-center flex flex-col items-center justify-center gap-3">
+                        <div className="w-10 h-10 border-2 border-aira-cyan/30 border-t-aira-cyan rounded-full animate-spin" />
+                        <p className="text-xs text-slate-400 font-orbitron">Loading laboratory divisions &amp; team members...</p>
+                    </div>
+                ) : filteredDivisions.length === 0 ? (
+                    <div className="glass p-12 rounded-3xl border border-white/10 text-center max-w-md mx-auto space-y-3">
+                        <Users size={36} className="mx-auto text-slate-500" />
+                        <h3 className="font-orbitron font-bold text-white text-base">No Team Members Found</h3>
+                        <p className="text-xs text-slate-400">
+                            No team members match your current filter or search criteria.
+                        </p>
+                        <button
+                            onClick={() => {
+                                setActiveGroup("ALL");
+                                setSearchQuery("");
+                            }}
+                            className="px-4 py-2 rounded-xl bg-aira-cyan text-slate-950 font-bold text-xs hover:scale-105 transition-transform"
+                        >
+                            Reset Filters
+                        </button>
+                    </div>
+                ) : (
+                    <div className="space-y-16">
+                        {filteredDivisions.map((division) => {
+                            const Icon = division.icon;
+                            return (
+                                <div key={division.id} className="space-y-6">
+                                    {/* Division Header Banner */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-transparent border border-white/10">
+                                        <div className="flex items-center gap-3.5">
+                                            <div
+                                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shadow-lg shrink-0"
+                                                style={{
+                                                    background: `radial-gradient(circle at top left, ${division.accentColor}30, ${division.accentColor}10)`,
+                                                    border: `1px solid ${division.accentColor}40`,
+                                                    boxShadow: `0 0 20px ${division.accentColor}20`,
+                                                }}
+                                            >
+                                                <Icon size={20} style={{ color: division.accentColor }} />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <h3 className="font-orbitron font-bold text-lg sm:text-xl text-white">
+                                                        {division.name}
+                                                    </h3>
+                                                    <span 
+                                                        className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-white/10 text-white border-white/20"
+                                                        style={{ 
+                                                            color: division.accentColor, 
+                                                            borderColor: `${division.accentColor}40`, 
+                                                            backgroundColor: `${division.accentColor}15` 
+                                                        }}
+                                                    >
+                                                        {division.allMembers.length} {division.allMembers.length === 1 ? "Member" : "Members"}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+                                                    {division.description}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Quick Orbit Focus Button */}
+                                        <button
+                                            onClick={() => {
+                                                setSelectedTeamId(division.id);
+                                                window.scrollTo({ top: 0, behavior: "smooth" });
+                                            }}
+                                            className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-orbitron font-semibold text-aira-cyan hover:text-white flex items-center gap-1.5 transition-all w-fit self-start sm:self-center shrink-0"
+                                        >
+                                            <OrbitIcon size={12} className="text-aira-cyan" />
+                                            <span>Spin in 3D Orbit ↑</span>
+                                        </button>
+                                    </div>
+
+                                    {/* Division Members Grid */}
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                        {division.allMembers.map((member, i) => {
+                                            const isLead = member.id === division.lead?.id || isLeaderMember(member);
+                                            return (
+                                                <ScrollReveal key={member.id} delay={i * 0.03} direction="up">
+                                                    <SpotlightCard
+                                                        spotlightColor={isLead ? "rgba(245, 158, 11, 0.2)" : "rgba(0, 212, 255, 0.16)"}
+                                                        className={`p-4 text-center cursor-pointer transition-all duration-300 hover:scale-[1.03] ${
+                                                            isLead
+                                                                ? "border-amber-400/40 bg-slate-900/80 shadow-lg shadow-amber-500/5 hover:border-amber-400"
+                                                                : "border-white/[0.08] hover:border-aira-cyan/50"
+                                                        }`}
+                                                    >
+                                                        <button
+                                                            onClick={() => setSelectedMember(member)}
+                                                            className="w-full text-center flex flex-col items-center justify-between h-full"
+                                                        >
+                                                            <div className="w-full">
+                                                                <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 mx-auto mb-3 transition-all flex items-center justify-center bg-slate-900 text-xs text-white relative shadow-lg ${
+                                                                    isLead
+                                                                        ? "border-amber-400 ring-2 ring-amber-400/20 shadow-amber-500/20"
+                                                                        : "border-white/10 group-hover:border-aira-cyan/60"
+                                                                }`}>
+                                                                    <img
+                                                                        src={
+                                                                            member.photo ||
+                                                                            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                                                                member.name
+                                                                            )}&background=0d1526&color=${isLead ? "F59E0B" : "00D4FF"}&size=200`
+                                                                        }
+                                                                        alt={member.name}
+                                                                        className="w-full h-full object-cover"
+                                                                        onError={(e) => {
+                                                                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                                                                member.name
+                                                                            )}&background=0d1526&color=${isLead ? "F59E0B" : "00D4FF"}&size=200`;
+                                                                        }}
+                                                                    />
+                                                                    {member.isPresident ? (
+                                                                        <div className="absolute -top-1 -right-1 text-xs" title="Founder / President">
+                                                                            👑
+                                                                        </div>
+                                                                    ) : isLead ? (
+                                                                        <div className="absolute -top-1 -right-1 text-xs" title="Team Lead">
+                                                                            ⭐
+                                                                        </div>
+                                                                    ) : null}
+                                                                </div>
+                                                                <h3 className="font-orbitron font-bold text-xs sm:text-sm text-white truncate">
+                                                                    {member.name}
+                                                                </h3>
+                                                                <p className={`font-medium text-[11px] mt-0.5 line-clamp-1 ${
+                                                                    isLead ? "text-amber-300 font-semibold" : "text-aira-cyan"
+                                                                }`}>
+                                                                    {member.role}
+                                                                </p>
+                                                            </div>
+
+                                                            <div className="mt-3 flex items-center justify-center gap-1.5 flex-wrap">
+                                                                {isLead && (
+                                                                    <span className="text-[9px] font-bold font-orbitron px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                                                        {member.isPresident ? "Founder" : "Lead"}
+                                                                    </span>
+                                                                )}
+                                                                <span className="text-[10px] text-slate-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full truncate max-w-[130px]">
+                                                                    {division.shortName}
+                                                                </span>
+                                                            </div>
+                                                        </button>
+                                                    </SpotlightCard>
+                                                </ScrollReveal>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </section>
 
             {/* Member Profile Modal */}

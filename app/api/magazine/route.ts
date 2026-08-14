@@ -30,14 +30,66 @@ export async function GET(req: NextRequest) {
             query = query.eq("status", "PUBLISHED");
         }
 
-        const { data: magazines, error } = await query.order("createdAt", { ascending: false });
-
+        let { data: magazines, error } = await query.order("createdAt", { ascending: false });
         if (error) throw error;
+
+        // Auto-seed flagship edition if no magazines exist yet
+        if (!magazines || magazines.length === 0) {
+            const { data: publishedPosts } = await db
+                .from("BlogPost")
+                .select("id, title, coverImage, readTime, author:User(name, avatar)")
+                .eq("status", "PUBLISHED")
+                .limit(5);
+
+            if (publishedPosts && publishedPosts.length > 0) {
+                const magId = uuidv4();
+                const now = new Date().toISOString();
+                
+                const { data: newMag } = await db
+                    .from("Magazine")
+                    .insert({
+                        id: magId,
+                        title: "AiRA Chronicles: The Campus Revolution",
+                        edition: "Vol. 2025-26",
+                        description: "Official annual lab reflection magazine spotlighting research breakthroughs, autonomous robotics, hackathons, and student engineering journeys.",
+                        coverImage: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80",
+                        status: "PUBLISHED",
+                        publishedAt: now,
+                        createdAt: now,
+                        updatedAt: now,
+                    })
+                    .select()
+                    .single();
+
+                if (newMag) {
+                    for (let i = 0; i < publishedPosts.length; i++) {
+                        await db.from("MagazinePost").insert({
+                            id: uuidv4(),
+                            magazineId: magId,
+                            postId: publishedPosts[i].id,
+                            sortOrder: i + 1,
+                        });
+                    }
+
+                    return NextResponse.json([
+                        {
+                            ...newMag,
+                            posts: publishedPosts.map((p: any, i: number) => ({
+                                id: `post-${i}`,
+                                sortOrder: i + 1,
+                                postId: p.id,
+                                post: p,
+                            })),
+                        },
+                    ]);
+                }
+            }
+        }
 
         return NextResponse.json(magazines || []);
     } catch (e: any) {
         console.error("Error fetching magazines:", e);
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        return NextResponse.json([], { status: 200 });
     }
 }
 
