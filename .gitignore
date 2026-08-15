@@ -27,7 +27,6 @@ dev-server.log
 WhatsApp*
 /logo_revel.mp4
 /logo.jpeg
-/*.glb
 
 # IDE
 .vscode/
