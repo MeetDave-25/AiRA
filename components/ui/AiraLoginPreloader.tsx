@@ -1,14 +1,17 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useRef, useState, Suspense } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Center } from "@react-three/drei";
+import { useGLTF, Center } from "@react-three/drei";
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import gsap from "gsap";
+
+// Preload 3D Wolf model
+if (typeof window !== "undefined") {
+    useGLTF.preload("/wolf.glb");
+}
 import { Volume2, VolumeX, FastForward, RotateCcw, Zap, Sparkles } from "lucide-react";
 import { speakJarvis } from "@/lib/audio";
-import { isWebGLAvailable } from "@/lib/webgl-detect";
 
 // Web Audio API Synthesizer for futuristic cyber chimes
 function playCyberBeep(freq = 440, type: OscillatorType = "sine", duration = 0.08, vol = 0.15) {
@@ -63,64 +66,58 @@ function playSuccessChord() {
     setTimeout(() => playNote("C6", 0.6, "sine", 0.25), 210);
 }
 
-// ══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // 3D WOLF MASCOT (MEVY) SCENE WITH EXACT CINEMATIC SEQUENCE:
 // 1. WOLF COMES FROM TOP (Drops down & lands with impact)
 // 2. CAMERA ZOOMS ONTO WOLF'S FACE (Close-up)
-// 3. IN THAT ZOOM, 360° SPIN IN AIR
+// 3. IN THAT ZOOM, 360Â° SPIN IN AIR
 // 4. AIRA LABS REVEAL (Camera pulls back, wings & logo burst)
-// 5. WOLF FACE FINAL CLOSE-UP ➔ FADE TO BLACK
+// 5. WOLF FACE FINAL CLOSE-UP âž” FADE TO BLACK
 // 6. LOGIN SCREEN WITH VOICE: "Welcome to AiRA Lab"
-// ══════════════════════════════════════════════════════════════════
-interface PreloaderWolfProps {
-    currentStep: number; // 0 = Entry from top, 1 = Zoom Face, 2 = 360 Spin in Zoom, 3 = AiRA LABS Climax, 4 = Final Face Cut
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+interface PreloaderWolfProps { currentStep: number; }
+
+function isWebGLAvailable(): boolean {
+    try {
+        const canvas = document.createElement('canvas');
+        return !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+    } catch (e) {
+        return false;
+    }
 }
 
 function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
     const { camera } = useThree();
+    const gltf = useGLTF("/wolf.glb");
     const groupRef = useRef<THREE.Group>(null);
-    const [wolfScene, setWolfScene] = useState<THREE.Group | null>(null);
 
     useEffect(() => {
-        let cancelled = false;
-        const loader = new GLTFLoader();
-        // GLTFLoader r155+ auto-handles EXT_texture_webp internally
-        loader.load(
-            "/wolf.glb",
-            (gltf) => {
-                if (cancelled) return;
-                gltf.scene.traverse((child) => {
-                    if ((child as THREE.Mesh).isMesh) {
-                        const mesh = child as THREE.Mesh;
-                        mesh.castShadow = true;
-                        mesh.receiveShadow = true;
-                        if (mesh.material) {
-                            const mat = mesh.material as THREE.MeshStandardMaterial;
-                            mat.roughness = Math.min((mat.roughness ?? 1), 0.65);
-                            mat.metalness = Math.max((mat.metalness ?? 0), 0.2);
-                            mat.envMapIntensity = 1.4;
-                            mat.needsUpdate = true;
-                        }
+        if (gltf.scene) {
+            gltf.scene.traverse((child) => {
+                if ((child as THREE.Mesh).isMesh) {
+                    const mesh = child as THREE.Mesh;
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    if (mesh.material) {
+                        const mat = mesh.material as THREE.MeshStandardMaterial;
+                        mat.roughness = Math.min(mat.roughness, 0.65);
+                        mat.metalness = Math.max(mat.metalness, 0.2);
+                        mat.envMapIntensity = 1.4;
                     }
-                });
-                setWolfScene(gltf.scene);
-            },
-            undefined,
-            (err) => {
-                console.error("Preloader: Failed to load wolf.glb", err);
-            }
-        );
-        return () => { cancelled = true; };
-    }, []);
+                }
+            });
+        }
+    }, [gltf]);
 
     // Exact Choreographed Camera & 3D Wolf Actions with safe framing margins
     useEffect(() => {
         if (!groupRef.current) return;
 
         if (currentStep === 0) {
-            // ═══════════════════════════════════════════════════════════
+            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             // 1. WOLF COMES FROM TOP (Dramatic drop from sky & land)
-            // ═══════════════════════════════════════════════════════════
+            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             gsap.fromTo(
                 groupRef.current.position,
                 { y: 4.5, z: -0.4 },
@@ -138,9 +135,9 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
             );
             gsap.to(camera.position, { x: 0, y: 0.05, z: 3.4, duration: 0.8, ease: "power2.out" });
         } else if (currentStep === 1) {
-            // ═══════════════════════════════════════════════════════════
+            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             // 2. ZOOM ON FACE (Close-up on Wolf's head with full ear clearance)
-            // ═══════════════════════════════════════════════════════════
+            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             gsap.to(groupRef.current.rotation, { y: 0.05, x: -0.04, duration: 0.75, ease: "power2.out" });
             // Camera zooms with generous breathing room so face & ears are never cut
             gsap.to(camera.position, { x: 0, y: 0.28, z: 2.15, duration: 0.85, ease: "power3.inOut" });
@@ -150,9 +147,9 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
                 { x: 1, y: 1, z: 1, duration: 0.6, ease: "elastic.out(1.2, 0.4)" }
             );
         } else if (currentStep === 2) {
-            // ═══════════════════════════════════════════════════════════
-            // 3. IN THAT ZOOM, 360° SPIN (High-speed 360 spin in face zoom)
-            // ═══════════════════════════════════════════════════════════
+            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+            // 3. IN THAT ZOOM, 360Â° SPIN (High-speed 360 spin in face zoom)
+            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             gsap.to(camera.position, { x: 0, y: 0.26, z: 2.2, duration: 0.3, ease: "power2.out" });
             // 360 degree spin right inside the zoom
             gsap.to(groupRef.current.rotation, {
@@ -166,9 +163,9 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
                 { x: 1.05, y: 1.05, z: 1.05, duration: 0.85, ease: "elastic.out(1.1, 0.4)" }
             );
         } else if (currentStep === 3) {
-            // ═══════════════════════════════════════════════════════════
+            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             // 4. AIRA LABS REVEAL (Camera pulls back, hero stance)
-            // ═══════════════════════════════════════════════════════════
+            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             gsap.to(camera.position, { x: 0, y: 0.05, z: 3.4, duration: 0.7, ease: "power2.out" });
             gsap.to(groupRef.current.rotation, { y: -0.15, x: 0, duration: 0.8, ease: "back.out(1.8)" });
             gsap.to(groupRef.current.position, { y: 0, z: 0, duration: 0.6, ease: "power2.out" });
@@ -178,9 +175,9 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
                 { x: 1.12, y: 1.12, z: 1.12, duration: 0.75, ease: "elastic.out(1.2, 0.4)" }
             );
         } else if (currentStep === 4) {
-            // ═══════════════════════════════════════════════════════════
+            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             // 5. WOLF FACE FINAL CLOSE-UP BEFORE FADE TO BLACK
-            // ═══════════════════════════════════════════════════════════
+            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             gsap.to(groupRef.current.rotation, { y: 0, x: 0, duration: 0.5, ease: "power2.out" });
             gsap.to(camera.position, { x: 0, y: 0.28, z: 1.85, duration: 0.6, ease: "power2.in" });
         }
@@ -199,17 +196,10 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
 
     return (
         <group ref={groupRef} position={[0, 0, 0]}>
-            {wolfScene ? (
-                <Center position={[0, 0.03, 0]}>
-                    <primitive object={wolfScene} scale={1.12} />
-                </Center>
-            ) : (
-                // Placeholder while loading
-                <mesh>
-                    <sphereGeometry args={[0.5, 32, 32]} />
-                    <meshStandardMaterial color="#38BDF8" emissive="#0ea5e9" emissiveIntensity={0.6} transparent opacity={0.5} />
-                </mesh>
-            )}
+            {/* Centered Wolf with safe scale margin */}
+            <Center position={[0, 0.03, 0]}>
+                <primitive object={gltf.scene} scale={1.12} />
+            </Center>
 
             {/* Glowing Holographic Base Platform */}
             <mesh position={[0, -0.98, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -224,29 +214,29 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
     );
 }
 
-// ══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // 3-STAGE CHARACTER ROLLING SLOTS DATA:
 // Stage 1: INNOVATION (10 chars)
-// Stage 2:  RESEARCH  (10 chars: · R E S E A R C H ·)
-// Stage 3:   IMPACT   (10 chars: · · I M P A C T ⚡ ·)
-// ══════════════════════════════════════════════════════════════════
+// Stage 2:  RESEARCH  (10 chars: Â· R E S E A R C H Â·)
+// Stage 3:   IMPACT   (10 chars: Â· Â· I M P A C T âš¡ Â·)
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const topCharSlots = [
-    { c1: "I", c1Class: "text-sky-400", c2: "·", c2Class: "text-purple-500/20", c3: "·", c3Class: "text-pink-500/20" },
-    { c1: "N", c1Class: "text-sky-400", c2: "R", c2Class: "text-purple-300", c3: "·", c3Class: "text-pink-500/20" },
+    { c1: "I", c1Class: "text-sky-400", c2: "Â·", c2Class: "text-purple-500/20", c3: "Â·", c3Class: "text-pink-500/20" },
+    { c1: "N", c1Class: "text-sky-400", c2: "R", c2Class: "text-purple-300", c3: "Â·", c3Class: "text-pink-500/20" },
     { c1: "N", c1Class: "text-sky-300", c2: "E", c2Class: "text-purple-300", c3: "I", c3Class: "text-pink-400" },
     { c1: "O", c1Class: "text-white", c2: "S", c2Class: "text-white", c3: "M", c3Class: "text-pink-300" },
     { c1: "V", c1Class: "text-white", c2: "E", c2Class: "text-white", c3: "P", c3Class: "text-white" },
     { c1: "A", c1Class: "text-white", c2: "A", c2Class: "text-white", c3: "A", c3Class: "text-white" },
     { c1: "T", c1Class: "text-sky-300", c2: "R", c2Class: "text-purple-300", c3: "C", c3Class: "text-pink-300" },
     { c1: "I", c1Class: "text-sky-400", c2: "C", c2Class: "text-purple-300", c3: "T", c3Class: "text-pink-400" },
-    { c1: "O", c1Class: "text-sky-400", c2: "H", c2Class: "text-purple-400", c3: "⚡", c3Class: "text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.9)]" },
-    { c1: "N", c1Class: "text-sky-400", c2: "·", c2Class: "text-purple-500/20", c3: "·", c3Class: "text-pink-500/20" },
+    { c1: "O", c1Class: "text-sky-400", c2: "H", c2Class: "text-purple-400", c3: "âš¡", c3Class: "text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.9)]" },
+    { c1: "N", c1Class: "text-sky-400", c2: "Â·", c2Class: "text-purple-500/20", c3: "Â·", c3Class: "text-pink-500/20" },
 ];
 
 const STAGE_SUBTITLES = [
-    { text: "01 · A NEW MIND · NEURAL INTELLIGENCE", color: "text-sky-300 border-sky-400/30 bg-sky-950/60" },
-    { text: "02 · A NEW ENERGY · ROBOTICS & HARDWARE", color: "text-purple-300 border-purple-500/30 bg-purple-950/60" },
-    { text: "03 · A NEW IMPACT · 4,500+ INNOVATORS", color: "text-pink-300 border-pink-500/30 bg-pink-950/60" },
+    { text: "01 Â· A NEW MIND Â· NEURAL INTELLIGENCE", color: "text-sky-300 border-sky-400/30 bg-sky-950/60" },
+    { text: "02 Â· A NEW ENERGY Â· ROBOTICS & HARDWARE", color: "text-purple-300 border-purple-500/30 bg-purple-950/60" },
+    { text: "03 Â· A NEW IMPACT Â· 4,500+ INNOVATORS", color: "text-pink-300 border-pink-500/30 bg-pink-950/60" },
 ];
 
 export interface AiraLoginPreloaderProps {
@@ -345,9 +335,9 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
         const tl = gsap.timeline();
         timelineRef.current = tl;
 
-        // ═══════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // PHASE 1: WOLF DROPS FROM TOP & INNOVATION
-        // ═══════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         tl.fromTo(
             "#topRollSlotsContainer .aira-roll-window",
             { opacity: 0, y: 35, rotateX: -70 },
@@ -373,9 +363,9 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
         // Linger on INNOVATION (1.1s)
         tl.to({}, { duration: 1.1 });
 
-        // ═══════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // TRANSITION 1 -> 2: ZOOM ON FACE & RESEARCH
-        // ═══════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         if (ambientGlowCyan.current && ambientGlowPurple.current) {
             tl.to(ambientGlowCyan.current, { opacity: 0.1, duration: 0.6 }, "-=0.2");
             tl.to(ambientGlowPurple.current, { opacity: 0.95, duration: 0.6 }, "<");
@@ -403,9 +393,9 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
         // Linger on RESEARCH Face Close-Up (1.1s)
         tl.to({}, { duration: 1.1 });
 
-        // ═══════════════════════════════════════════════════════════
-        // TRANSITION 2 -> 3: IN THAT ZOOM, 360° SPIN & IMPACT ⚡
-        // ═══════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // TRANSITION 2 -> 3: IN THAT ZOOM, 360Â° SPIN & IMPACT âš¡
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         if (ambientGlowPurple.current && ambientGlowPink.current) {
             tl.to(ambientGlowPurple.current, { opacity: 0.1, duration: 0.6 });
             tl.to(ambientGlowPink.current, { opacity: 0.95, duration: 0.6 }, "<");
@@ -433,9 +423,9 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
         // Linger on IMPACT Spin (1.1s)
         tl.to({}, { duration: 1.1 });
 
-        // ═══════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // TRANSITION 3 -> 4: AIRA LABS CLIMAX
-        // ═══════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         if (ambientGlowPink.current && ambientGlowCyan.current) {
             tl.to(ambientGlowPink.current, { opacity: 0.1, duration: 0.6 });
             tl.to(ambientGlowCyan.current, { opacity: 0.95, duration: 0.6 }, "<");
@@ -508,9 +498,9 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
         // Linger on AiRA LABS climax (1.2s)
         tl.to({}, { duration: 1.2 });
 
-        // ═══════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // TRANSITION 4 -> 5: WOLF FACE FINAL CLOSE-UP & FADE TO BLACK
-        // ═══════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         tl.call(() => setCurrentStepIndex(4));
 
         // Fade to black
@@ -615,13 +605,13 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
             <div className="absolute top-4 sm:top-6 left-4 sm:left-6 z-30 hidden xs:flex items-center gap-2 text-xs font-mono text-slate-400 pointer-events-none">
                 <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                 <span className="font-orbitron font-bold text-sky-300 text-[9px] sm:text-[10px] tracking-wider">
-                    MEVY 3D MASCOT · CINEMATIC AIRA
+                    MEVY 3D MASCOT Â· CINEMATIC AIRA
                 </span>
             </div>
 
-            {/* ══ CENTER STAGE CONTAINER (PROPER VERTICAL SPACING & NEVER OVERLAPS) ══ */}
+            {/* â•â• CENTER STAGE CONTAINER (PROPER VERTICAL SPACING & NEVER OVERLAPS) â•â• */}
             <div className="relative z-20 flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 my-auto pt-14 sm:pt-0">
-                {/* ══ 3D WOLF MASCOT (MEVY) CENTER STAGE WITH REAL-TIME CAMERA CHOREOGRAPHY ══ */}
+                {/* â•â• 3D WOLF MASCOT (MEVY) CENTER STAGE WITH REAL-TIME CAMERA CHOREOGRAPHY â•â• */}
                 <div className="relative z-20 w-[190px] h-[190px] xs:w-[230px] xs:h-[230px] sm:w-[290px] sm:h-[290px] mb-1 sm:mb-2 flex items-center justify-center shrink-0">
                     {webGLSupported ? (
                         <Suspense fallback={null}>
@@ -655,16 +645,16 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
                         <div className="flex flex-col items-center justify-center gap-2">
                             <div className="relative w-24 h-24 rounded-full bg-slate-900 border-2 border-sky-400/60 flex items-center justify-center shadow-[0_0_30px_rgba(56,189,248,0.4)]">
                                 <div className="absolute inset-0 rounded-full border-2 border-dashed border-sky-400/30 animate-spin [animation-duration:10s]" />
-                                <span className="text-5xl select-none" role="img" aria-label="MEVY Wolf">🐺</span>
+                                <span className="text-5xl select-none" role="img" aria-label="MEVY Wolf">ðŸº</span>
                             </div>
-                            <p className="font-orbitron text-[9px] text-sky-400 animate-pulse tracking-widest">MEVY · AI GUIDE</p>
+                            <p className="font-orbitron text-[9px] text-sky-400 animate-pulse tracking-widest">MEVY Â· AI GUIDE</p>
                         </div>
                     )}
                 </div>
 
-                {/* ══ MAIN TYPOGRAPHY STAGE ══ */}
+                {/* â•â• MAIN TYPOGRAPHY STAGE â•â• */}
                 <div className="relative z-20 flex flex-col items-center justify-center px-2 sm:px-4 w-full">
-                    {/* ══ SCENE 1: 3-STEP ROLLING SLOTS (INNOVATION ➔ RESEARCH ➔ IMPACT) ══ */}
+                    {/* â•â• SCENE 1: 3-STEP ROLLING SLOTS (INNOVATION âž” RESEARCH âž” IMPACT) â•â• */}
                     <div
                         ref={logoSceneRef}
                         className="flex flex-col items-center justify-center relative w-full"
@@ -712,7 +702,7 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
                         </div>
                     </div>
 
-                    {/* ══ SCENE 2: GRAND AIRA LABS PRODUCT FINALE ══ */}
+                    {/* â•â• SCENE 2: GRAND AIRA LABS PRODUCT FINALE â•â• */}
                     <div
                         ref={presentsSceneRef}
                         className="hidden flex-col items-center justify-center text-center relative py-1 sm:py-2 w-full max-w-3xl px-2"
@@ -733,16 +723,16 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
                         {/* 4 FRONTIER LAB WINGS BADGES */}
                         <div ref={wingsRef} className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-2 sm:mt-3 max-w-2xl px-2">
                             <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg bg-sky-500/10 border border-sky-400/30 text-sky-300 text-[9px] sm:text-xs font-mono">
-                                🧠 AI & Autonomous Agents
+                                ðŸ§  AI & Autonomous Agents
                             </span>
                             <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[9px] sm:text-xs font-mono">
-                                🤖 Robotics Systems
+                                ðŸ¤– Robotics Systems
                             </span>
                             <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-[9px] sm:text-xs font-mono">
-                                🌐 Web3 / Cloud Systems
+                                ðŸŒ Web3 / Cloud Systems
                             </span>
                             <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg bg-pink-500/10 border border-pink-500/30 text-pink-300 text-[9px] sm:text-xs font-mono">
-                                🛡️ Cyber Defense
+                                ðŸ›¡ï¸ Cyber Defense
                             </span>
                         </div>
 
@@ -753,14 +743,14 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
                                 className="text-[10px] xs:text-xs sm:text-sm md:text-base font-orbitron font-bold text-slate-200 tracking-[0.12em] sm:tracking-[0.2em] uppercase flex items-center justify-center gap-1.5 sm:gap-2"
                             >
                                 <Zap size={13} className="text-amber-400 shrink-0 animate-bounce" />
-                                <span>A New Mind · A New Energy · A New Impact ⚡</span>
+                                <span>A New Mind Â· A New Energy Â· A New Impact âš¡</span>
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* ══ FINAL CINEMATIC BLACK OUT CURTAIN ══ */}
+            {/* â•â• FINAL CINEMATIC BLACK OUT CURTAIN â•â• */}
             <div
                 ref={blackOverlayRef}
                 className="absolute inset-0 bg-[#05070B] z-50 pointer-events-none opacity-0 transition-opacity"
