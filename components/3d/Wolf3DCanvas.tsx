@@ -5,7 +5,6 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { Center, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { EXTTextureWebP } from "three/examples/jsm/loaders/EXTTextureWebP.js";
 import gsap from "gsap";
 import { Sparkles, RotateCw, Move, Shield, Radio, Zap } from "lucide-react";
 import { isWebGLAvailable } from "@/lib/webgl-detect";
@@ -23,8 +22,7 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
     useEffect(() => {
         let cancelled = false;
         const loader = new GLTFLoader();
-        // Register WebP texture extension — wolf.glb uses EXT_texture_webp
-        loader.register((parser) => new EXTTextureWebP(parser));
+        // GLTFLoader r155+ auto-handles EXT_texture_webp internally
         loader.load(
             "/wolf.glb",
             (gltf) => {
