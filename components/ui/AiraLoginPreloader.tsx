@@ -2,16 +2,12 @@
 
 import React, { useEffect, useRef, useState, Suspense } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useGLTF, Center } from "@react-three/drei";
+import { Center } from "@react-three/drei";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import gsap from "gsap";
 import { Volume2, VolumeX, FastForward, RotateCcw, Zap, Sparkles } from "lucide-react";
 import { speakJarvis } from "@/lib/audio";
-
-// Preload 3D Wolf model
-if (typeof window !== "undefined") {
-    useGLTF.preload("/wolf.glb");
-}
 
 // Web Audio API Synthesizer for futuristic cyber chimes
 function playCyberBeep(freq = 440, type: OscillatorType = "sine", duration = 0.08, vol = 0.15) {
@@ -81,26 +77,39 @@ interface PreloaderWolfProps {
 
 function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
     const { camera } = useThree();
-    const gltf = useGLTF("/wolf.glb");
     const groupRef = useRef<THREE.Group>(null);
+    const [wolfScene, setWolfScene] = useState<THREE.Group | null>(null);
 
     useEffect(() => {
-        if (gltf.scene) {
-            gltf.scene.traverse((child) => {
-                if ((child as THREE.Mesh).isMesh) {
-                    const mesh = child as THREE.Mesh;
-                    mesh.castShadow = true;
-                    mesh.receiveShadow = true;
-                    if (mesh.material) {
-                        const mat = mesh.material as THREE.MeshStandardMaterial;
-                        mat.roughness = Math.min(mat.roughness, 0.65);
-                        mat.metalness = Math.max(mat.metalness, 0.2);
-                        mat.envMapIntensity = 1.4;
+        let cancelled = false;
+        const loader = new GLTFLoader();
+        loader.load(
+            "/wolf.glb",
+            (gltf) => {
+                if (cancelled) return;
+                gltf.scene.traverse((child) => {
+                    if ((child as THREE.Mesh).isMesh) {
+                        const mesh = child as THREE.Mesh;
+                        mesh.castShadow = true;
+                        mesh.receiveShadow = true;
+                        if (mesh.material) {
+                            const mat = mesh.material as THREE.MeshStandardMaterial;
+                            mat.roughness = Math.min((mat.roughness ?? 1), 0.65);
+                            mat.metalness = Math.max((mat.metalness ?? 0), 0.2);
+                            mat.envMapIntensity = 1.4;
+                            mat.needsUpdate = true;
+                        }
                     }
-                }
-            });
-        }
-    }, [gltf]);
+                });
+                setWolfScene(gltf.scene);
+            },
+            undefined,
+            (err) => {
+                console.error("Preloader: Failed to load wolf.glb", err);
+            }
+        );
+        return () => { cancelled = true; };
+    }, []);
 
     // Exact Choreographed Camera & 3D Wolf Actions with safe framing margins
     useEffect(() => {
@@ -188,10 +197,17 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
 
     return (
         <group ref={groupRef} position={[0, 0, 0]}>
-            {/* Centered Wolf with safe scale margin */}
-            <Center position={[0, 0.03, 0]}>
-                <primitive object={gltf.scene} scale={1.12} />
-            </Center>
+            {wolfScene ? (
+                <Center position={[0, 0.03, 0]}>
+                    <primitive object={wolfScene} scale={1.12} />
+                </Center>
+            ) : (
+                // Placeholder while loading
+                <mesh>
+                    <sphereGeometry args={[0.5, 32, 32]} />
+                    <meshStandardMaterial color="#38BDF8" emissive="#0ea5e9" emissiveIntensity={0.6} transparent opacity={0.5} />
+                </mesh>
+            )}
 
             {/* Glowing Holographic Base Platform */}
             <mesh position={[0, -0.98, 0]} rotation={[-Math.PI / 2, 0, 0]}>

@@ -2,45 +2,55 @@
 
 import React, { useRef, useState, useEffect, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, Center, OrbitControls } from "@react-three/drei";
+import { Center, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import gsap from "gsap";
 import { Sparkles, RotateCw, Move, Shield, Radio } from "lucide-react";
-
-// Preload the wolf model for instant caching
-if (typeof window !== "undefined") {
-    useGLTF.preload("/wolf.glb");
-}
 
 interface WolfModelProps {
     onClick?: () => void;
 }
 
 function Wolf3DModel({ onClick }: WolfModelProps) {
-    const gltf = useGLTF("/wolf.glb");
     const groupRef = useRef<THREE.Group>(null);
+    const [scene, setScene] = useState<THREE.Group | null>(null);
+    const [loadError, setLoadError] = useState(false);
     const pointerStart = useRef({ x: 0, y: 0, time: 0 });
 
-    // Optimize materials and textures on load
     useEffect(() => {
-        if (gltf.scene) {
-            gltf.scene.traverse((child) => {
-                if ((child as THREE.Mesh).isMesh) {
-                    const mesh = child as THREE.Mesh;
-                    mesh.castShadow = true;
-                    mesh.receiveShadow = true;
-                    if (mesh.material) {
-                        const mat = mesh.material as THREE.MeshStandardMaterial;
-                        mat.roughness = Math.min(mat.roughness, 0.65);
-                        mat.metalness = Math.max(mat.metalness, 0.2);
-                        mat.envMapIntensity = 1.3;
+        let cancelled = false;
+        const loader = new GLTFLoader();
+        loader.load(
+            "/wolf.glb",
+            (gltf) => {
+                if (cancelled) return;
+                // Fix textures: encode all textures inline so blob URLs are not needed
+                gltf.scene.traverse((child) => {
+                    if ((child as THREE.Mesh).isMesh) {
+                        const mesh = child as THREE.Mesh;
+                        mesh.castShadow = true;
+                        mesh.receiveShadow = true;
+                        if (mesh.material) {
+                            const mat = mesh.material as THREE.MeshStandardMaterial;
+                            mat.roughness = Math.min((mat.roughness ?? 1), 0.65);
+                            mat.metalness = Math.max((mat.metalness ?? 0), 0.2);
+                            mat.envMapIntensity = 1.3;
+                            mat.needsUpdate = true;
+                        }
                     }
-                }
-            });
-        }
-    }, [gltf]);
+                });
+                setScene(gltf.scene);
+            },
+            undefined,
+            (err) => {
+                console.error("Wolf3D: Failed to load wolf.glb", err);
+                if (!cancelled) setLoadError(true);
+            }
+        );
+        return () => { cancelled = true; };
+    }, []);
 
-    // Handle smooth click bounce reaction when tapped (not dragged)
     const handlePointerDown = (e: any) => {
         pointerStart.current = {
             x: e.clientX || e.touches?.[0]?.clientX || 0,
@@ -54,32 +64,33 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
         const clientY = e.clientY || e.changedTouches?.[0]?.clientY || 0;
         const dist = Math.hypot(clientX - pointerStart.current.x, clientY - pointerStart.current.y);
         const timeDiff = Date.now() - pointerStart.current.time;
-
-        // If pointer moved less than 8px and within 350ms, treat as clean tap/click
         if (dist < 8 && timeDiff < 350) {
             if (groupRef.current) {
                 gsap.fromTo(
                     groupRef.current.scale,
                     { x: 0.93, y: 0.93, z: 0.93 },
-                    {
-                        x: 1,
-                        y: 1,
-                        z: 1,
-                        duration: 0.55,
-                        ease: "elastic.out(1.2, 0.4)",
-                    }
+                    { x: 1, y: 1, z: 1, duration: 0.55, ease: "elastic.out(1.2, 0.4)" }
                 );
             }
             if (onClick) onClick();
         }
     };
 
-    // Smooth subtle breathing float
     useFrame((state) => {
         if (groupRef.current) {
             groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.6) * 0.035;
         }
     });
+
+    if (loadError || !scene) {
+        // Show a glowing placeholder sphere while loading or on error
+        return (
+            <mesh>
+                <sphereGeometry args={[0.6, 32, 32]} />
+                <meshStandardMaterial color="#38BDF8" emissive="#0ea5e9" emissiveIntensity={0.5} transparent opacity={0.5} />
+            </mesh>
+        );
+    }
 
     return (
         <group
@@ -88,9 +99,8 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
             onPointerUp={handlePointerUp}
             rotation={[0.02, -0.45, 0]}
         >
-            {/* Center vertically and horizontally with safe scale margins so ears, face & paws never clip */}
             <Center position={[0, 0.02, 0]}>
-                <primitive object={gltf.scene} scale={1.12} />
+                <primitive object={scene} scale={1.12} />
             </Center>
 
             {/* Glowing Holographic Base Platform */}
@@ -110,7 +120,6 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
 function JarvisHoloLoader() {
     return (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-md rounded-3xl z-20 select-none">
-            {/* Spinning Arc Reactor Rings */}
             <div className="relative w-24 h-24 flex items-center justify-center">
                 <div className="absolute inset-0 rounded-full border-2 border-dashed border-sky-400/60 animate-spin [animation-duration:8s]" />
                 <div className="absolute inset-2 rounded-full border border-purple-500/50 animate-spin [animation-duration:4s] [animation-direction:reverse]" />
@@ -119,8 +128,6 @@ function JarvisHoloLoader() {
                     <Radio size={14} className="text-sky-300 animate-pulse" />
                 </div>
             </div>
-
-            {/* Telemetry Status */}
             <div className="mt-4 text-center">
                 <p className="font-orbitron font-bold text-xs tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-purple-400 animate-pulse">
                     CALIBRATING 3D NEURAL WOLF
@@ -149,12 +156,25 @@ export function Wolf3DCanvas({
 }: Wolf3DCanvasProps) {
     const [autoRotate, setAutoRotate] = useState(false);
     const controlsRef = useRef<any>(null);
+    const [canvasReady, setCanvasReady] = useState(false);
+
+    useEffect(() => {
+        setCanvasReady(true);
+    }, []);
 
     const handleResetOrientation = () => {
         if (controlsRef.current) {
             controlsRef.current.reset();
         }
     };
+
+    if (!canvasReady) {
+        return (
+            <div className={`relative rounded-3xl overflow-hidden bg-gradient-to-b from-slate-950/90 via-[#0a0d1e]/95 to-slate-950 border border-sky-500/30 ${className}`}>
+                <JarvisHoloLoader />
+            </div>
+        );
+    }
 
     return (
         <div
@@ -187,7 +207,7 @@ export function Wolf3DCanvas({
                 </div>
             </div>
 
-            {/* ══ THREE.JS CANVAS WITH BUTTER-SMOOTH ORBITCONTROLS ══ */}
+            {/* ══ THREE.JS CANVAS ══ */}
             <Suspense fallback={<JarvisHoloLoader />}>
                 <Canvas
                     camera={{ position: [0, 0.05, 3.4], fov: 42 }}
