@@ -5,6 +5,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Center } from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { EXTTextureWebP } from "three/examples/jsm/loaders/EXTTextureWebP.js";
 import gsap from "gsap";
 import { Volume2, VolumeX, FastForward, RotateCcw, Zap, Sparkles } from "lucide-react";
 import { speakJarvis } from "@/lib/audio";
@@ -84,6 +85,8 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
     useEffect(() => {
         let cancelled = false;
         const loader = new GLTFLoader();
+        // wolf.glb uses EXT_texture_webp — register the extension
+        loader.register((parser) => new EXTTextureWebP(parser));
         loader.load(
             "/wolf.glb",
             (gltf) => {
