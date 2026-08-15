@@ -1,15 +1,61 @@
 "use client";
 
-import React, { useRef, useState, useEffect, Suspense } from "react";
+import React, { useRef, useState, useEffect, Suspense, Component, ErrorInfo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Center, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import gsap from "gsap";
-import { Sparkles, RotateCw, Move, Shield, Radio } from "lucide-react";
+import { RotateCw, Move, Shield, Radio, Sparkles } from "lucide-react";
+import Image from "next/image";
 
-// Preload the wolf model for instant caching
+// Preload the wolf model for immediate caching
 if (typeof window !== "undefined") {
     useGLTF.preload("/wolf.glb");
+}
+
+function checkWebGLSupport(): boolean {
+    if (typeof window === "undefined") return false;
+    try {
+        const canvas = document.createElement("canvas");
+        const gl = canvas.getContext("webgl2") || canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+        return !!gl;
+    } catch {
+        return false;
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// WEBGL ERROR BOUNDARY — Catches "Error creating WebGL context" safely
+// ══════════════════════════════════════════════════════════════════════
+interface ErrorBoundaryProps {
+    fallback: React.ReactNode;
+    children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+    hasError: boolean;
+}
+
+class WebGLCanvasErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    constructor(props: ErrorBoundaryProps) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError(_: Error): ErrorBoundaryState {
+        return { hasError: true };
+    }
+
+    componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+        console.warn("[Wolf3DCanvas] WebGL context initialization fallback activated:", error.message);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return this.props.fallback;
+        }
+        return this.props.children;
+    }
 }
 
 interface WolfModelProps {
@@ -21,7 +67,6 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
     const groupRef = useRef<THREE.Group>(null);
     const pointerStart = useRef({ x: 0, y: 0, time: 0 });
 
-    // Optimize materials and textures on load
     useEffect(() => {
         if (gltf.scene) {
             gltf.scene.traverse((child) => {
@@ -33,14 +78,13 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
                         const mat = mesh.material as THREE.MeshStandardMaterial;
                         mat.roughness = Math.min(mat.roughness, 0.65);
                         mat.metalness = Math.max(mat.metalness, 0.2);
-                        mat.envMapIntensity = 1.3;
+                        mat.envMapIntensity = 1.4;
                     }
                 }
             });
         }
     }, [gltf]);
 
-    // Handle smooth click bounce reaction when tapped (not dragged)
     const handlePointerDown = (e: any) => {
         pointerStart.current = {
             x: e.clientX || e.touches?.[0]?.clientX || 0,
@@ -55,7 +99,6 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
         const dist = Math.hypot(clientX - pointerStart.current.x, clientY - pointerStart.current.y);
         const timeDiff = Date.now() - pointerStart.current.time;
 
-        // If pointer moved less than 8px and within 350ms, treat as clean tap/click
         if (dist < 8 && timeDiff < 350) {
             if (groupRef.current) {
                 gsap.fromTo(
@@ -74,7 +117,6 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
         }
     };
 
-    // Smooth subtle breathing float
     useFrame((state) => {
         if (groupRef.current) {
             groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.6) * 0.035;
@@ -88,12 +130,10 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
             onPointerUp={handlePointerUp}
             rotation={[0.02, -0.45, 0]}
         >
-            {/* Center vertically and horizontally with safe scale margins so ears, face & paws never clip */}
             <Center position={[0, 0.02, 0]}>
                 <primitive object={gltf.scene} scale={1.12} />
             </Center>
 
-            {/* Glowing Holographic Base Platform */}
             <mesh position={[0, -0.98, 0]} rotation={[-Math.PI / 2, 0, 0]}>
                 <ringGeometry args={[0.5, 0.95, 32]} />
                 <meshBasicMaterial color="#38BDF8" transparent opacity={0.4} side={THREE.DoubleSide} />
@@ -106,11 +146,9 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
     );
 }
 
-// Futuristic Holographic Loading Spinner
 function JarvisHoloLoader() {
     return (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-md rounded-3xl z-20 select-none">
-            {/* Spinning Arc Reactor Rings */}
             <div className="relative w-24 h-24 flex items-center justify-center">
                 <div className="absolute inset-0 rounded-full border-2 border-dashed border-sky-400/60 animate-spin [animation-duration:8s]" />
                 <div className="absolute inset-2 rounded-full border border-purple-500/50 animate-spin [animation-duration:4s] [animation-direction:reverse]" />
@@ -120,7 +158,6 @@ function JarvisHoloLoader() {
                 </div>
             </div>
 
-            {/* Telemetry Status */}
             <div className="mt-4 text-center">
                 <p className="font-orbitron font-bold text-xs tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-purple-400 animate-pulse">
                     CALIBRATING 3D NEURAL WOLF
@@ -129,6 +166,30 @@ function JarvisHoloLoader() {
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                     <span>JARVIS PROTOCOL · LOADING GLTF</span>
                 </div>
+            </div>
+        </div>
+    );
+}
+
+function HolographicMascotFallback({ onClick }: { onClick?: () => void }) {
+    return (
+        <div onClick={onClick} className="w-full h-full flex flex-col items-center justify-center relative select-none cursor-pointer">
+            <div className="relative w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full border-2 border-dashed border-sky-400/40 animate-spin [animation-duration:12s]" />
+                <div className="absolute inset-3 rounded-full border border-purple-500/30 animate-spin [animation-duration:8s] [animation-direction:reverse]" />
+                <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full overflow-hidden border-2 border-sky-400/60 shadow-[0_0_30px_rgba(56,189,248,0.4)]">
+                    <Image
+                        src="/mascot-mevy.jpg"
+                        alt="AiRA 3D Mascot Mevy"
+                        fill
+                        className="object-cover hover:scale-105 transition-transform duration-500"
+                        priority
+                    />
+                </div>
+            </div>
+            <div className="mt-3 flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-950/70 border border-sky-400/40">
+                <Sparkles size={11} className="text-amber-400 animate-spin [animation-duration:6s]" />
+                <span className="font-orbitron text-[10px] text-sky-200 font-bold tracking-wider">MEVY · AI GUIDE</span>
             </div>
         </div>
     );
@@ -148,7 +209,12 @@ export function Wolf3DCanvas({
     showControls = true,
 }: Wolf3DCanvasProps) {
     const [autoRotate, setAutoRotate] = useState(false);
+    const [webGLSupported, setWebGLSupported] = useState(true);
     const controlsRef = useRef<any>(null);
+
+    useEffect(() => {
+        setWebGLSupported(checkWebGLSupport());
+    }, []);
 
     const handleResetOrientation = () => {
         if (controlsRef.current) {
@@ -160,20 +226,14 @@ export function Wolf3DCanvas({
         <div
             className={`relative rounded-3xl overflow-hidden bg-gradient-to-b from-slate-950/90 via-[#0a0d1e]/95 to-slate-950 border border-sky-500/30 shadow-[0_10px_50px_rgba(6,182,212,0.15)] select-none ${className}`}
         >
-            {/* ══ HOLOGRAPHIC BACKGROUND GRID & GLOW BEAMS ══ */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.15)_0%,rgba(168,85,247,0.08)_45%,transparent_75%)] pointer-events-none" />
             <div className="absolute -top-16 inset-x-0 h-32 bg-sky-400/10 blur-3xl pointer-events-none" />
-
-            {/* Holographic Radar Grid Overlay */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(56,189,248,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.03)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none opacity-80" />
-
-            {/* Corner Futuristic HUD Brackets */}
             <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-sky-400/70 pointer-events-none" />
             <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-sky-400/70 pointer-events-none" />
             <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-purple-500/70 pointer-events-none" />
             <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-purple-500/70 pointer-events-none" />
 
-            {/* Top Telemetry Header */}
             <div className="absolute top-3 inset-x-3 sm:inset-x-4 flex items-center justify-between z-10 pointer-events-none">
                 <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-950/80 backdrop-blur-md px-2 sm:px-2.5 py-1 rounded-full border border-sky-400/30">
                     <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -187,55 +247,63 @@ export function Wolf3DCanvas({
                 </div>
             </div>
 
-            {/* ══ THREE.JS CANVAS WITH BUTTER-SMOOTH ORBITCONTROLS ══ */}
-            <Suspense fallback={<JarvisHoloLoader />}>
-                <Canvas
-                    camera={{ position: [0, 0.05, 3.4], fov: 42 }}
-                    className="w-full h-full cursor-grab active:cursor-grabbing"
-                    gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-                    onCreated={({ gl }) => {
-                        gl.toneMapping = THREE.ACESFilmicToneMapping;
-                        gl.toneMappingExposure = 1.2;
-                    }}
-                >
-                    {/* Studio Cinematic Lighting */}
-                    <ambientLight intensity={1.1} />
-                    <directionalLight position={[5, 6, 4]} intensity={2.2} color="#ffffff" castShadow />
-                    <directionalLight position={[-5, 3, -2]} intensity={1.8} color="#38BDF8" />
-                    <pointLight position={[0, -2, 2]} intensity={1.4} color="#A855F7" />
-                    <pointLight position={[0, 4, 0]} intensity={1.2} color="#00D4FF" />
+            {webGLSupported ? (
+                <WebGLCanvasErrorBoundary fallback={<HolographicMascotFallback onClick={onWolfClick} />}>
+                    <Suspense fallback={<JarvisHoloLoader />}>
+                        <Canvas
+                            camera={{ position: [0, 0.05, 3.4], fov: 42 }}
+                            className="w-full h-full cursor-grab active:cursor-grabbing"
+                            gl={{
+                                antialias: true,
+                                alpha: true,
+                                powerPreference: "default",
+                                failIfMajorPerformanceCaveat: false,
+                            }}
+                            onCreated={({ gl }) => {
+                                gl.toneMapping = THREE.ACESFilmicToneMapping;
+                                gl.toneMappingExposure = 1.2;
+                                gl.domElement.addEventListener("webglcontextlost", (e) => {
+                                    e.preventDefault();
+                                    setWebGLSupported(false);
+                                });
+                            }}
+                        >
+                            <ambientLight intensity={1.1} />
+                            <directionalLight position={[5, 6, 4]} intensity={2.2} color="#ffffff" castShadow />
+                            <directionalLight position={[-5, 3, -2]} intensity={1.8} color="#38BDF8" />
+                            <pointLight position={[0, -2, 2]} intensity={1.4} color="#A855F7" />
+                            <pointLight position={[0, 4, 0]} intensity={1.2} color="#00D4FF" />
 
-                    {/* 3D Wolf Model */}
-                    <Wolf3DModel onClick={onWolfClick} />
+                            <Wolf3DModel onClick={onWolfClick} />
 
-                    {/* Ultra-Smooth 360-Degree Inertia OrbitControls */}
-                    {interactive && (
-                        <OrbitControls
-                            ref={controlsRef}
-                            enableDamping={true}
-                            dampingFactor={0.06}
-                            rotateSpeed={0.9}
-                            enableZoom={false}
-                            enablePan={false}
-                            minPolarAngle={Math.PI / 3.6}
-                            maxPolarAngle={Math.PI / 1.7}
-                            autoRotate={autoRotate}
-                            autoRotateSpeed={2.2}
-                        />
-                    )}
-                </Canvas>
-            </Suspense>
+                            {interactive && (
+                                <OrbitControls
+                                    ref={controlsRef}
+                                    enableDamping={true}
+                                    dampingFactor={0.06}
+                                    rotateSpeed={0.9}
+                                    enableZoom={false}
+                                    enablePan={false}
+                                    minPolarAngle={Math.PI / 3.6}
+                                    maxPolarAngle={Math.PI / 1.7}
+                                    autoRotate={autoRotate}
+                                    autoRotateSpeed={2.2}
+                                />
+                            )}
+                        </Canvas>
+                    </Suspense>
+                </WebGLCanvasErrorBoundary>
+            ) : (
+                <HolographicMascotFallback onClick={onWolfClick} />
+            )}
 
-            {/* ══ INTERACTIVE BOTTOM CONTROLS & HUD FOOTER ══ */}
             {showControls && (
                 <div className="absolute bottom-2.5 sm:bottom-3 inset-x-3 sm:inset-x-4 flex items-center justify-between z-10 pointer-events-auto">
-                    {/* 360 Drag Prompt */}
                     <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-slate-950/85 backdrop-blur-md border border-sky-400/30 text-slate-200 text-[10px] sm:text-xs font-mono">
                         <Move size={11} className="text-sky-400 animate-pulse" />
                         <span className="text-[10px] sm:text-[11px]">360° Drag</span>
                     </div>
 
-                    {/* Controls: Reset & Auto-Rotate Toggle */}
                     <div className="flex items-center gap-1.5 sm:gap-2">
                         <button
                             type="button"
