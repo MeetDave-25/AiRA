@@ -6,7 +6,9 @@ import { Center, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import gsap from "gsap";
-import { Sparkles, RotateCw, Move, Shield, Radio } from "lucide-react";
+import { Sparkles, RotateCw, Move, Shield, Radio, Zap } from "lucide-react";
+import { isWebGLAvailable } from "@/lib/webgl-detect";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
 interface WolfModelProps {
     onClick?: () => void;
@@ -15,7 +17,6 @@ interface WolfModelProps {
 function Wolf3DModel({ onClick }: WolfModelProps) {
     const groupRef = useRef<THREE.Group>(null);
     const [scene, setScene] = useState<THREE.Group | null>(null);
-    const [loadError, setLoadError] = useState(false);
     const pointerStart = useRef({ x: 0, y: 0, time: 0 });
 
     useEffect(() => {
@@ -25,7 +26,6 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
             "/wolf.glb",
             (gltf) => {
                 if (cancelled) return;
-                // Fix textures: encode all textures inline so blob URLs are not needed
                 gltf.scene.traverse((child) => {
                     if ((child as THREE.Mesh).isMesh) {
                         const mesh = child as THREE.Mesh;
@@ -33,8 +33,8 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
                         mesh.receiveShadow = true;
                         if (mesh.material) {
                             const mat = mesh.material as THREE.MeshStandardMaterial;
-                            mat.roughness = Math.min((mat.roughness ?? 1), 0.65);
-                            mat.metalness = Math.max((mat.metalness ?? 0), 0.2);
+                            mat.roughness = Math.min(mat.roughness ?? 1, 0.65);
+                            mat.metalness = Math.max(mat.metalness ?? 0, 0.2);
                             mat.envMapIntensity = 1.3;
                             mat.needsUpdate = true;
                         }
@@ -44,8 +44,7 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
             },
             undefined,
             (err) => {
-                console.error("Wolf3D: Failed to load wolf.glb", err);
-                if (!cancelled) setLoadError(true);
+                console.warn("Wolf3D: could not load wolf.glb —", err);
             }
         );
         return () => { cancelled = true; };
@@ -60,11 +59,10 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
     };
 
     const handlePointerUp = (e: any) => {
-        const clientX = e.clientX || e.changedTouches?.[0]?.clientX || 0;
-        const clientY = e.clientY || e.changedTouches?.[0]?.clientY || 0;
-        const dist = Math.hypot(clientX - pointerStart.current.x, clientY - pointerStart.current.y);
-        const timeDiff = Date.now() - pointerStart.current.time;
-        if (dist < 8 && timeDiff < 350) {
+        const cx = e.clientX || e.changedTouches?.[0]?.clientX || 0;
+        const cy = e.clientY || e.changedTouches?.[0]?.clientY || 0;
+        const dist = Math.hypot(cx - pointerStart.current.x, cy - pointerStart.current.y);
+        if (dist < 8 && Date.now() - pointerStart.current.time < 350) {
             if (groupRef.current) {
                 gsap.fromTo(
                     groupRef.current.scale,
@@ -82,12 +80,18 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
         }
     });
 
-    if (loadError || !scene) {
-        // Show a glowing placeholder sphere while loading or on error
+    if (!scene) {
+        // Glowing orb placeholder while model loads
         return (
             <mesh>
-                <sphereGeometry args={[0.6, 32, 32]} />
-                <meshStandardMaterial color="#38BDF8" emissive="#0ea5e9" emissiveIntensity={0.5} transparent opacity={0.5} />
+                <sphereGeometry args={[0.55, 32, 32]} />
+                <meshStandardMaterial
+                    color="#38BDF8"
+                    emissive="#0ea5e9"
+                    emissiveIntensity={0.6}
+                    transparent
+                    opacity={0.6}
+                />
             </mesh>
         );
     }
@@ -102,8 +106,6 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
             <Center position={[0, 0.02, 0]}>
                 <primitive object={scene} scale={1.12} />
             </Center>
-
-            {/* Glowing Holographic Base Platform */}
             <mesh position={[0, -0.98, 0]} rotation={[-Math.PI / 2, 0, 0]}>
                 <ringGeometry args={[0.5, 0.95, 32]} />
                 <meshBasicMaterial color="#38BDF8" transparent opacity={0.4} side={THREE.DoubleSide} />
@@ -116,27 +118,51 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
     );
 }
 
-// Futuristic Holographic Loading Spinner
+// Futuristic 2D Fallback Mascot — shown when WebGL is not available
+function MascotFallback2D({ onMascotClick }: { onMascotClick?: () => void }) {
+    return (
+        <div
+            className="w-full h-full flex flex-col items-center justify-center cursor-pointer select-none gap-3"
+            onClick={onMascotClick}
+        >
+            <div className="relative flex items-center justify-center">
+                {/* Outer glow ring */}
+                <div className="absolute w-36 h-36 rounded-full bg-sky-500/20 blur-2xl animate-pulse" />
+                <div className="absolute w-28 h-28 rounded-full border-2 border-dashed border-sky-400/50 animate-spin [animation-duration:10s]" />
+                <div className="absolute w-20 h-20 rounded-full border border-purple-500/40 animate-spin [animation-duration:6s] [animation-direction:reverse]" />
+
+                {/* Wolf emoji + glow */}
+                <div className="relative z-10 w-20 h-20 rounded-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-2 border-sky-400/60 flex items-center justify-center shadow-[0_0_30px_rgba(56,189,248,0.4)]">
+                    <span className="text-4xl select-none" role="img" aria-label="MEVY Wolf Mascot">🐺</span>
+                </div>
+            </div>
+
+            <div className="text-center space-y-1">
+                <p className="font-orbitron font-bold text-xs text-sky-300 tracking-widest">MEVY · AI GUIDE</p>
+                <p className="text-[10px] text-slate-500 font-mono flex items-center gap-1 justify-center">
+                    <Zap size={9} className="text-amber-400" />
+                    Tap to interact
+                </p>
+            </div>
+        </div>
+    );
+}
+
+// Loading spinner
 function JarvisHoloLoader() {
     return (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-md rounded-3xl z-20 select-none">
-            <div className="relative w-24 h-24 flex items-center justify-center">
+            <div className="relative w-20 h-20 flex items-center justify-center">
                 <div className="absolute inset-0 rounded-full border-2 border-dashed border-sky-400/60 animate-spin [animation-duration:8s]" />
                 <div className="absolute inset-2 rounded-full border border-purple-500/50 animate-spin [animation-duration:4s] [animation-direction:reverse]" />
                 <div className="absolute inset-5 rounded-full border-2 border-t-cyan-400 border-r-transparent border-b-sky-400 border-l-transparent animate-spin" />
-                <div className="w-7 h-7 rounded-full bg-sky-400/20 backdrop-blur-sm border border-sky-400 flex items-center justify-center shadow-[0_0_20px_rgba(56,189,248,0.8)]">
-                    <Radio size={14} className="text-sky-300 animate-pulse" />
+                <div className="w-6 h-6 rounded-full bg-sky-400/20 border border-sky-400 flex items-center justify-center">
+                    <Radio size={12} className="text-sky-300 animate-pulse" />
                 </div>
             </div>
-            <div className="mt-4 text-center">
-                <p className="font-orbitron font-bold text-xs tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-purple-400 animate-pulse">
-                    CALIBRATING 3D NEURAL WOLF
-                </p>
-                <div className="flex items-center justify-center gap-1.5 mt-1.5 text-[10px] text-slate-400 font-mono">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    <span>JARVIS PROTOCOL · LOADING GLTF</span>
-                </div>
-            </div>
+            <p className="mt-4 font-orbitron font-bold text-[10px] tracking-widest text-sky-400 animate-pulse">
+                LOADING 3D WOLF...
+            </p>
         </div>
     );
 }
@@ -155,20 +181,19 @@ export function Wolf3DCanvas({
     showControls = true,
 }: Wolf3DCanvasProps) {
     const [autoRotate, setAutoRotate] = useState(false);
+    const [webGLSupported, setWebGLSupported] = useState<boolean | null>(null);
     const controlsRef = useRef<any>(null);
-    const [canvasReady, setCanvasReady] = useState(false);
 
     useEffect(() => {
-        setCanvasReady(true);
+        setWebGLSupported(isWebGLAvailable());
     }, []);
 
     const handleResetOrientation = () => {
-        if (controlsRef.current) {
-            controlsRef.current.reset();
-        }
+        if (controlsRef.current) controlsRef.current.reset();
     };
 
-    if (!canvasReady) {
+    // Still detecting
+    if (webGLSupported === null) {
         return (
             <div className={`relative rounded-3xl overflow-hidden bg-gradient-to-b from-slate-950/90 via-[#0a0d1e]/95 to-slate-950 border border-sky-500/30 ${className}`}>
                 <JarvisHoloLoader />
@@ -180,103 +205,110 @@ export function Wolf3DCanvas({
         <div
             className={`relative rounded-3xl overflow-hidden bg-gradient-to-b from-slate-950/90 via-[#0a0d1e]/95 to-slate-950 border border-sky-500/30 shadow-[0_10px_50px_rgba(6,182,212,0.15)] select-none ${className}`}
         >
-            {/* ══ HOLOGRAPHIC BACKGROUND GRID & GLOW BEAMS ══ */}
+            {/* Background glow */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.15)_0%,rgba(168,85,247,0.08)_45%,transparent_75%)] pointer-events-none" />
-            <div className="absolute -top-16 inset-x-0 h-32 bg-sky-400/10 blur-3xl pointer-events-none" />
-
-            {/* Holographic Radar Grid Overlay */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(56,189,248,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.03)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none opacity-80" />
 
-            {/* Corner Futuristic HUD Brackets */}
+            {/* HUD Brackets */}
             <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-sky-400/70 pointer-events-none" />
             <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-sky-400/70 pointer-events-none" />
             <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-purple-500/70 pointer-events-none" />
             <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-purple-500/70 pointer-events-none" />
 
-            {/* Top Telemetry Header */}
+            {/* Top Telemetry */}
             <div className="absolute top-3 inset-x-3 sm:inset-x-4 flex items-center justify-between z-10 pointer-events-none">
-                <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-950/80 backdrop-blur-md px-2 sm:px-2.5 py-1 rounded-full border border-sky-400/30">
-                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="font-orbitron font-bold text-[9px] sm:text-[10px] text-sky-200 tracking-wider">
-                        3D WOLF · LIVE CANVAS
+                <div className="flex items-center gap-1.5 bg-slate-950/80 backdrop-blur-md px-2 py-1 rounded-full border border-sky-400/30">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="font-orbitron font-bold text-[9px] text-sky-200 tracking-wider">
+                        {webGLSupported ? "3D WOLF · LIVE CANVAS" : "MEVY · 2D MODE"}
                     </span>
                 </div>
-                <div className="flex items-center gap-1 sm:gap-1.5 text-[8px] sm:text-[9px] font-mono text-purple-300 bg-purple-950/60 px-1.5 sm:px-2 py-0.5 rounded-md border border-purple-500/30">
+                <div className="flex items-center gap-1 text-[8px] font-mono text-purple-300 bg-purple-950/60 px-1.5 py-0.5 rounded-md border border-purple-500/30">
                     <Shield size={9} className="text-purple-400" />
-                    <span>SILKY INERTIA</span>
+                    <span>{webGLSupported ? "WEBGL ACTIVE" : "CANVAS MODE"}</span>
                 </div>
             </div>
 
-            {/* ══ THREE.JS CANVAS ══ */}
-            <Suspense fallback={<JarvisHoloLoader />}>
-                <Canvas
-                    camera={{ position: [0, 0.05, 3.4], fov: 42 }}
-                    className="w-full h-full cursor-grab active:cursor-grabbing"
-                    gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-                    onCreated={({ gl }) => {
-                        gl.toneMapping = THREE.ACESFilmicToneMapping;
-                        gl.toneMappingExposure = 1.2;
-                    }}
+            {/* ── WebGL not available: show 2D mascot ── */}
+            {!webGLSupported ? (
+                <MascotFallback2D onMascotClick={onWolfClick} />
+            ) : (
+                /* ── WebGL available: render full 3D canvas ── */
+                <ErrorBoundary
+                    fallback={
+                        <div className="w-full h-full flex items-center justify-center p-8">
+                            <MascotFallback2D onMascotClick={onWolfClick} />
+                        </div>
+                    }
                 >
-                    {/* Studio Cinematic Lighting */}
-                    <ambientLight intensity={1.1} />
-                    <directionalLight position={[5, 6, 4]} intensity={2.2} color="#ffffff" castShadow />
-                    <directionalLight position={[-5, 3, -2]} intensity={1.8} color="#38BDF8" />
-                    <pointLight position={[0, -2, 2]} intensity={1.4} color="#A855F7" />
-                    <pointLight position={[0, 4, 0]} intensity={1.2} color="#00D4FF" />
+                    <Suspense fallback={<JarvisHoloLoader />}>
+                        <Canvas
+                            camera={{ position: [0, 0.05, 3.4], fov: 42 }}
+                            className="w-full h-full cursor-grab active:cursor-grabbing"
+                            gl={{
+                                antialias: true,
+                                alpha: true,
+                                powerPreference: "high-performance",
+                                failIfMajorPerformanceCaveat: false,
+                            }}
+                            onCreated={({ gl }) => {
+                                gl.toneMapping = THREE.ACESFilmicToneMapping;
+                                gl.toneMappingExposure = 1.2;
+                            }}
+                        >
+                            <ambientLight intensity={1.1} />
+                            <directionalLight position={[5, 6, 4]} intensity={2.2} color="#ffffff" castShadow />
+                            <directionalLight position={[-5, 3, -2]} intensity={1.8} color="#38BDF8" />
+                            <pointLight position={[0, -2, 2]} intensity={1.4} color="#A855F7" />
+                            <pointLight position={[0, 4, 0]} intensity={1.2} color="#00D4FF" />
 
-                    {/* 3D Wolf Model */}
-                    <Wolf3DModel onClick={onWolfClick} />
+                            <Wolf3DModel onClick={onWolfClick} />
 
-                    {/* Ultra-Smooth 360-Degree Inertia OrbitControls */}
-                    {interactive && (
-                        <OrbitControls
-                            ref={controlsRef}
-                            enableDamping={true}
-                            dampingFactor={0.06}
-                            rotateSpeed={0.9}
-                            enableZoom={false}
-                            enablePan={false}
-                            minPolarAngle={Math.PI / 3.6}
-                            maxPolarAngle={Math.PI / 1.7}
-                            autoRotate={autoRotate}
-                            autoRotateSpeed={2.2}
-                        />
-                    )}
-                </Canvas>
-            </Suspense>
+                            {interactive && (
+                                <OrbitControls
+                                    ref={controlsRef}
+                                    enableDamping
+                                    dampingFactor={0.06}
+                                    rotateSpeed={0.9}
+                                    enableZoom={false}
+                                    enablePan={false}
+                                    minPolarAngle={Math.PI / 3.6}
+                                    maxPolarAngle={Math.PI / 1.7}
+                                    autoRotate={autoRotate}
+                                    autoRotateSpeed={2.2}
+                                />
+                            )}
+                        </Canvas>
+                    </Suspense>
+                </ErrorBoundary>
+            )}
 
-            {/* ══ INTERACTIVE BOTTOM CONTROLS & HUD FOOTER ══ */}
-            {showControls && (
+            {/* Bottom Controls */}
+            {showControls && webGLSupported && (
                 <div className="absolute bottom-2.5 sm:bottom-3 inset-x-3 sm:inset-x-4 flex items-center justify-between z-10 pointer-events-auto">
-                    {/* 360 Drag Prompt */}
-                    <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-slate-950/85 backdrop-blur-md border border-sky-400/30 text-slate-200 text-[10px] sm:text-xs font-mono">
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-950/85 backdrop-blur-md border border-sky-400/30 text-slate-200 text-[10px] font-mono">
                         <Move size={11} className="text-sky-400 animate-pulse" />
-                        <span className="text-[10px] sm:text-[11px]">360° Drag</span>
+                        <span>360° Drag</span>
                     </div>
-
-                    {/* Controls: Reset & Auto-Rotate Toggle */}
                     <div className="flex items-center gap-1.5 sm:gap-2">
                         <button
                             type="button"
                             onClick={handleResetOrientation}
-                            className="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-900 border border-white/10 text-slate-400 hover:text-white text-[10px] sm:text-xs font-mono transition-all"
-                            title="Reset 3D Orientation"
+                            className="px-2 py-1 rounded-xl bg-slate-950/80 hover:bg-slate-900 border border-white/10 text-slate-400 hover:text-white text-[10px] font-mono transition-all"
                         >
                             Reset
                         </button>
                         <button
                             type="button"
                             onClick={() => setAutoRotate(!autoRotate)}
-                            className={`flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl border backdrop-blur-md text-[10px] sm:text-xs font-mono transition-all ${
+                            className={`flex items-center gap-1 px-2 sm:px-3 py-1 rounded-xl border text-[10px] font-mono transition-all ${
                                 autoRotate
-                                    ? "bg-sky-500/20 border-sky-400 text-sky-300 shadow-[0_0_15px_rgba(56,189,248,0.4)]"
-                                    : "bg-slate-950/80 border-white/10 text-slate-400 hover:text-white hover:bg-slate-900"
+                                    ? "bg-sky-500/20 border-sky-400 text-sky-300"
+                                    : "bg-slate-950/80 border-white/10 text-slate-400 hover:text-white"
                             }`}
-                            title="Toggle Auto 360 Orbit"
                         >
                             <RotateCw size={11} className={autoRotate ? "animate-spin" : ""} />
-                            <span className="text-[10px] sm:text-[11px]">{autoRotate ? "Orbiting" : "Orbit"}</span>
+                            <span>{autoRotate ? "Orbiting" : "Orbit"}</span>
                         </button>
                     </div>
                 </div>

@@ -8,6 +8,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import gsap from "gsap";
 import { Volume2, VolumeX, FastForward, RotateCcw, Zap, Sparkles } from "lucide-react";
 import { speakJarvis } from "@/lib/audio";
+import { isWebGLAvailable } from "@/lib/webgl-detect";
 
 // Web Audio API Synthesizer for futuristic cyber chimes
 function playCyberBeep(freq = 440, type: OscillatorType = "sine", duration = 0.08, vol = 0.15) {
@@ -257,7 +258,7 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
     const [isFinished, setIsFinished] = useState(false);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isFadeToBlack, setIsFadeToBlack] = useState(false);
-
+    const [webGLSupported, setWebGLSupported] = useState(true); // optimistic default
     const containerRef = useRef<HTMLDivElement>(null);
     const blackOverlayRef = useRef<HTMLDivElement>(null);
     const ambientGlowCyan = useRef<HTMLDivElement>(null);
@@ -269,6 +270,11 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
     const wingsRef = useRef<HTMLDivElement>(null);
     const taglineRef = useRef<HTMLParagraphElement>(null);
     const timelineRef = useRef<gsap.core.Timeline | null>(null);
+
+    // Check WebGL support on mount
+    useEffect(() => {
+        setWebGLSupported(isWebGLAvailable());
+    }, []);
 
     const playSound = (note: string, duration = 0.08, type: OscillatorType = "sine", vol = 0.15) => {
         if (soundEnabled) {
@@ -615,28 +621,44 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
             {/* ══ CENTER STAGE CONTAINER (PROPER VERTICAL SPACING & NEVER OVERLAPS) ══ */}
             <div className="relative z-20 flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 my-auto pt-14 sm:pt-0">
                 {/* ══ 3D WOLF MASCOT (MEVY) CENTER STAGE WITH REAL-TIME CAMERA CHOREOGRAPHY ══ */}
-                <div className="relative z-20 w-[190px] h-[190px] xs:w-[230px] xs:h-[230px] sm:w-[290px] sm:h-[290px] mb-1 sm:mb-2 pointer-events-none flex items-center justify-center shrink-0">
-                    <Suspense fallback={null}>
-                        <Canvas
-                            camera={{ position: [0, 0.05, 3.4], fov: 40 }}
-                            className="w-full h-full"
-                            gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-                            onCreated={({ gl }) => {
-                                gl.toneMapping = THREE.ACESFilmicToneMapping;
-                                gl.toneMappingExposure = 1.25;
-                            }}
-                        >
-                            {/* Dynamic Studio Lighting */}
-                            <ambientLight intensity={1.2} />
-                            <directionalLight position={[5, 6, 4]} intensity={2.2} color="#ffffff" />
-                            <directionalLight position={[-5, 3, -2]} intensity={1.9} color={currentStepIndex === 0 ? "#38BDF8" : currentStepIndex === 1 ? "#C084FC" : "#FB7185"} />
-                            <pointLight position={[0, -2, 2]} intensity={1.5} color="#A855F7" />
-                            <pointLight position={[0, 4, 0]} intensity={1.2} color="#00D4FF" />
+                <div className="relative z-20 w-[190px] h-[190px] xs:w-[230px] xs:h-[230px] sm:w-[290px] sm:h-[290px] mb-1 sm:mb-2 flex items-center justify-center shrink-0">
+                    {webGLSupported ? (
+                        <Suspense fallback={null}>
+                            <Canvas
+                                camera={{ position: [0, 0.05, 3.4], fov: 40 }}
+                                className="w-full h-full pointer-events-none"
+                                gl={{
+                                    antialias: true,
+                                    alpha: true,
+                                    powerPreference: "high-performance",
+                                    failIfMajorPerformanceCaveat: false,
+                                }}
+                                onCreated={({ gl }) => {
+                                    gl.toneMapping = THREE.ACESFilmicToneMapping;
+                                    gl.toneMappingExposure = 1.25;
+                                }}
+                            >
+                                {/* Dynamic Studio Lighting */}
+                                <ambientLight intensity={1.2} />
+                                <directionalLight position={[5, 6, 4]} intensity={2.2} color="#ffffff" />
+                                <directionalLight position={[-5, 3, -2]} intensity={1.9} color={currentStepIndex === 0 ? "#38BDF8" : currentStepIndex === 1 ? "#C084FC" : "#FB7185"} />
+                                <pointLight position={[0, -2, 2]} intensity={1.5} color="#A855F7" />
+                                <pointLight position={[0, 4, 0]} intensity={1.2} color="#00D4FF" />
 
-                            {/* Choreographed 3D Wolf Scene */}
-                            <Preloader3DWolfScene currentStep={currentStepIndex} />
-                        </Canvas>
-                    </Suspense>
+                                {/* Choreographed 3D Wolf Scene */}
+                                <Preloader3DWolfScene currentStep={currentStepIndex} />
+                            </Canvas>
+                        </Suspense>
+                    ) : (
+                        /* 2D fallback when WebGL unavailable */
+                        <div className="flex flex-col items-center justify-center gap-2">
+                            <div className="relative w-24 h-24 rounded-full bg-slate-900 border-2 border-sky-400/60 flex items-center justify-center shadow-[0_0_30px_rgba(56,189,248,0.4)]">
+                                <div className="absolute inset-0 rounded-full border-2 border-dashed border-sky-400/30 animate-spin [animation-duration:10s]" />
+                                <span className="text-5xl select-none" role="img" aria-label="MEVY Wolf">🐺</span>
+                            </div>
+                            <p className="font-orbitron text-[9px] text-sky-400 animate-pulse tracking-widest">MEVY · AI GUIDE</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* ══ MAIN TYPOGRAPHY STAGE ══ */}
