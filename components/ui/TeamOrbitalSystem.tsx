@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useMemo, useEffect } from "react";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { 
     Sparkles, Orbit, Users, Crown, Linkedin, Github, 
     ExternalLink, Play, Pause, RefreshCw, Layers, ShieldCheck, User
@@ -34,6 +34,25 @@ export function TeamOrbitalSystem({
     const [isPaused, setIsPaused] = useState(false);
     const [selectedWing, setSelectedWing] = useState<string>("ALL");
     const [hoveredMember, setHoveredMember] = useState<OrbitMember | null>(null);
+
+    const orbit1Controls = useAnimation();
+    const node1Controls = useAnimation();
+    const orbit2Controls = useAnimation();
+    const node2Controls = useAnimation();
+
+    useEffect(() => {
+        if (isPaused) {
+            orbit1Controls.stop();
+            node1Controls.stop();
+            orbit2Controls.stop();
+            node2Controls.stop();
+        } else {
+            orbit1Controls.start({ rotate: 360, transition: { repeat: Infinity, duration: 40, ease: "linear" } });
+            node1Controls.start({ rotate: -360, transition: { repeat: Infinity, duration: 40, ease: "linear" } });
+            orbit2Controls.start({ rotate: -360, transition: { repeat: Infinity, duration: 65, ease: "linear" } });
+            node2Controls.start({ rotate: 360, transition: { repeat: Infinity, duration: 65, ease: "linear" } });
+        }
+    }, [isPaused, orbit1Controls, node1Controls, orbit2Controls, node2Controls]);
 
     // Filter members by selected wing/department
     const filteredMembers = useMemo(() => {
@@ -178,12 +197,10 @@ export function TeamOrbitalSystem({
                 </div>
 
                 {/* 4. Orbit 1 Members Rotating Container */}
-                <div
-                    style={{ 
-                        width: `${R1 * 2}px`, height: `${R1 * 2}px`,
-                        animationPlayState: isPaused ? 'paused' : 'running'
-                    }}
-                    className="absolute rounded-full pointer-events-none animate-[spin_40s_linear_infinite]"
+                <motion.div
+                    animate={orbit1Controls}
+                    style={{ width: `${R1 * 2}px`, height: `${R1 * 2}px` }}
+                    className="absolute rounded-full pointer-events-none"
                 >
                     {orbit1Members.map((member, i) => {
                         const angle = (360 / orbit1Members.length) * i;
@@ -202,9 +219,9 @@ export function TeamOrbitalSystem({
                                 className="pointer-events-auto"
                             >
                                 {/* Counter-rotate node so avatar & text stay upright */}
-                                <div
-                                    style={{ animationPlayState: isPaused ? 'paused' : 'running' }}
-                                    className="relative group animate-[spin_40s_linear_infinite_reverse]"
+                                <motion.div
+                                    animate={node1Controls}
+                                    className="relative group"
                                     onMouseEnter={() => setHoveredMember(member)}
                                     onMouseLeave={() => setHoveredMember(null)}
                                     onClick={() => onSelectMember?.(member)}
@@ -233,20 +250,18 @@ export function TeamOrbitalSystem({
                                     <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded-full bg-slate-950/90 border border-purple-400/40 text-[10px] font-semibold text-white pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity shadow-xl z-30">
                                         {member.name}
                                     </div>
-                                </div>
+                                </motion.div>
                             </div>
                         );
                     })}
-                </div>
+                </motion.div>
 
                 {/* 5. Orbit 2 Members Counter-Rotating Container */}
                 {hasSecondOrbit && (
-                    <div
-                        style={{ 
-                            width: `${R2 * 2}px`, height: `${R2 * 2}px`,
-                            animationPlayState: isPaused ? 'paused' : 'running'
-                        }}
-                        className="absolute rounded-full pointer-events-none animate-[spin_65s_linear_infinite_reverse]"
+                    <motion.div
+                        animate={orbit2Controls}
+                        style={{ width: `${R2 * 2}px`, height: `${R2 * 2}px` }}
+                        className="absolute rounded-full pointer-events-none"
                     >
                         {orbit2Members.map((member, i) => {
                             const angle = (360 / orbit2Members.length) * i;
@@ -265,9 +280,9 @@ export function TeamOrbitalSystem({
                                     className="pointer-events-auto"
                                 >
                                     {/* Counter-rotate so avatar stays upright */}
-                                    <div
-                                        style={{ animationPlayState: isPaused ? 'paused' : 'running' }}
-                                        className="relative group animate-[spin_65s_linear_infinite]"
+                                    <motion.div
+                                        animate={node2Controls}
+                                        className="relative group"
                                         onMouseEnter={() => setHoveredMember(member)}
                                         onMouseLeave={() => setHoveredMember(null)}
                                         onClick={() => onSelectMember?.(member)}
@@ -290,11 +305,11 @@ export function TeamOrbitalSystem({
                                         <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded-full bg-slate-950/90 border border-indigo-400/40 text-[9px] font-semibold text-white pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity shadow-xl z-30">
                                             {member.name}
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 </div>
                             );
                         })}
-                    </div>
+                    </motion.div>
                 )}
             </div>
 
