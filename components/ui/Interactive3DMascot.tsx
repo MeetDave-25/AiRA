@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Zap, MessageSquare, Volume2, VolumeX, Shield, Radio, ArrowRight, CornerRightDown } from "lucide-react";
-import { ErrorBoundary } from "./ErrorBoundary";
 import { playJarvisChime, playJarvisBlip, speakJarvis, stopSpeaking } from "@/lib/audio";
 
 // Dynamically import the Three.js 3D Wolf canvas with SSR disabled
@@ -196,14 +195,12 @@ export function Interactive3DMascot({
 
             {/* ══ MAIN 3D WOLF CANVAS CONTAINER WITH GSAP SMOOTH DRAG INERTIA ══ */}
             <div className={`relative ${sizeClasses}`}>
-                <ErrorBoundary>
-                    <Wolf3DCanvas
-                        onWolfClick={handleWolfInteraction}
-                        interactive={interactive}
-                        className="w-full h-full"
-                        showControls={true}
-                    />
-                </ErrorBoundary>
+                <Wolf3DCanvas
+                    onWolfClick={handleWolfInteraction}
+                    interactive={interactive}
+                    className="w-full h-full"
+                    showControls={true}
+                />
 
                 {/* Celebratory Sparkle Burst on Click */}
                 {sparkleBurst && (

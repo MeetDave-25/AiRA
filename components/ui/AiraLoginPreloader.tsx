@@ -8,6 +8,7 @@ import gsap from "gsap";
 import { Volume2, VolumeX, FastForward, RotateCcw, Zap, Sparkles } from "lucide-react";
 import { speakJarvis } from "@/lib/audio";
 
+// Preload 3D Wolf model
 if (typeof window !== "undefined") {
     useGLTF.preload("/wolf.glb");
 }
@@ -65,47 +66,17 @@ function playSuccessChord() {
     setTimeout(() => playNote("C6", 0.6, "sine", 0.25), 210);
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════════════════════════════════════════════════
 // 3D WOLF MASCOT (MEVY) SCENE WITH EXACT CINEMATIC SEQUENCE:
 // 1. WOLF COMES FROM TOP (Drops down & lands with impact)
 // 2. CAMERA ZOOMS ONTO WOLF'S FACE (Close-up)
-// 3. IN THAT ZOOM, 360Â° SPIN IN AIR
+// 3. IN THAT ZOOM, 360° SPIN IN AIR
 // 4. AIRA LABS REVEAL (Camera pulls back, wings & logo burst)
-// 5. WOLF FACE FINAL CLOSE-UP âž” FADE TO BLACK
+// 5. WOLF FACE FINAL CLOSE-UP ➔ FADE TO BLACK
 // 6. LOGIN SCREEN WITH VOICE: "Welcome to AiRA Lab"
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
-// ErrorBoundary to catch GLTF/WebGL errors silently swallowing the 3D wolf
-class WolfSceneErrorBoundary extends React.Component<
-    { children: React.ReactNode; onError?: () => void },
-    { hasError: boolean }
-> {
-    constructor(props: any) {
-        super(props);
-        this.state = { hasError: false };
-    }
-    static getDerivedStateFromError() {
-        return { hasError: true };
-    }
-    componentDidCatch(error: Error) {
-        console.warn("[AiraPreloader] 3D Wolf scene error caught:", error.message);
-        this.props.onError?.();
-    }
-    render() {
-        if (this.state.hasError) return null;
-        return this.props.children;
-    }
-}
-
-interface PreloaderWolfProps { currentStep: number; }
-
-function isWebGLAvailable(): boolean {
-    try {
-        const canvas = document.createElement('canvas');
-        return !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
-    } catch (e) {
-        return false;
-    }
+// ══════════════════════════════════════════════════════════════════
+interface PreloaderWolfProps {
+    currentStep: number; // 0 = Entry from top, 1 = Zoom Face, 2 = 360 Spin in Zoom, 3 = AiRA LABS Climax, 4 = Final Face Cut
 }
 
 function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
@@ -136,7 +107,9 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
         if (!groupRef.current) return;
 
         if (currentStep === 0) {
+            // ═══════════════════════════════════════════════════════════
             // 1. WOLF COMES FROM TOP (Dramatic drop from sky & land)
+            // ═══════════════════════════════════════════════════════════
             gsap.fromTo(
                 groupRef.current.position,
                 { y: 4.5, z: -0.4 },
@@ -154,8 +127,11 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
             );
             gsap.to(camera.position, { x: 0, y: 0.05, z: 3.4, duration: 0.8, ease: "power2.out" });
         } else if (currentStep === 1) {
+            // ═══════════════════════════════════════════════════════════
             // 2. ZOOM ON FACE (Close-up on Wolf's head with full ear clearance)
+            // ═══════════════════════════════════════════════════════════
             gsap.to(groupRef.current.rotation, { y: 0.05, x: -0.04, duration: 0.75, ease: "power2.out" });
+            // Camera zooms with generous breathing room so face & ears are never cut
             gsap.to(camera.position, { x: 0, y: 0.28, z: 2.15, duration: 0.85, ease: "power3.inOut" });
             gsap.fromTo(
                 groupRef.current.scale,
@@ -163,10 +139,13 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
                 { x: 1, y: 1, z: 1, duration: 0.6, ease: "elastic.out(1.2, 0.4)" }
             );
         } else if (currentStep === 2) {
-            // 3. IN THAT ZOOM, 360° SPIN IN AIR
+            // ═══════════════════════════════════════════════════════════
+            // 3. IN THAT ZOOM, 360° SPIN (High-speed 360 spin in face zoom)
+            // ═══════════════════════════════════════════════════════════
             gsap.to(camera.position, { x: 0, y: 0.26, z: 2.2, duration: 0.3, ease: "power2.out" });
+            // 360 degree spin right inside the zoom
             gsap.to(groupRef.current.rotation, {
-                y: "+=" + (Math.PI * 2),
+                y: `+=${Math.PI * 2}`,
                 duration: 0.85,
                 ease: "power2.inOut",
             });
@@ -176,7 +155,9 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
                 { x: 1.05, y: 1.05, z: 1.05, duration: 0.85, ease: "elastic.out(1.1, 0.4)" }
             );
         } else if (currentStep === 3) {
+            // ═══════════════════════════════════════════════════════════
             // 4. AIRA LABS REVEAL (Camera pulls back, hero stance)
+            // ═══════════════════════════════════════════════════════════
             gsap.to(camera.position, { x: 0, y: 0.05, z: 3.4, duration: 0.7, ease: "power2.out" });
             gsap.to(groupRef.current.rotation, { y: -0.15, x: 0, duration: 0.8, ease: "back.out(1.8)" });
             gsap.to(groupRef.current.position, { y: 0, z: 0, duration: 0.6, ease: "power2.out" });
@@ -186,7 +167,9 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
                 { x: 1.12, y: 1.12, z: 1.12, duration: 0.75, ease: "elastic.out(1.2, 0.4)" }
             );
         } else if (currentStep === 4) {
+            // ═══════════════════════════════════════════════════════════
             // 5. WOLF FACE FINAL CLOSE-UP BEFORE FADE TO BLACK
+            // ═══════════════════════════════════════════════════════════
             gsap.to(groupRef.current.rotation, { y: 0, x: 0, duration: 0.5, ease: "power2.out" });
             gsap.to(camera.position, { x: 0, y: 0.28, z: 1.85, duration: 0.6, ease: "power2.in" });
         }
@@ -205,6 +188,7 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
 
     return (
         <group ref={groupRef} position={[0, 0, 0]}>
+            {/* Centered Wolf with safe scale margin */}
             <Center position={[0, 0.03, 0]}>
                 <primitive object={gltf.scene} scale={1.12} />
             </Center>
@@ -222,23 +206,29 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
     );
 }
 
+// ══════════════════════════════════════════════════════════════════
+// 3-STAGE CHARACTER ROLLING SLOTS DATA:
+// Stage 1: INNOVATION (10 chars)
+// Stage 2:  RESEARCH  (10 chars: · R E S E A R C H ·)
+// Stage 3:   IMPACT   (10 chars: · · I M P A C T ⚡ ·)
+// ══════════════════════════════════════════════════════════════════
 const topCharSlots = [
-    { c1: "I", c1Class: "text-sky-400", c2: "Â·", c2Class: "text-purple-500/20", c3: "Â·", c3Class: "text-pink-500/20" },
-    { c1: "N", c1Class: "text-sky-400", c2: "R", c2Class: "text-purple-300", c3: "Â·", c3Class: "text-pink-500/20" },
+    { c1: "I", c1Class: "text-sky-400", c2: "·", c2Class: "text-purple-500/20", c3: "·", c3Class: "text-pink-500/20" },
+    { c1: "N", c1Class: "text-sky-400", c2: "R", c2Class: "text-purple-300", c3: "·", c3Class: "text-pink-500/20" },
     { c1: "N", c1Class: "text-sky-300", c2: "E", c2Class: "text-purple-300", c3: "I", c3Class: "text-pink-400" },
     { c1: "O", c1Class: "text-white", c2: "S", c2Class: "text-white", c3: "M", c3Class: "text-pink-300" },
     { c1: "V", c1Class: "text-white", c2: "E", c2Class: "text-white", c3: "P", c3Class: "text-white" },
     { c1: "A", c1Class: "text-white", c2: "A", c2Class: "text-white", c3: "A", c3Class: "text-white" },
     { c1: "T", c1Class: "text-sky-300", c2: "R", c2Class: "text-purple-300", c3: "C", c3Class: "text-pink-300" },
     { c1: "I", c1Class: "text-sky-400", c2: "C", c2Class: "text-purple-300", c3: "T", c3Class: "text-pink-400" },
-    { c1: "O", c1Class: "text-sky-400", c2: "H", c2Class: "text-purple-400", c3: "âš¡", c3Class: "text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.9)]" },
-    { c1: "N", c1Class: "text-sky-400", c2: "Â·", c2Class: "text-purple-500/20", c3: "Â·", c3Class: "text-pink-500/20" },
+    { c1: "O", c1Class: "text-sky-400", c2: "H", c2Class: "text-purple-400", c3: "⚡", c3Class: "text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.9)]" },
+    { c1: "N", c1Class: "text-sky-400", c2: "·", c2Class: "text-purple-500/20", c3: "·", c3Class: "text-pink-500/20" },
 ];
 
 const STAGE_SUBTITLES = [
-    { text: "01 Â· A NEW MIND Â· NEURAL INTELLIGENCE", color: "text-sky-300 border-sky-400/30 bg-sky-950/60" },
-    { text: "02 Â· A NEW ENERGY Â· ROBOTICS & HARDWARE", color: "text-purple-300 border-purple-500/30 bg-purple-950/60" },
-    { text: "03 Â· A NEW IMPACT Â· 4,500+ INNOVATORS", color: "text-pink-300 border-pink-500/30 bg-pink-950/60" },
+    { text: "01 · A NEW MIND · NEURAL INTELLIGENCE", color: "text-sky-300 border-sky-400/30 bg-sky-950/60" },
+    { text: "02 · A NEW ENERGY · ROBOTICS & HARDWARE", color: "text-purple-300 border-purple-500/30 bg-purple-950/60" },
+    { text: "03 · A NEW IMPACT · 4,500+ INNOVATORS", color: "text-pink-300 border-pink-500/30 bg-pink-950/60" },
 ];
 
 export interface AiraLoginPreloaderProps {
@@ -251,7 +241,7 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
     const [isFinished, setIsFinished] = useState(false);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isFadeToBlack, setIsFadeToBlack] = useState(false);
-    const [webGLSupported, setWebGLSupported] = useState(true); // optimistic default
+
     const containerRef = useRef<HTMLDivElement>(null);
     const blackOverlayRef = useRef<HTMLDivElement>(null);
     const ambientGlowCyan = useRef<HTMLDivElement>(null);
@@ -263,11 +253,6 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
     const wingsRef = useRef<HTMLDivElement>(null);
     const taglineRef = useRef<HTMLParagraphElement>(null);
     const timelineRef = useRef<gsap.core.Timeline | null>(null);
-
-    // Check WebGL support on mount
-    useEffect(() => {
-        setWebGLSupported(isWebGLAvailable());
-    }, []);
 
     const playSound = (note: string, duration = 0.08, type: OscillatorType = "sine", vol = 0.15) => {
         if (soundEnabled) {
@@ -337,9 +322,9 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
         const tl = gsap.timeline();
         timelineRef.current = tl;
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // ═══════════════════════════════════════════════════════════
         // PHASE 1: WOLF DROPS FROM TOP & INNOVATION
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // ═══════════════════════════════════════════════════════════
         tl.fromTo(
             "#topRollSlotsContainer .aira-roll-window",
             { opacity: 0, y: 35, rotateX: -70 },
@@ -365,9 +350,9 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
         // Linger on INNOVATION (1.1s)
         tl.to({}, { duration: 1.1 });
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // ═══════════════════════════════════════════════════════════
         // TRANSITION 1 -> 2: ZOOM ON FACE & RESEARCH
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // ═══════════════════════════════════════════════════════════
         if (ambientGlowCyan.current && ambientGlowPurple.current) {
             tl.to(ambientGlowCyan.current, { opacity: 0.1, duration: 0.6 }, "-=0.2");
             tl.to(ambientGlowPurple.current, { opacity: 0.95, duration: 0.6 }, "<");
@@ -395,9 +380,9 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
         // Linger on RESEARCH Face Close-Up (1.1s)
         tl.to({}, { duration: 1.1 });
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-        // TRANSITION 2 -> 3: IN THAT ZOOM, 360Â° SPIN & IMPACT âš¡
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // ═══════════════════════════════════════════════════════════
+        // TRANSITION 2 -> 3: IN THAT ZOOM, 360° SPIN & IMPACT ⚡
+        // ═══════════════════════════════════════════════════════════
         if (ambientGlowPurple.current && ambientGlowPink.current) {
             tl.to(ambientGlowPurple.current, { opacity: 0.1, duration: 0.6 });
             tl.to(ambientGlowPink.current, { opacity: 0.95, duration: 0.6 }, "<");
@@ -425,9 +410,9 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
         // Linger on IMPACT Spin (1.1s)
         tl.to({}, { duration: 1.1 });
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // ═══════════════════════════════════════════════════════════
         // TRANSITION 3 -> 4: AIRA LABS CLIMAX
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // ═══════════════════════════════════════════════════════════
         if (ambientGlowPink.current && ambientGlowCyan.current) {
             tl.to(ambientGlowPink.current, { opacity: 0.1, duration: 0.6 });
             tl.to(ambientGlowCyan.current, { opacity: 0.95, duration: 0.6 }, "<");
@@ -500,9 +485,9 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
         // Linger on AiRA LABS climax (1.2s)
         tl.to({}, { duration: 1.2 });
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // ═══════════════════════════════════════════════════════════
         // TRANSITION 4 -> 5: WOLF FACE FINAL CLOSE-UP & FADE TO BLACK
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // ═══════════════════════════════════════════════════════════
         tl.call(() => setCurrentStepIndex(4));
 
         // Fade to black
@@ -607,67 +592,40 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
             <div className="absolute top-4 sm:top-6 left-4 sm:left-6 z-30 hidden xs:flex items-center gap-2 text-xs font-mono text-slate-400 pointer-events-none">
                 <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                 <span className="font-orbitron font-bold text-sky-300 text-[9px] sm:text-[10px] tracking-wider">
-                    MEVY 3D MASCOT Â· CINEMATIC AIRA
+                    MEVY 3D MASCOT · CINEMATIC AIRA
                 </span>
             </div>
 
-            {/* â•â• CENTER STAGE CONTAINER (PROPER VERTICAL SPACING & NEVER OVERLAPS) â•â• */}
+            {/* ══ CENTER STAGE CONTAINER (PROPER VERTICAL SPACING & NEVER OVERLAPS) ══ */}
             <div className="relative z-20 flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 my-auto pt-14 sm:pt-0">
-                {/* â•â• 3D WOLF MASCOT (MEVY) CENTER STAGE WITH REAL-TIME CAMERA CHOREOGRAPHY â•â• */}
-                <div className="relative z-20 w-[190px] h-[190px] xs:w-[230px] xs:h-[230px] sm:w-[290px] sm:h-[290px] mb-1 sm:mb-2 flex items-center justify-center shrink-0">
-                    {webGLSupported ? (
-                        <WolfSceneErrorBoundary onError={() => setWebGLSupported(false)}>
-                            <Suspense fallback={
-                                <div className="w-full h-full flex items-center justify-center">
-                                    <div className="w-8 h-8 rounded-full border-2 border-sky-400/40 border-t-sky-400 animate-spin" />
-                                </div>
-                            }>
-                                <Canvas
-                                    camera={{ position: [0, 0.05, 3.4], fov: 40 }}
-                                    className="w-full h-full pointer-events-none"
-                                    gl={{
-                                        antialias: true,
-                                        alpha: true,
-                                        powerPreference: "high-performance",
-                                        failIfMajorPerformanceCaveat: false,
-                                    }}
-                                    onCreated={({ gl }) => {
-                                        gl.toneMapping = THREE.ACESFilmicToneMapping;
-                                        gl.toneMappingExposure = 1.25;
-                                        // Handle WebGL context loss gracefully
-                                        gl.domElement.addEventListener("webglcontextlost", (e) => {
-                                            e.preventDefault();
-                                            setWebGLSupported(false);
-                                        });
-                                    }}
-                                >
-                                    {/* Dynamic Studio Lighting */}
-                                    <ambientLight intensity={1.2} />
-                                    <directionalLight position={[5, 6, 4]} intensity={2.2} color="#ffffff" />
-                                    <directionalLight position={[-5, 3, -2]} intensity={1.9} color={currentStepIndex === 0 ? "#38BDF8" : currentStepIndex === 1 ? "#C084FC" : "#FB7185"} />
-                                    <pointLight position={[0, -2, 2]} intensity={1.5} color="#A855F7" />
-                                    <pointLight position={[0, 4, 0]} intensity={1.2} color="#00D4FF" />
+                {/* ══ 3D WOLF MASCOT (MEVY) CENTER STAGE WITH REAL-TIME CAMERA CHOREOGRAPHY ══ */}
+                <div className="relative z-20 w-[190px] h-[190px] xs:w-[230px] xs:h-[230px] sm:w-[290px] sm:h-[290px] mb-1 sm:mb-2 pointer-events-none flex items-center justify-center shrink-0">
+                    <Suspense fallback={null}>
+                        <Canvas
+                            camera={{ position: [0, 0.05, 3.4], fov: 40 }}
+                            className="w-full h-full"
+                            gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+                            onCreated={({ gl }) => {
+                                gl.toneMapping = THREE.ACESFilmicToneMapping;
+                                gl.toneMappingExposure = 1.25;
+                            }}
+                        >
+                            {/* Dynamic Studio Lighting */}
+                            <ambientLight intensity={1.2} />
+                            <directionalLight position={[5, 6, 4]} intensity={2.2} color="#ffffff" />
+                            <directionalLight position={[-5, 3, -2]} intensity={1.9} color={currentStepIndex === 0 ? "#38BDF8" : currentStepIndex === 1 ? "#C084FC" : "#FB7185"} />
+                            <pointLight position={[0, -2, 2]} intensity={1.5} color="#A855F7" />
+                            <pointLight position={[0, 4, 0]} intensity={1.2} color="#00D4FF" />
 
-                                    {/* Choreographed 3D Wolf Scene */}
-                                    <Preloader3DWolfScene currentStep={currentStepIndex} />
-                                </Canvas>
-                            </Suspense>
-                        </WolfSceneErrorBoundary>
-                    ) : (
-                        /* 2D fallback when WebGL unavailable */
-                        <div className="flex flex-col items-center justify-center gap-2">
-                            <div className="relative w-24 h-24 rounded-full bg-slate-900 border-2 border-sky-400/60 flex items-center justify-center shadow-[0_0_30px_rgba(56,189,248,0.4)]">
-                                <div className="absolute inset-0 rounded-full border-2 border-dashed border-sky-400/30 animate-spin [animation-duration:10s]" />
-                                <span className="text-5xl select-none" role="img" aria-label="MEVY Wolf">ðŸº</span>
-                            </div>
-                            <p className="font-orbitron text-[9px] text-sky-400 animate-pulse tracking-widest">MEVY Â· AI GUIDE</p>
-                        </div>
-                    )}
+                            {/* Choreographed 3D Wolf Scene */}
+                            <Preloader3DWolfScene currentStep={currentStepIndex} />
+                        </Canvas>
+                    </Suspense>
                 </div>
 
-                {/* â•â• MAIN TYPOGRAPHY STAGE â•â• */}
+                {/* ══ MAIN TYPOGRAPHY STAGE ══ */}
                 <div className="relative z-20 flex flex-col items-center justify-center px-2 sm:px-4 w-full">
-                    {/* â•â• SCENE 1: 3-STEP ROLLING SLOTS (INNOVATION âž” RESEARCH âž” IMPACT) â•â• */}
+                    {/* ══ SCENE 1: 3-STEP ROLLING SLOTS (INNOVATION ➔ RESEARCH ➔ IMPACT) ══ */}
                     <div
                         ref={logoSceneRef}
                         className="flex flex-col items-center justify-center relative w-full"
@@ -715,7 +673,7 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
                         </div>
                     </div>
 
-                    {/* â•â• SCENE 2: GRAND AIRA LABS PRODUCT FINALE â•â• */}
+                    {/* ══ SCENE 2: GRAND AIRA LABS PRODUCT FINALE ══ */}
                     <div
                         ref={presentsSceneRef}
                         className="hidden flex-col items-center justify-center text-center relative py-1 sm:py-2 w-full max-w-3xl px-2"
@@ -736,16 +694,16 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
                         {/* 4 FRONTIER LAB WINGS BADGES */}
                         <div ref={wingsRef} className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-2 sm:mt-3 max-w-2xl px-2">
                             <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg bg-sky-500/10 border border-sky-400/30 text-sky-300 text-[9px] sm:text-xs font-mono">
-                                ðŸ§  AI & Autonomous Agents
+                                🧠 AI & Autonomous Agents
                             </span>
                             <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[9px] sm:text-xs font-mono">
-                                ðŸ¤– Robotics Systems
+                                🤖 Robotics Systems
                             </span>
                             <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-[9px] sm:text-xs font-mono">
-                                ðŸŒ Web3 / Cloud Systems
+                                🌐 Web3 / Cloud Systems
                             </span>
                             <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg bg-pink-500/10 border border-pink-500/30 text-pink-300 text-[9px] sm:text-xs font-mono">
-                                ðŸ›¡ï¸ Cyber Defense
+                                🛡️ Cyber Defense
                             </span>
                         </div>
 
@@ -756,14 +714,14 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
                                 className="text-[10px] xs:text-xs sm:text-sm md:text-base font-orbitron font-bold text-slate-200 tracking-[0.12em] sm:tracking-[0.2em] uppercase flex items-center justify-center gap-1.5 sm:gap-2"
                             >
                                 <Zap size={13} className="text-amber-400 shrink-0 animate-bounce" />
-                                <span>A New Mind Â· A New Energy Â· A New Impact âš¡</span>
+                                <span>A New Mind · A New Energy · A New Impact ⚡</span>
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* â•â• FINAL CINEMATIC BLACK OUT CURTAIN â•â• */}
+            {/* ══ FINAL CINEMATIC BLACK OUT CURTAIN ══ */}
             <div
                 ref={blackOverlayRef}
                 className="absolute inset-0 bg-[#05070B] z-50 pointer-events-none opacity-0 transition-opacity"

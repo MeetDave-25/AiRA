@@ -5,9 +5,9 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Center, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import gsap from "gsap";
-import { RotateCw, Move, Shield, Radio, Sparkles } from "lucide-react";
+import { Sparkles, RotateCw, Move, Shield, Radio } from "lucide-react";
 
-// Preload the wolf model for immediate caching
+// Preload the wolf model for instant caching
 if (typeof window !== "undefined") {
     useGLTF.preload("/wolf.glb");
 }
@@ -16,10 +16,7 @@ interface WolfModelProps {
     onClick?: () => void;
 }
 
-// ══════════════════════════════════════════════════════════════════════
-// 3D WOLF MODEL COMPONENT (MEVY) — LOADS REAL WOLF.GLB MESH & TEXTURES
-// ══════════════════════════════════════════════════════════════════════
-function WolfGLBModel({ onClick }: WolfModelProps) {
+function Wolf3DModel({ onClick }: WolfModelProps) {
     const gltf = useGLTF("/wolf.glb");
     const groupRef = useRef<THREE.Group>(null);
     const pointerStart = useRef({ x: 0, y: 0, time: 0 });
@@ -36,13 +33,14 @@ function WolfGLBModel({ onClick }: WolfModelProps) {
                         const mat = mesh.material as THREE.MeshStandardMaterial;
                         mat.roughness = Math.min(mat.roughness, 0.65);
                         mat.metalness = Math.max(mat.metalness, 0.2);
-                        mat.envMapIntensity = 1.4;
+                        mat.envMapIntensity = 1.3;
                     }
                 }
             });
         }
     }, [gltf]);
 
+    // Handle smooth click bounce reaction when tapped (not dragged)
     const handlePointerDown = (e: any) => {
         pointerStart.current = {
             x: e.clientX || e.touches?.[0]?.clientX || 0,
@@ -57,11 +55,12 @@ function WolfGLBModel({ onClick }: WolfModelProps) {
         const dist = Math.hypot(clientX - pointerStart.current.x, clientY - pointerStart.current.y);
         const timeDiff = Date.now() - pointerStart.current.time;
 
+        // If pointer moved less than 8px and within 350ms, treat as clean tap/click
         if (dist < 8 && timeDiff < 350) {
             if (groupRef.current) {
                 gsap.fromTo(
                     groupRef.current.scale,
-                    { x: 0.92, y: 0.92, z: 0.92 },
+                    { x: 0.93, y: 0.93, z: 0.93 },
                     {
                         x: 1,
                         y: 1,
@@ -75,7 +74,7 @@ function WolfGLBModel({ onClick }: WolfModelProps) {
         }
     };
 
-    // Organic idle floating / breathing animation
+    // Smooth subtle breathing float
     useFrame((state) => {
         if (groupRef.current) {
             groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.6) * 0.035;
@@ -89,8 +88,9 @@ function WolfGLBModel({ onClick }: WolfModelProps) {
             onPointerUp={handlePointerUp}
             rotation={[0.02, -0.45, 0]}
         >
+            {/* Center vertically and horizontally with safe scale margins so ears, face & paws never clip */}
             <Center position={[0, 0.02, 0]}>
-                <primitive object={gltf.scene} scale={1.15} />
+                <primitive object={gltf.scene} scale={1.12} />
             </Center>
 
             {/* Glowing Holographic Base Platform */}
@@ -195,18 +195,18 @@ export function Wolf3DCanvas({
                     gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
                     onCreated={({ gl }) => {
                         gl.toneMapping = THREE.ACESFilmicToneMapping;
-                        gl.toneMappingExposure = 1.25;
+                        gl.toneMappingExposure = 1.2;
                     }}
                 >
                     {/* Studio Cinematic Lighting */}
-                    <ambientLight intensity={1.2} />
-                    <directionalLight position={[5, 6, 4]} intensity={2.4} color="#ffffff" castShadow />
-                    <directionalLight position={[-5, 3, -2]} intensity={1.9} color="#38BDF8" />
-                    <pointLight position={[0, -2, 2]} intensity={1.5} color="#A855F7" />
-                    <pointLight position={[0, 4, 0]} intensity={1.3} color="#00D4FF" />
+                    <ambientLight intensity={1.1} />
+                    <directionalLight position={[5, 6, 4]} intensity={2.2} color="#ffffff" castShadow />
+                    <directionalLight position={[-5, 3, -2]} intensity={1.8} color="#38BDF8" />
+                    <pointLight position={[0, -2, 2]} intensity={1.4} color="#A855F7" />
+                    <pointLight position={[0, 4, 0]} intensity={1.2} color="#00D4FF" />
 
-                    {/* Real 3D Wolf GLB Model */}
-                    <WolfGLBModel onClick={onWolfClick} />
+                    {/* 3D Wolf Model */}
+                    <Wolf3DModel onClick={onWolfClick} />
 
                     {/* Ultra-Smooth 360-Degree Inertia OrbitControls */}
                     {interactive && (
@@ -266,4 +266,3 @@ export function Wolf3DCanvas({
 }
 
 export default Wolf3DCanvas;
-
