@@ -1,17 +1,17 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useRef, useState, Suspense } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useGLTF, Center } from "@react-three/drei";
 import * as THREE from "three";
 import gsap from "gsap";
+import { Volume2, VolumeX, FastForward, RotateCcw, Zap, Sparkles } from "lucide-react";
+import { speakJarvis } from "@/lib/audio";
 
 // Preload 3D Wolf model
 if (typeof window !== "undefined") {
     useGLTF.preload("/wolf.glb");
 }
-import { Volume2, VolumeX, FastForward, RotateCcw, Zap, Sparkles } from "lucide-react";
-import { speakJarvis } from "@/lib/audio";
 
 // Web Audio API Synthesizer for futuristic cyber chimes
 function playCyberBeep(freq = 440, type: OscillatorType = "sine", duration = 0.08, vol = 0.15) {
@@ -75,6 +75,28 @@ function playSuccessChord() {
 // 5. WOLF FACE FINAL CLOSE-UP âž” FADE TO BLACK
 // 6. LOGIN SCREEN WITH VOICE: "Welcome to AiRA Lab"
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+// ErrorBoundary to catch GLTF/WebGL errors silently swallowing the 3D wolf
+class WolfSceneErrorBoundary extends React.Component<
+    { children: React.ReactNode; onError?: () => void },
+    { hasError: boolean }
+> {
+    constructor(props: any) {
+        super(props);
+        this.state = { hasError: false };
+    }
+    static getDerivedStateFromError() {
+        return { hasError: true };
+    }
+    componentDidCatch(error: Error) {
+        console.warn("[AiraPreloader] 3D Wolf scene error caught:", error.message);
+        this.props.onError?.();
+    }
+    render() {
+        if (this.state.hasError) return null; // fall through to 2D fallback
+        return this.props.children;
+    }
+}
 
 interface PreloaderWolfProps { currentStep: number; }
 
@@ -614,32 +636,43 @@ export function AiraLoginPreloader({ onComplete, autoStart = true }: AiraLoginPr
                 {/* â•â• 3D WOLF MASCOT (MEVY) CENTER STAGE WITH REAL-TIME CAMERA CHOREOGRAPHY â•â• */}
                 <div className="relative z-20 w-[190px] h-[190px] xs:w-[230px] xs:h-[230px] sm:w-[290px] sm:h-[290px] mb-1 sm:mb-2 flex items-center justify-center shrink-0">
                     {webGLSupported ? (
-                        <Suspense fallback={null}>
-                            <Canvas
-                                camera={{ position: [0, 0.05, 3.4], fov: 40 }}
-                                className="w-full h-full pointer-events-none"
-                                gl={{
-                                    antialias: true,
-                                    alpha: true,
-                                    powerPreference: "high-performance",
-                                    failIfMajorPerformanceCaveat: false,
-                                }}
-                                onCreated={({ gl }) => {
-                                    gl.toneMapping = THREE.ACESFilmicToneMapping;
-                                    gl.toneMappingExposure = 1.25;
-                                }}
-                            >
-                                {/* Dynamic Studio Lighting */}
-                                <ambientLight intensity={1.2} />
-                                <directionalLight position={[5, 6, 4]} intensity={2.2} color="#ffffff" />
-                                <directionalLight position={[-5, 3, -2]} intensity={1.9} color={currentStepIndex === 0 ? "#38BDF8" : currentStepIndex === 1 ? "#C084FC" : "#FB7185"} />
-                                <pointLight position={[0, -2, 2]} intensity={1.5} color="#A855F7" />
-                                <pointLight position={[0, 4, 0]} intensity={1.2} color="#00D4FF" />
+                        <WolfSceneErrorBoundary onError={() => setWebGLSupported(false)}>
+                            <Suspense fallback={
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <div className="w-8 h-8 rounded-full border-2 border-sky-400/40 border-t-sky-400 animate-spin" />
+                                </div>
+                            }>
+                                <Canvas
+                                    camera={{ position: [0, 0.05, 3.4], fov: 40 }}
+                                    className="w-full h-full pointer-events-none"
+                                    gl={{
+                                        antialias: true,
+                                        alpha: true,
+                                        powerPreference: "high-performance",
+                                        failIfMajorPerformanceCaveat: false,
+                                    }}
+                                    onCreated={({ gl }) => {
+                                        gl.toneMapping = THREE.ACESFilmicToneMapping;
+                                        gl.toneMappingExposure = 1.25;
+                                        // Handle WebGL context loss gracefully
+                                        gl.domElement.addEventListener("webglcontextlost", (e) => {
+                                            e.preventDefault();
+                                            setWebGLSupported(false);
+                                        });
+                                    }}
+                                >
+                                    {/* Dynamic Studio Lighting */}
+                                    <ambientLight intensity={1.2} />
+                                    <directionalLight position={[5, 6, 4]} intensity={2.2} color="#ffffff" />
+                                    <directionalLight position={[-5, 3, -2]} intensity={1.9} color={currentStepIndex === 0 ? "#38BDF8" : currentStepIndex === 1 ? "#C084FC" : "#FB7185"} />
+                                    <pointLight position={[0, -2, 2]} intensity={1.5} color="#A855F7" />
+                                    <pointLight position={[0, 4, 0]} intensity={1.2} color="#00D4FF" />
 
-                                {/* Choreographed 3D Wolf Scene */}
-                                <Preloader3DWolfScene currentStep={currentStepIndex} />
-                            </Canvas>
-                        </Suspense>
+                                    {/* Choreographed 3D Wolf Scene */}
+                                    <Preloader3DWolfScene currentStep={currentStepIndex} />
+                                </Canvas>
+                            </Suspense>
+                        </WolfSceneErrorBoundary>
                     ) : (
                         /* 2D fallback when WebGL unavailable */
                         <div className="flex flex-col items-center justify-center gap-2">
