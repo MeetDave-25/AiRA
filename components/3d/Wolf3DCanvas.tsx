@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect, Suspense, Component, ErrorInfo } from "react";
+import React, { useRef, useState, useEffect, Suspense, Component, ErrorInfo, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Center, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -67,23 +67,25 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
     const groupRef = useRef<THREE.Group>(null);
     const pointerStart = useRef({ x: 0, y: 0, time: 0 });
 
-    useEffect(() => {
-        if (gltf.scene) {
-            gltf.scene.traverse((child) => {
-                if ((child as THREE.Mesh).isMesh) {
-                    const mesh = child as THREE.Mesh;
-                    mesh.castShadow = true;
-                    mesh.receiveShadow = true;
-                    if (mesh.material) {
-                        const mat = mesh.material as THREE.MeshStandardMaterial;
-                        mat.roughness = Math.min(mat.roughness, 0.65);
-                        mat.metalness = Math.max(mat.metalness, 0.2);
-                        mat.envMapIntensity = 1.4;
-                    }
+    const sceneClone = useMemo(() => {
+        if (!gltf.scene) return null;
+        const cloned = gltf.scene.clone(true);
+        cloned.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+                const mesh = child as THREE.Mesh;
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                if (mesh.material) {
+                    const mat = (mesh.material as THREE.Material).clone() as THREE.MeshStandardMaterial;
+                    mat.roughness = Math.min(mat.roughness ?? 0.5, 0.65);
+                    mat.metalness = Math.max(mat.metalness ?? 0.2, 0.25);
+                    mat.envMapIntensity = 1.4;
+                    mesh.material = mat;
                 }
-            });
-        }
-    }, [gltf]);
+            }
+        });
+        return cloned;
+    }, [gltf.scene]);
 
     const handlePointerDown = (e: any) => {
         pointerStart.current = {
@@ -123,6 +125,8 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
         }
     });
 
+    if (!sceneClone) return null;
+
     return (
         <group
             ref={groupRef}
@@ -131,9 +135,10 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
             rotation={[0.02, -0.45, 0]}
         >
             <Center position={[0, 0.02, 0]}>
-                <primitive object={gltf.scene} scale={1.12} />
+                <primitive object={sceneClone} scale={1.15} />
             </Center>
 
+            {/* Glowing Holographic Base Platform */}
             <mesh position={[0, -0.98, 0]} rotation={[-Math.PI / 2, 0, 0]}>
                 <ringGeometry args={[0.5, 0.95, 32]} />
                 <meshBasicMaterial color="#38BDF8" transparent opacity={0.4} side={THREE.DoubleSide} />
@@ -146,6 +151,7 @@ function Wolf3DModel({ onClick }: WolfModelProps) {
     );
 }
 
+// Futuristic Holographic Loading Spinner
 function JarvisHoloLoader() {
     return (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-md rounded-3xl z-20 select-none">
