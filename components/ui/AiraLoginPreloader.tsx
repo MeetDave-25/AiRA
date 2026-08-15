@@ -1,17 +1,11 @@
 "use client";
 
-import React, { useEffect, useRef, useState, Suspense } from "react";
+import React, { useEffect, useRef, useState, Suspense, useMemo } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useGLTF, Center } from "@react-three/drei";
 import * as THREE from "three";
 import gsap from "gsap";
 import { Volume2, VolumeX, FastForward, RotateCcw, Zap, Sparkles } from "lucide-react";
 import { speakJarvis } from "@/lib/audio";
-
-// Preload 3D Wolf model
-if (typeof window !== "undefined") {
-    useGLTF.preload("/wolf.glb");
-}
 
 // Web Audio API Synthesizer for futuristic cyber chimes
 function playCyberBeep(freq = 440, type: OscillatorType = "sine", duration = 0.08, vol = 0.15) {
@@ -93,7 +87,7 @@ class WolfSceneErrorBoundary extends React.Component<
         this.props.onError?.();
     }
     render() {
-        if (this.state.hasError) return null; // fall through to 2D fallback
+        if (this.state.hasError) return null;
         return this.props.children;
     }
 }
@@ -111,35 +105,28 @@ function isWebGLAvailable(): boolean {
 
 function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
     const { camera } = useThree();
-    const gltf = useGLTF("/wolf.glb");
     const groupRef = useRef<THREE.Group>(null);
+    const headGroup = useRef<THREE.Group>(null);
+    const leftEar = useRef<THREE.Group>(null);
+    const rightEar = useRef<THREE.Group>(null);
+    const energyRing1 = useRef<THREE.Mesh>(null);
+    const energyRing2 = useRef<THREE.Mesh>(null);
+    const crestRef = useRef<THREE.Mesh>(null);
 
-    useEffect(() => {
-        if (gltf.scene) {
-            gltf.scene.traverse((child) => {
-                if ((child as THREE.Mesh).isMesh) {
-                    const mesh = child as THREE.Mesh;
-                    mesh.castShadow = true;
-                    mesh.receiveShadow = true;
-                    if (mesh.material) {
-                        const mat = mesh.material as THREE.MeshStandardMaterial;
-                        mat.roughness = Math.min(mat.roughness, 0.65);
-                        mat.metalness = Math.max(mat.metalness, 0.2);
-                        mat.envMapIntensity = 1.4;
-                    }
-                }
-            });
-        }
-    }, [gltf]);
+    const materials = useMemo(() => ({
+        armorDark: new THREE.MeshStandardMaterial({ color: "#0a1128", roughness: 0.3, metalness: 0.85, flatShading: true }),
+        armorLight: new THREE.MeshStandardMaterial({ color: "#1c2a4a", roughness: 0.35, metalness: 0.75, flatShading: true }),
+        cyberCyan: new THREE.MeshStandardMaterial({ color: "#00f0ff", emissive: "#00f0ff", emissiveIntensity: 1.8, roughness: 0.1, metalness: 0.9 }),
+        cyberPurple: new THREE.MeshStandardMaterial({ color: "#a855f7", emissive: "#a855f7", emissiveIntensity: 1.5, roughness: 0.2, metalness: 0.8 }),
+        goldAccent: new THREE.MeshStandardMaterial({ color: "#fbbf24", emissive: "#d97706", emissiveIntensity: 0.6, roughness: 0.25, metalness: 0.9 }),
+        glowEye: new THREE.MeshBasicMaterial({ color: "#38bdf8" }),
+        wireframe: new THREE.MeshBasicMaterial({ color: "#38bdf8", wireframe: true, transparent: true, opacity: 0.3 }),
+    }), []);
 
-    // Exact Choreographed Camera & 3D Wolf Actions with safe framing margins
     useEffect(() => {
         if (!groupRef.current) return;
 
         if (currentStep === 0) {
-            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-            // 1. WOLF COMES FROM TOP (Dramatic drop from sky & land)
-            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             gsap.fromTo(
                 groupRef.current.position,
                 { y: 4.5, z: -0.4 },
@@ -157,11 +144,7 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
             );
             gsap.to(camera.position, { x: 0, y: 0.05, z: 3.4, duration: 0.8, ease: "power2.out" });
         } else if (currentStep === 1) {
-            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-            // 2. ZOOM ON FACE (Close-up on Wolf's head with full ear clearance)
-            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             gsap.to(groupRef.current.rotation, { y: 0.05, x: -0.04, duration: 0.75, ease: "power2.out" });
-            // Camera zooms with generous breathing room so face & ears are never cut
             gsap.to(camera.position, { x: 0, y: 0.28, z: 2.15, duration: 0.85, ease: "power3.inOut" });
             gsap.fromTo(
                 groupRef.current.scale,
@@ -169,13 +152,9 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
                 { x: 1, y: 1, z: 1, duration: 0.6, ease: "elastic.out(1.2, 0.4)" }
             );
         } else if (currentStep === 2) {
-            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-            // 3. IN THAT ZOOM, 360Â° SPIN (High-speed 360 spin in face zoom)
-            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             gsap.to(camera.position, { x: 0, y: 0.26, z: 2.2, duration: 0.3, ease: "power2.out" });
-            // 360 degree spin right inside the zoom
             gsap.to(groupRef.current.rotation, {
-                y: `+=${Math.PI * 2}`,
+                y: "+=" + (Math.PI * 2),
                 duration: 0.85,
                 ease: "power2.inOut",
             });
@@ -185,9 +164,6 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
                 { x: 1.05, y: 1.05, z: 1.05, duration: 0.85, ease: "elastic.out(1.1, 0.4)" }
             );
         } else if (currentStep === 3) {
-            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-            // 4. AIRA LABS REVEAL (Camera pulls back, hero stance)
-            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             gsap.to(camera.position, { x: 0, y: 0.05, z: 3.4, duration: 0.7, ease: "power2.out" });
             gsap.to(groupRef.current.rotation, { y: -0.15, x: 0, duration: 0.8, ease: "back.out(1.8)" });
             gsap.to(groupRef.current.position, { y: 0, z: 0, duration: 0.6, ease: "power2.out" });
@@ -197,33 +173,43 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
                 { x: 1.12, y: 1.12, z: 1.12, duration: 0.75, ease: "elastic.out(1.2, 0.4)" }
             );
         } else if (currentStep === 4) {
-            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-            // 5. WOLF FACE FINAL CLOSE-UP BEFORE FADE TO BLACK
-            // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             gsap.to(groupRef.current.rotation, { y: 0, x: 0, duration: 0.5, ease: "power2.out" });
             gsap.to(camera.position, { x: 0, y: 0.28, z: 1.85, duration: 0.6, ease: "power2.in" });
         }
     }, [currentStep, camera]);
 
-    // Continuous subtle floating breathing bob
     useFrame((state) => {
+        const time = state.clock.getElapsedTime();
         if (groupRef.current && currentStep !== 2 && currentStep !== 0) {
-            groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.8) * 0.03;
+            groupRef.current.position.y = Math.sin(time * 1.8) * 0.03;
         }
+        if (leftEar.current) leftEar.current.rotation.z = 0.35 + Math.sin(time * 4) * 0.04;
+        if (rightEar.current) rightEar.current.rotation.z = -0.35 - Math.cos(time * 3.5) * 0.04;
+        if (energyRing1.current) { energyRing1.current.rotation.z = time * 0.6; energyRing1.current.rotation.x = Math.PI / 3 + Math.sin(time * 0.5) * 0.2; }
+        if (energyRing2.current) { energyRing2.current.rotation.z = -time * 0.4; energyRing2.current.rotation.y = Math.cos(time * 0.5) * 0.3; }
+        if (crestRef.current) crestRef.current.rotation.y = time * 0.8;
     });
 
-    // Dynamic color shifting for pedestal
     const lightColors = ["#38BDF8", "#C084FC", "#FB7185", "#00D4FF", "#38BDF8"];
     const activeColor = lightColors[currentStep] || lightColors[0];
 
     return (
         <group ref={groupRef} position={[0, 0, 0]}>
-            {/* Centered Wolf with safe scale margin */}
-            <Center position={[0, 0.03, 0]}>
-                <primitive object={gltf.scene} scale={1.12} />
-            </Center>
-
-            {/* Glowing Holographic Base Platform */}
+            <group ref={headGroup} position={[0, 0.15, 0]}>
+                <mesh material={materials.armorDark} position={[0, 0.2, 0]}><dodecahedronGeometry args={[0.55, 0]} /></mesh>
+                <mesh material={materials.wireframe} position={[0, 0.2, 0]}><dodecahedronGeometry args={[0.58, 0]} /></mesh>
+                <mesh material={materials.armorLight} position={[-0.32, 0.05, 0.18]} rotation={[0.2, 0.3, -0.2]}><coneGeometry args={[0.28, 0.6, 4]} /></mesh>
+                <mesh material={materials.armorLight} position={[0.32, 0.05, 0.18]} rotation={[0.2, -0.3, 0.2]}><coneGeometry args={[0.28, 0.6, 4]} /></mesh>
+                <mesh material={materials.armorDark} position={[0, 0.02, 0.48]} rotation={[Math.PI / 2, 0, 0]}><coneGeometry args={[0.26, 0.65, 5]} /></mesh>
+                <mesh material={materials.cyberCyan} position={[0, 0.01, 0.78]}><octahedronGeometry args={[0.08, 0]} /></mesh>
+                <group position={[-0.24, 0.18, 0.38]}><mesh material={materials.cyberCyan}><boxGeometry args={[0.18, 0.06, 0.08]} /></mesh><pointLight color="#00f0ff" intensity={1.5} distance={0.8} /></group>
+                <group position={[0.24, 0.18, 0.38]}><mesh material={materials.cyberCyan}><boxGeometry args={[0.18, 0.06, 0.08]} /></mesh><pointLight color="#00f0ff" intensity={1.5} distance={0.8} /></group>
+                <group ref={leftEar} position={[-0.32, 0.65, -0.05]} rotation={[0.1, 0.2, 0.35]}><mesh material={materials.armorDark}><coneGeometry args={[0.18, 0.55, 3]} /></mesh></group>
+                <group ref={rightEar} position={[0.32, 0.65, -0.05]} rotation={[0.1, -0.2, -0.35]}><mesh material={materials.armorDark}><coneGeometry args={[0.18, 0.55, 3]} /></mesh></group>
+                <mesh ref={crestRef} material={materials.goldAccent} position={[0, 0.48, 0.3]}><octahedronGeometry args={[0.1, 0]} /></mesh>
+            </group>
+            <mesh ref={energyRing1} material={materials.cyberCyan} position={[0, 0.1, 0]}><torusGeometry args={[1.05, 0.015, 8, 48]} /></mesh>
+            <mesh ref={energyRing2} material={materials.cyberPurple} position={[0, 0.1, 0]}><torusGeometry args={[1.2, 0.012, 8, 48]} /></mesh>
             <mesh position={[0, -0.98, 0]} rotation={[-Math.PI / 2, 0, 0]}>
                 <ringGeometry args={[0.5, 0.95, 32]} />
                 <meshBasicMaterial color={activeColor} transparent opacity={0.45} side={THREE.DoubleSide} />
@@ -236,12 +222,6 @@ function Preloader3DWolfScene({ currentStep }: PreloaderWolfProps) {
     );
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// 3-STAGE CHARACTER ROLLING SLOTS DATA:
-// Stage 1: INNOVATION (10 chars)
-// Stage 2:  RESEARCH  (10 chars: Â· R E S E A R C H Â·)
-// Stage 3:   IMPACT   (10 chars: Â· Â· I M P A C T âš¡ Â·)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const topCharSlots = [
     { c1: "I", c1Class: "text-sky-400", c2: "Â·", c2Class: "text-purple-500/20", c3: "Â·", c3Class: "text-pink-500/20" },
     { c1: "N", c1Class: "text-sky-400", c2: "R", c2Class: "text-purple-300", c3: "Â·", c3Class: "text-pink-500/20" },
