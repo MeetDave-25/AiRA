@@ -88,7 +88,11 @@ export async function GET() {
             return (a.sortOrder || 0) - (b.sortOrder || 0);
         });
 
-        return NextResponse.json(merged);
+        return NextResponse.json(merged, {
+            headers: {
+                "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120"
+            }
+        });
     } catch (error) {
         console.error("Failed to load team members:", error);
         return NextResponse.json([], { status: 200 });

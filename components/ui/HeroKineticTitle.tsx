@@ -69,8 +69,9 @@ export function HeroKineticTitle() {
                 animate="visible"
                 className="font-orbitron font-black text-5xl xs:text-6xl sm:text-7xl md:text-8xl lg:text-9xl leading-[0.95] tracking-tight mb-3 sm:mb-6 select-none perspective-[1000px] w-full"
             >
+                <span className="sr-only">AiRA Labs — Student AI &amp; Robotics Innovation Lab</span>
                 {/* Line 1: AiRA */}
-                <div className="flex items-center overflow-hidden py-1">
+                <div aria-hidden="true" className="flex items-center overflow-hidden py-1">
                     {airaLetters.map((char, index) => (
                         <motion.span
                             key={`aira-${index}`}
@@ -88,7 +89,7 @@ export function HeroKineticTitle() {
                 </div>
 
                 {/* Line 2: Labs (With Cyan/Ice Blue Holographic Flare) */}
-                <div className="flex items-center overflow-hidden py-0.5 sm:py-1 mt-0.5 sm:mt-1">
+                <div aria-hidden="true" className="flex items-center overflow-hidden py-0.5 sm:py-1 mt-0.5 sm:mt-1">
                     {labLetters.map((char, index) => (
                         <motion.span
                             key={`lab-${index}`}

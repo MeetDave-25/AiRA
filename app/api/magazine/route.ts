@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 
-const AUTHORIZED_ROLES = ["ADMIN", "SUPER_ADMIN", "CONTENT_MANAGER", "TEAM_LEAD", "LEAD", "PRESIDENT"];
+const AUTHORIZED_ROLES = ["ADMIN", "SUPER_ADMIN"];
 
 // ── GET: list all editions (published → public, all → admin) ────────────────
 export async function GET(req: NextRequest) {

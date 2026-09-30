@@ -196,10 +196,27 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             if (Notification.permission === "default") {
                 const sessionDismissed = sessionStorage.getItem("aira_notif_prompt_dismissed_v2");
                 if (!sessionDismissed) {
-                    const timer = setTimeout(() => {
+                    // Ask only once the visitor is engaged (scrolled ~1.5 screens or 30s on site) and has
+                    // already answered the cookie banner — never stack two popups over the hero.
+                    let shown = false;
+                    const consentGiven = () => {
+                        try { return !!localStorage.getItem("aira_cookie_consent_v1"); } catch { return true; }
+                    };
+                    const tryShow = () => {
+                        if (shown || !consentGiven()) return;
+                        shown = true;
                         setShowPushPrompt(true);
-                    }, 1800);
-                    return () => clearTimeout(timer);
+                        cleanup();
+                    };
+                    let engagedMs = 0;
+                    const onScroll = () => window.scrollY > window.innerHeight * 1.5 && tryShow();
+                    const timer = setInterval(() => document.visibilityState === "visible" && (engagedMs += 1000) >= 30000 && tryShow(), 1000);
+                    const cleanup = () => {
+                        clearInterval(timer);
+                        window.removeEventListener("scroll", onScroll);
+                    };
+                    window.addEventListener("scroll", onScroll, { passive: true });
+                    return cleanup;
                 }
             }
         }

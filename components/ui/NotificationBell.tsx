@@ -75,7 +75,7 @@ export function NotificationBell() {
         <div className="relative" ref={ref}>
             <button
                 onClick={toggleOpen}
-                className="relative p-2.5 rounded-xl text-slate-300 hover:text-aira-cyan hover:bg-white/5 transition-all focus:outline-none focus:ring-2 focus:ring-aira-cyan/50"
+                className="relative p-2.5 rounded-xl text-current hover:text-nb-violet hover:bg-black/5 transition-all focus:outline-none focus:ring-2 focus:ring-nb-violet/50"
                 aria-label="Notifications"
             >
                 <Bell size={20} className={unreadBadge ? "text-aira-cyan" : ""} />

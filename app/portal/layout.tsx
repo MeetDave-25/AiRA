@@ -82,7 +82,7 @@ export default function PortalLayout({
         // Blog & Magazine
         { href: "/portal/blog", label: "Blog", icon: BookOpen, roles: ["ADMIN", "CONTENT_MANAGER", "TEAM_LEAD", "TEAM_MEMBER"] },
         { href: "/portal/admin/blog", label: "Blog Management", icon: BookOpen, roles: ["ADMIN", "CONTENT_MANAGER", "TEAM_LEAD"] },
-        { href: "/portal/admin/magazine", label: "Magazine Studio", icon: Newspaper, roles: ["ADMIN", "CONTENT_MANAGER", "TEAM_LEAD"] },
+        { href: "/portal/admin/magazine", label: "Magazine Studio", icon: Newspaper, roles: ["ADMIN"] },
         // Reports & Admin
         { href: "/admin/reports", label: "Team Reports", icon: FileText, roles: ["ADMIN"] },
         { href: "/admin/applications", label: "Applications", icon: FileText, roles: ["ADMIN"] },

@@ -40,6 +40,7 @@ export default function MemberBlogPage() {
     const [creatingTopic, setCreatingTopic] = useState(false);
 
     const userRole = (session?.user as any)?.role || "TEAM_MEMBER";
+    const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(userRole.toUpperCase());
     const isPrivileged = ["ADMIN", "SUPER_ADMIN", "CONTENT_MANAGER", "TEAM_LEAD", "LEAD", "PRESIDENT"].includes(userRole.toUpperCase());
 
     const loadTopics = () => {
@@ -118,13 +119,15 @@ export default function MemberBlogPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => setShowCreateModal(true)}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-400 to-cyan-300 hover:from-sky-300 hover:to-cyan-200 text-slate-950 font-bold text-xs font-orbitron tracking-wider shadow-md shadow-sky-400/20 transition-all cursor-pointer"
-                    >
-                        <Plus size={14} />
-                        <span>Create Topic &amp; Write</span>
-                    </button>
+                    {isAdmin && (
+                        <button
+                            onClick={() => setShowCreateModal(true)}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-400 to-cyan-300 hover:from-sky-300 hover:to-cyan-200 text-slate-950 font-bold text-xs font-orbitron tracking-wider shadow-md shadow-sky-400/20 transition-all cursor-pointer"
+                        >
+                            <Plus size={14} />
+                            <span>Create Topic &amp; Write</span>
+                        </button>
+                    )}
 
                     {isPrivileged && (
                         <Link
@@ -161,12 +164,14 @@ export default function MemberBlogPage() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <p className="text-slate-400 text-sm">Select a topic below to start drafting your article:</p>
-                        <button
-                            onClick={() => setShowCreateModal(true)}
-                            className="text-xs text-aira-cyan hover:underline flex items-center gap-1"
-                        >
-                            <Plus size={12} /> Add new topic
-                        </button>
+                        {isAdmin && (
+                            <button
+                                onClick={() => setShowCreateModal(true)}
+                                className="text-xs text-aira-cyan hover:underline flex items-center gap-1"
+                            >
+                                <Plus size={12} /> Add new topic
+                            </button>
+                        )}
                     </div>
 
                     {topics.length === 0 ? (
@@ -177,16 +182,20 @@ export default function MemberBlogPage() {
                             <div>
                                 <p className="text-white font-orbitron font-bold text-base">No Writing Topics Yet</p>
                                 <p className="text-slate-400 text-xs mt-1 max-w-md mx-auto">
-                                    Create the first topic to kickstart articles on autonomous systems, AI, robotics, or research!
+                                    {isAdmin
+                                        ? "Create the first topic to kickstart articles on autonomous systems, AI, robotics, or research!"
+                                        : "Writing topics are created by Admins. Please check back soon once a topic has been published!"}
                                 </p>
                             </div>
-                            <button
-                                onClick={() => setShowCreateModal(true)}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-400 to-cyan-300 text-slate-950 font-bold text-xs font-orbitron tracking-wider shadow-md hover:scale-105 transition-all cursor-pointer"
-                            >
-                                <Plus size={14} />
-                                <span>Create First Topic</span>
-                            </button>
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setShowCreateModal(true)}
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-400 to-cyan-300 text-slate-950 font-bold text-xs font-orbitron tracking-wider shadow-md hover:scale-105 transition-all cursor-pointer"
+                                >
+                                    <Plus size={14} />
+                                    <span>Create First Topic</span>
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

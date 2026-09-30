@@ -6,10 +6,33 @@ import { v4 as uuidv4 } from "uuid";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+import { unstable_cache } from "next/cache";
+
 export async function GET(req: NextRequest) {
     const session: any = await getServerSession(authOptions as any);
+    
+    // If unauthenticated public request, return public teams list
     if (!session?.user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        try {
+            const getCachedPublicTeams = unstable_cache(
+                async () => {
+                    const { data: publicTeams, error } = await db
+                        .from("Team")
+                        .select("id, name, color, description, createdAt")
+                        .order("createdAt", { ascending: true });
+
+                    if (error) throw error;
+                    return publicTeams || [];
+                },
+                ['public-teams-list'],
+                { revalidate: 60 }
+            );
+            
+            const publicTeams = await getCachedPublicTeams();
+            return NextResponse.json(publicTeams);
+        } catch {
+            return NextResponse.json([]);
+        }
     }
     
     const role = (session.user as any)?.role;

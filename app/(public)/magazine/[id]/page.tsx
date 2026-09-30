@@ -2,38 +2,11 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-    ArrowLeft,
-    ChevronLeft,
-    ChevronRight,
-    Star,
-    Clock,
-    User,
-    BookOpen,
-    Share2,
-    Globe2,
-    Maximize2,
-    Minimize2,
-    Type,
-    Printer,
-    Sparkles,
-    Check,
-    Copy,
-    X,
-    QrCode,
-    Layers,
-    ListFilter,
-    Award,
-    Eye,
-    Columns,
-    FileText,
-    Bookmark,
-    Quote
-} from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, BookOpen, Share2, Globe2, Type, Printer, Sparkles, Check, Copy, X, QrCode, Layers, Columns, Quote } from "lucide-react";
 import toast from "react-hot-toast";
 import MediumArticleContent from "@/components/ui/MediumArticleContent";
+import { Btn, Button, Empty, SkeletonCard } from "@/components/nb/kit";
 
 function WorldwideShareModal({ isOpen, mag, onClose }: { isOpen: boolean; mag: any; onClose: () => void }) {
     const [copied, setCopied] = useState(false);
@@ -48,8 +21,6 @@ function WorldwideShareModal({ isOpen, mag, onClose }: { isOpen: boolean; mag: a
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [isOpen, onClose]);
 
-    // Conditional rendering is now handled inside AnimatePresence
-
     const url = typeof window !== "undefined" ? window.location.href : `https://aira-lab.in/magazine/${mag.id}`;
     const shareText = `Read "${mag.title}" (${mag.edition}) - Official AiRA Lab Digital Magazine Publication:`;
 
@@ -62,114 +33,58 @@ function WorldwideShareModal({ isOpen, mag, onClose }: { isOpen: boolean; mag: a
         }
     };
 
+    const shareBtn = "flex items-center justify-center py-2.5 px-3 rounded-xl border-2 border-nb-ink font-brico font-bold text-sm shadow-nb-sm transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none";
+
     return (
         <AnimatePresence>
-            {isOpen && mag && (
+            {isOpen && (
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[99999] bg-slate-950/85 backdrop-blur-md p-4 flex items-center justify-center cursor-pointer"
+                    className="fixed inset-0 z-[99999] bg-nb-ink/60 backdrop-blur-sm p-4 flex items-center justify-center no-print"
                     onClick={onClose}
                 >
                     <motion.div
-                        initial={{ scale: 0.92, opacity: 0, y: 20 }}
-                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        initial={{ scale: 0.92, opacity: 0, y: 20, rotate: -2 }}
+                        animate={{ scale: 1, opacity: 1, y: 0, rotate: 0 }}
                         exit={{ scale: 0.92, opacity: 0, y: 20 }}
-                        className="glass-strong rounded-3xl border border-white/20 p-6 sm:p-8 max-w-md w-full relative overflow-hidden shadow-2xl cursor-default"
+                        className="rounded-[22px] border-2 border-nb-ink bg-nb-paper shadow-nb-lg p-6 sm:p-7 max-w-md w-full text-nb-ink"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
-                            <div className="flex items-center gap-2">
-                                <Globe2 className="text-aira-cyan" size={18} />
-                                <h3 className="font-orbitron font-bold text-base text-white">Share Publication</h3>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onClose();
-                                }}
-                                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                                title="Close Modal"
-                            >
-                                <X size={18} />
+                        <div className="flex items-center justify-between pb-4 mb-5 border-b-2 border-nb-ink">
+                            <h3 className="flex items-center gap-2 font-brico font-extrabold text-xl">
+                                <Globe2 size={18} /> Share this issue
+                            </h3>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); onClose(); }} title="Close" className="p-1.5 rounded-lg border-2 border-nb-ink bg-white">
+                                <X size={16} />
                             </button>
                         </div>
-
-                        <div className="space-y-4">
+                        <p className="font-brico font-bold">{mag.title}</p>
+                        <p className="font-mono text-xs text-nb-violet">{mag.edition}</p>
+                        <div className="mt-4 grid grid-cols-2 gap-2.5">
+                            <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + " " + url)}`} target="_blank" rel="noopener noreferrer" className={`${shareBtn} bg-nb-mint`}>WhatsApp</a>
+                            <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer" className={`${shareBtn} bg-nb-sky`}>LinkedIn</a>
+                            <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer" className={`${shareBtn} bg-white`}>X / Twitter</a>
+                            <a href={`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer" className={`${shareBtn} bg-nb-lilac`}>Telegram</a>
+                        </div>
+                        <label className="mt-5 block font-mono text-[11px] uppercase tracking-[0.14em] text-nb-muted mb-1.5">Direct link</label>
+                        <div className="flex items-center gap-2 rounded-xl border-2 border-nb-ink bg-white p-1.5">
+                            <input type="text" readOnly value={url} className="bg-transparent text-xs px-2 flex-1 outline-none font-mono min-w-0" />
+                            <button onClick={handleCopy} className="px-3 py-1.5 rounded-lg border-2 border-nb-ink bg-nb-sun font-bold text-xs flex items-center gap-1.5">
+                                {copied ? <Check size={13} /> : <Copy size={13} />}
+                                {copied ? "Copied" : "Copy"}
+                            </button>
+                        </div>
+                        <div className="mt-4 flex items-center gap-4 rounded-2xl border-2 border-nb-ink bg-white p-3">
+                            <img
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(url)}&color=111111&bgcolor=ffffff`}
+                                alt="QR code"
+                                className="w-16 h-16 rounded-lg border-2 border-nb-ink"
+                            />
                             <div>
-                                <p className="font-orbitron font-bold text-sm text-white">{mag.title}</p>
-                                <p className="text-xs text-pink-400">{mag.edition}</p>
-                            </div>
-
-                            {/* Social Share Buttons */}
-                            <div className="grid grid-cols-2 gap-2.5 pt-2">
-                                <a
-                                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + " " + url)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold hover:bg-emerald-500/30 transition-all"
-                                >
-                                    WhatsApp
-                                </a>
-                                <a
-                                    href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#0077b5]/20 border border-[#0077b5]/40 text-blue-300 text-xs font-semibold hover:bg-[#0077b5]/30 transition-all"
-                                >
-                                    LinkedIn
-                                </a>
-                                <a
-                                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-white/10 border border-white/20 text-white text-xs font-semibold hover:bg-white/20 transition-all"
-                                >
-                                    X / Twitter
-                                </a>
-                                <a
-                                    href={`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-sky-500/20 border border-sky-500/40 text-sky-300 text-xs font-semibold hover:bg-sky-500/30 transition-all"
-                                >
-                                    Telegram
-                                </a>
-                            </div>
-
-                            {/* Copy Link Input */}
-                            <div className="pt-2">
-                                <label className="text-[11px] text-slate-400 block mb-1.5 font-mono">Direct Publication URL</label>
-                                <div className="flex items-center gap-2 bg-slate-900 rounded-xl border border-white/10 p-1.5">
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        value={url}
-                                        className="bg-transparent text-xs text-slate-300 px-2 flex-1 outline-none font-mono"
-                                    />
-                                    <button
-                                        onClick={handleCopy}
-                                        className="px-3 py-1.5 rounded-lg bg-aira-cyan text-slate-950 font-bold text-xs flex items-center gap-1.5 hover:scale-105 transition-transform"
-                                    >
-                                        {copied ? <Check size={13} /> : <Copy size={13} />}
-                                        {copied ? "Copied" : "Copy"}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* QR Code */}
-                            <div className="pt-2 flex items-center gap-4 bg-white/5 rounded-2xl p-3 border border-white/10">
-                                <img
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(url)}&color=00D4FF&bgcolor=0a0f1d`}
-                                    alt="QR Code"
-                                    className="w-16 h-16 rounded-xl border border-aira-cyan/30"
-                                />
-                                <div>
-                                    <p className="text-xs font-bold text-white font-orbitron">Scan &amp; Read Worldwide</p>
-                                    <p className="text-[10px] text-slate-400 mt-0.5">Quick access for symposium &amp; conference delegates</p>
-                                </div>
+                                <p className="font-brico font-bold">Scan &amp; read on mobile</p>
+                                <p className="text-xs text-nb-muted">Great for sharing at events and conferences.</p>
                             </div>
                         </div>
                     </motion.div>
@@ -179,7 +94,6 @@ function WorldwideShareModal({ isOpen, mag, onClose }: { isOpen: boolean; mag: a
     );
 }
 
-// ── DIAMOND GEOMETRIC PHOTO COLLAGE (MATCHING PAGE 1 OF PDF) ──
 function CoverDiamondCollage({ articles, edition }: { articles: any[]; edition: string }) {
     const sampleImages = useMemo(() => {
         const extracted = articles.map((a) => a.coverImage).filter(Boolean);
@@ -193,54 +107,33 @@ function CoverDiamondCollage({ articles, edition }: { articles: any[]; edition: 
         ];
         return [...extracted, ...defaults].slice(0, 6);
     }, [articles]);
+    const tints = ["bg-nb-sun", "bg-nb-sky", "bg-nb-peach"];
 
     return (
-        <div className="relative w-full aspect-[4/5] sm:aspect-[3/4] max-w-[420px] mx-auto rounded-3xl p-4 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950/40 border-2 border-pink-500/30 shadow-2xl shadow-pink-500/20 overflow-hidden flex flex-col justify-between">
-            {/* Top Magazine Masthead */}
-            <div className="text-center pt-2 z-10">
-                <span className="text-[10px] font-orbitron font-bold tracking-[0.3em] text-aira-cyan uppercase block">
-                    AiRA LABS • RESEARCH &amp; INNOVATION
-                </span>
-                <h3 className="font-orbitron font-black text-2xl sm:text-3xl text-white tracking-wider mt-1">
-                    CHRONICLES
-                </h3>
-                <span className="text-[11px] text-pink-400 font-mono font-semibold block">
-                    OUR REFLECTION • {edition || "2025-26"}
-                </span>
+        <div className="relative w-full aspect-[4/5] sm:aspect-[3/4] max-w-[420px] mx-auto rounded-[24px] border-2 border-nb-ink bg-nb-lilac shadow-nb-lg p-4 flex flex-col justify-between -rotate-1">
+            <div className="text-center pt-2">
+                <span className="font-mono text-[10px] font-bold tracking-[0.3em] uppercase block">AiRA Lab · student community</span>
+                <h3 className="mt-1 font-brico font-extrabold text-4xl tracking-tight">CHRONICLES</h3>
+                <span className="font-mono text-[11px] font-semibold text-nb-violet block">Our reflection · {edition || "2025-26"}</span>
             </div>
-
-            {/* Geometric Diamond Collage Grid */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-2.5 py-4 z-10 px-2">
+            <div className="grid grid-cols-3 gap-2.5 py-4 px-1">
                 {sampleImages.map((src, i) => (
                     <div
                         key={i}
-                        className={`relative rounded-2xl overflow-hidden aspect-square border-2 transition-all duration-300 hover:scale-105 ${
-                            i % 3 === 0
-                                ? "border-amber-400/60 shadow-lg shadow-amber-500/20 rotate-1"
-                                : i % 3 === 1
-                                ? "border-aira-cyan/60 shadow-lg shadow-cyan-500/20 -rotate-2"
-                                : "border-pink-400/60 shadow-lg shadow-pink-500/20 rotate-2"
+                        className={`relative rounded-2xl overflow-hidden aspect-square border-2 border-nb-ink p-1 shadow-nb-sm ${tints[i % 3]} ${
+                            i % 3 === 0 ? "rotate-2" : i % 3 === 1 ? "-rotate-2" : "rotate-1"
                         }`}
                     >
-                        <img src={src} alt="Lab Moment" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+                        <img src={src} alt="Lab moment" className="w-full h-full object-cover rounded-xl" />
                     </div>
                 ))}
             </div>
-
-            {/* Bottom Theme Ribbon & Badge */}
-            <div className="z-10 bg-slate-950/90 backdrop-blur-md rounded-2xl p-3 border border-white/15 flex items-center justify-between">
+            <div className="rounded-2xl border-2 border-nb-ink bg-white p-3 flex items-center justify-between">
                 <div>
-                    <span className="text-[9px] font-orbitron text-amber-400 font-bold uppercase tracking-wider block">
-                        THE CAMPUS REVOLUTION
-                    </span>
-                    <p className="text-[11px] font-bold text-white leading-tight">
-                        Ideas • Innovation • Impact
-                    </p>
+                    <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-nb-violet block">The campus revolution</span>
+                    <p className="font-brico font-bold text-sm leading-tight">Ideas · Innovation · Impact</p>
                 </div>
-                <div className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 font-orbitron font-black text-[10px] uppercase shadow-md">
-                    Annual Edition
-                </div>
+                <span className="rounded-lg border-2 border-nb-ink bg-nb-sun px-2 py-1 font-brico font-extrabold text-[10px] uppercase">Annual</span>
             </div>
         </div>
     );
@@ -356,7 +249,7 @@ export default function MagazineReaderPage() {
     const [mag, setMag] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    // Page Navigation: -1 = Cover Spread, >= 0 = Article index
+    // Page navigation: -1 = cover spread, >= 0 = article index
     const [pageIdx, setPageIdx] = useState<number>(-1);
     const [fontSize, setFontSize] = useState<"normal" | "large" | "extra">("normal");
     const [viewMode, setViewMode] = useState<"single" | "spread">("spread");
@@ -389,19 +282,18 @@ export default function MagazineReaderPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen pt-28 px-4 max-w-5xl mx-auto">
-                <div className="glass rounded-3xl h-[75vh] animate-pulse border border-white/10" />
+            <div className="min-h-screen pt-36 px-5 max-w-5xl mx-auto">
+                <SkeletonCard className="h-[70vh]" />
             </div>
         );
     }
 
     if (!mag) {
         return (
-            <div className="min-h-screen pt-28 text-center text-slate-400 px-4">
-                <p className="font-orbitron text-2xl text-white font-bold">Publication Edition Not Found</p>
-                <Link href="/magazine" className="text-aira-cyan underline mt-4 inline-block font-medium">
-                    ← Return to Magazine Shelf
-                </Link>
+            <div className="min-h-screen pt-36 px-5 max-w-3xl mx-auto">
+                <Empty icon={<BookOpen size={24} />} title="Issue not found" desc="It may have been unpublished.">
+                    <Btn href="/magazine" tone="white">← Back to the shelf</Btn>
+                </Empty>
             </div>
         );
     }
@@ -409,415 +301,240 @@ export default function MagazineReaderPage() {
     const dbArticles: any[] = mag.posts?.map((mp: any) => mp.post || mp.BlogPost || mp).filter((p: any) => p && p.title) ?? [];
     const articles: any[] = dbArticles.length > 0 ? dbArticles : DEFAULT_ARTICLES;
     const current = pageIdx >= 0 ? articles[pageIdx] ?? null : null;
-    const nextArticle = pageIdx >= 0 && pageIdx + 1 < articles.length ? articles[pageIdx + 1] : null;
     const progressPercent = pageIdx === -1 ? 0 : Math.round(((pageIdx + 1) / articles.length) * 100);
 
     const shareUrl = typeof window !== "undefined" ? window.location.href : `https://aira-lab.in/magazine/${mag.id}`;
+    const toolBtn = "p-2 rounded-lg border-2 border-nb-ink bg-white hover:bg-nb-sun transition-colors disabled:opacity-30";
 
     return (
-        <div className="min-h-screen pt-20 pb-20 bg-[#040711] text-white relative">
-            {/* Top Reading Progress Line */}
-            <div className="fixed top-0 left-0 right-0 h-1 bg-white/5 z-[100]">
-                <div
-                    className="h-full bg-gradient-to-r from-orange-500 via-aira-cyan to-pink-500 transition-all duration-300"
-                    style={{ width: `${progressPercent}%` }}
-                />
+        <div className="min-h-screen pt-28 sm:pt-32 pb-24">
+            {/* Reading progress */}
+            <div className="fixed top-0 left-0 right-0 h-1.5 bg-nb-ink/10 z-[10001] no-print">
+                <div className="h-full bg-nb-violet transition-all duration-300" style={{ width: `${progressPercent}%` }} />
             </div>
 
-            {/* ══ STICKY MAGAZINE ACTION COMMAND BAR ══ */}
-            <header className="sticky top-0 z-50 glass-strong border-b border-white/10 px-4 sm:px-8 py-3 flex items-center justify-between shadow-2xl no-print">
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => router.push("/magazine")}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all"
-                    >
-                        <ArrowLeft size={14} />
-                        <span className="hidden sm:inline">Magazine Shelf</span>
-                    </button>
-
-                    <div className="hidden md:block">
-                        <p className="font-orbitron font-bold text-xs sm:text-sm text-white truncate max-w-xs">{mag.title}</p>
-                        <p className="text-[10px] text-pink-400 font-mono font-semibold">{mag.edition || "Annual Lab Edition"}</p>
-                    </div>
-                </div>
-
-                {/* Center Page Turn Navigation */}
-                <div className="flex items-center gap-2">
-                    <button
-                        disabled={pageIdx <= -1}
-                        onClick={() => setPageIdx((curr) => Math.max(-1, curr - 1))}
-                        className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-30 text-slate-300 hover:text-white transition-all cursor-pointer"
-                        title="Previous Spread (Left Arrow)"
-                    >
-                        <ChevronLeft size={16} />
-                    </button>
-
-                    <button
-                        onClick={() => setPageIdx(-1)}
-                        className={`px-3 py-1 rounded-xl text-xs font-orbitron font-bold transition-all ${
-                            pageIdx === -1
-                                ? "bg-gradient-to-r from-orange-500 to-pink-500 text-slate-950 shadow-md shadow-orange-500/20"
-                                : "bg-white/5 text-slate-300 hover:text-white"
-                        }`}
-                    >
-                        {pageIdx === -1 ? "📖 Cover Spread" : `Page ${pageIdx + 1} / ${articles.length}`}
-                    </button>
-
-                    <button
-                        disabled={pageIdx >= articles.length - 1}
-                        onClick={() => setPageIdx((curr) => Math.min(articles.length - 1, curr + 1))}
-                        className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-30 text-slate-300 hover:text-white transition-all cursor-pointer"
-                        title="Next Spread (Right Arrow)"
-                    >
-                        <ChevronRight size={16} />
-                    </button>
-                </div>
-
-                {/* Right Action Suite */}
-                <div className="flex items-center gap-2">
-                    {/* View Mode Toggle */}
-                    <button
-                        onClick={() => setViewMode((m) => (m === "spread" ? "single" : "spread"))}
-                        className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-colors hidden sm:flex ${
-                            viewMode === "spread"
-                                ? "bg-aira-cyan/20 border-aira-cyan/40 text-aira-cyan"
-                                : "bg-white/5 border-white/10 text-slate-300 hover:text-white"
-                        }`}
-                        title={viewMode === "spread" ? "Switch to Single Page Mode" : "Switch to Two-Page Spread Mode"}
-                    >
-                        <Columns size={14} />
-                        <span className="text-[11px] font-orbitron">{viewMode === "spread" ? "Two-Page" : "Single"}</span>
-                    </button>
-
-                    {/* Font Adjuster */}
-                    <button
-                        onClick={() => {
-                            setFontSize((curr) => (curr === "normal" ? "large" : curr === "large" ? "extra" : "normal"));
-                        }}
-                        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
-                        title="Adjust Typography Size"
-                    >
-                        <Type size={14} />
-                    </button>
-
-                    {/* Print / Export PDF */}
-                    <button
-                        onClick={() => window.print()}
-                        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
-                        title="Print / Save as PDF Spread"
-                    >
-                        <Printer size={14} />
-                    </button>
-
-                    {/* Share Worldwide */}
-                    <button
-                        onClick={() => setShowShare(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-orbitron font-bold text-xs hover:scale-105 transition-all shadow-md shadow-pink-500/20"
-                    >
-                        <Globe2 size={13} />
-                        <span className="hidden sm:inline">Share</span>
-                    </button>
-                </div>
-            </header>
-
-            {/* ══ MAIN MAGAZINE CONTAINER ══ */}
-            <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6 flex flex-col lg:flex-row gap-6">
-                {/* ── SIDEBAR TABLE OF CONTENTS ── */}
-                <aside className="lg:w-64 shrink-0 no-print">
-                    <div className="glass rounded-3xl border border-white/10 p-4 sticky top-20 space-y-3">
-                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                            <span className="font-orbitron text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                                <Layers size={13} className="text-orange-400" /> Edition Contents
-                            </span>
-                            <span className="text-[10px] font-mono text-slate-500">{articles.length} Works</span>
+            {/* Reader toolbar */}
+            <div className="sticky top-24 z-40 px-3 sm:px-6 no-print">
+                <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 rounded-2xl border-2 border-nb-ink bg-nb-paper/95 backdrop-blur-md shadow-nb px-3 py-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <button onClick={() => router.push("/magazine")} className="inline-flex items-center gap-1.5 rounded-lg border-2 border-nb-ink bg-white px-2.5 py-1.5 font-brico font-bold text-sm">
+                            <ArrowLeft size={15} /> <span className="hidden sm:inline">Shelf</span>
+                        </button>
+                        <div className="hidden md:block min-w-0">
+                            <p className="font-brico font-bold truncate max-w-xs leading-tight">{mag.title}</p>
+                            <p className="font-mono text-[10px] text-nb-violet">{mag.edition || "Annual edition"}</p>
                         </div>
+                    </div>
 
-                        {/* Cover Page Button */}
+                    <div className="flex items-center gap-1.5">
+                        <button disabled={pageIdx <= -1} onClick={() => setPageIdx((curr) => Math.max(-1, curr - 1))} className={toolBtn} title="Previous (←)">
+                            <ChevronLeft size={16} />
+                        </button>
                         <button
                             onClick={() => setPageIdx(-1)}
-                            className={`w-full text-left p-2.5 rounded-2xl text-xs font-orbitron font-bold transition-all flex items-center gap-2.5 ${
-                                pageIdx === -1
-                                    ? "bg-gradient-to-r from-orange-500/20 to-pink-500/20 border border-orange-500/40 text-white shadow-md"
-                                    : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/5"
-                            }`}
+                            className={`rounded-lg border-2 border-nb-ink px-3 py-1.5 font-brico font-bold text-sm ${pageIdx === -1 ? "bg-nb-violet text-white" : "bg-white"}`}
                         >
-                            <span>🌟</span>
-                            <div className="truncate">
-                                <p className="leading-tight">Front Cover Spread</p>
-                                <span className="text-[9px] font-normal text-slate-400 font-sans">Mosaic Collage &amp; Abstract</span>
-                            </div>
+                            {pageIdx === -1 ? "📖 Cover" : `Page ${pageIdx + 1} / ${articles.length}`}
                         </button>
+                        <button disabled={pageIdx >= articles.length - 1} onClick={() => setPageIdx((curr) => Math.min(articles.length - 1, curr + 1))} className={toolBtn} title="Next (→)">
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
 
-                        {/* Articles List */}
-                        <nav className="space-y-1.5 max-h-[58vh] overflow-y-auto pr-1">
-                            {articles.map((art: any, i: number) => {
-                                const isSelected = pageIdx === i;
-                                return (
-                                    <button
-                                        key={art.id}
-                                        onClick={() => setPageIdx(i)}
-                                        className={`w-full text-left p-2.5 rounded-xl text-xs transition-all flex items-start gap-2 border ${
-                                            isSelected
-                                                ? "bg-aira-cyan/20 border-aira-cyan/50 text-white shadow-md"
-                                                : "bg-white/[0.02] border-transparent text-slate-400 hover:text-white hover:bg-white/5"
-                                        }`}
-                                    >
-                                        <span className="font-orbitron font-bold text-[10px] text-pink-400 mt-0.5 shrink-0">
-                                            #{String(i + 1).padStart(2, "0")}
-                                        </span>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="font-semibold line-clamp-2 leading-snug text-xs">{art.title}</p>
-                                            <span className="text-[10px] text-slate-400 block mt-0.5">by {art.author?.name || "AiRA Researcher"}</span>
-                                        </div>
-                                    </button>
-                                );
-                            })}
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            onClick={() => setViewMode((m) => (m === "spread" ? "single" : "spread"))}
+                            className={`hidden sm:flex items-center gap-1.5 rounded-lg border-2 border-nb-ink px-2.5 py-1.5 font-bold text-xs ${viewMode === "spread" ? "bg-nb-sky" : "bg-white"}`}
+                            title={viewMode === "spread" ? "Switch to single page" : "Switch to two-page spread"}
+                        >
+                            <Columns size={14} /> {viewMode === "spread" ? "Two-page" : "Single"}
+                        </button>
+                        <button onClick={() => setFontSize((curr) => (curr === "normal" ? "large" : curr === "large" ? "extra" : "normal"))} className={toolBtn} title="Text size">
+                            <Type size={15} />
+                        </button>
+                        <button onClick={() => window.print()} className={toolBtn} title="Print / save as PDF">
+                            <Printer size={15} />
+                        </button>
+                        <Button onClick={() => setShowShare(true)} size="sm">
+                            <Globe2 size={14} /> <span className="hidden sm:inline">Share</span>
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-8 flex flex-col lg:flex-row gap-8">
+                {/* Contents */}
+                <aside className="lg:w-64 shrink-0 no-print">
+                    <div className="lg:sticky lg:top-44 rounded-[22px] border-2 border-nb-ink bg-white shadow-nb p-4">
+                        <div className="flex items-center justify-between pb-3 mb-3 border-b-2 border-nb-ink/15">
+                            <span className="flex items-center gap-1.5 font-brico font-bold"><Layers size={15} /> Contents</span>
+                            <span className="font-mono text-[10px] text-nb-muted">{articles.length} pieces</span>
+                        </div>
+                        <button
+                            onClick={() => setPageIdx(-1)}
+                            className={`w-full text-left rounded-xl border-2 border-nb-ink p-2.5 mb-2 font-brico font-bold text-sm ${pageIdx === -1 ? "bg-nb-sun" : "bg-white hover:bg-nb-paper"}`}
+                        >
+                            🌟 Front cover
+                        </button>
+                        <nav className="space-y-1.5 max-h-[55vh] overflow-y-auto pr-1">
+                            {articles.map((art: any, i: number) => (
+                                <button
+                                    key={art.id}
+                                    onClick={() => setPageIdx(i)}
+                                    className={`w-full text-left rounded-xl p-2.5 flex items-start gap-2 border-2 transition-colors ${
+                                        pageIdx === i ? "border-nb-ink bg-nb-lilac" : "border-transparent hover:border-nb-ink/20"
+                                    }`}
+                                >
+                                    <span className="font-mono text-[10px] font-bold text-nb-violet mt-0.5 shrink-0">#{String(i + 1).padStart(2, "0")}</span>
+                                    <span className="min-w-0">
+                                        <span className="block font-semibold text-sm leading-snug line-clamp-2">{art.title}</span>
+                                        <span className="block text-[11px] text-nb-muted mt-0.5">by {art.author?.name || "AiRA member"}</span>
+                                    </span>
+                                </button>
+                            ))}
                         </nav>
                     </div>
                 </aside>
 
-                {/* ── MAIN MAGAZINE FOLIO / ARTICLE READER ── */}
+                {/* Folio */}
                 <main className="flex-1 min-w-0">
                     <AnimatePresence mode="wait">
                         {pageIdx === -1 ? (
-                            /* ═══════════════════════════════════════════════════════════
-                               COVER SPREAD (PAGE 1 IN PDF STYLE)
-                               ═══════════════════════════════════════════════════════════ */
                             <motion.div
                                 key="cover-spread"
-                                initial={{ opacity: 0, scale: 0.98 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.98 }}
+                                initial={{ opacity: 0, y: 16, rotate: -0.6 }}
+                                animate={{ opacity: 1, y: 0, rotate: 0 }}
+                                exit={{ opacity: 0, y: -12 }}
                                 transition={{ duration: 0.35 }}
-                                className="magazine-folio-paper rounded-3xl border border-white/15 overflow-hidden shadow-2xl p-6 sm:p-10 space-y-8"
+                                className="magazine-folio-paper rounded-[26px] overflow-hidden p-6 sm:p-10 space-y-8"
                             >
                                 <div className="magazine-stripe-top w-full rounded-full" />
-
-                                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-2">
-                                    {/* Left: Geometric Diamond Photo Collage */}
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-10 items-center">
                                     <div className="md:col-span-6 flex justify-center">
                                         <CoverDiamondCollage articles={articles} edition={mag.edition} />
                                     </div>
-
-                                    {/* Right: Magazine Presentation, Editorial Letter & Table of Contents */}
                                     <div className="md:col-span-6 space-y-5">
-                                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-aira-cyan/15 border border-aira-cyan/30 text-aira-cyan text-[10px] font-orbitron font-bold uppercase">
-                                            <Sparkles size={12} /> OFFICIAL LAB PERIODIC PUBLICATION
-                                        </div>
-
-                                        <h1 className="font-orbitron font-black text-3xl sm:text-5xl text-white leading-tight">
-                                            {mag.title}
-                                        </h1>
-
-                                        <p className="text-slate-300 text-xs sm:text-sm leading-relaxed font-sans">
+                                        <span className="inline-flex items-center gap-2 rounded-full border-2 border-nb-ink bg-nb-mint px-3 py-1 font-brico font-bold text-sm">
+                                            <Sparkles size={14} /> Written by the community
+                                        </span>
+                                        <h1 className="font-brico font-extrabold tracking-[-0.04em] leading-[0.98] text-[clamp(2.2rem,4.5vw,3.75rem)]">{mag.title}</h1>
+                                        <p className="text-nb-muted leading-relaxed">
                                             {mag.description ||
-                                                "Welcome to this curated edition of AiRA Magazine — presenting breakthrough autonomous robotics case studies, artificial intelligence research, student innovation reflections, and collegiate achievements."}
+                                                "Welcome to this edition of the AiRA Magazine — student writing on software, AI, robotics and life in our community."}
                                         </p>
-
-                                        {/* Highlights Stats */}
-                                        <div className="grid grid-cols-2 gap-3 pt-2">
-                                            <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
-                                                <span className="text-[9px] font-orbitron text-slate-400 uppercase tracking-wider block">Featured Articles</span>
-                                                <p className="font-orbitron font-bold text-lg text-white mt-0.5">{articles.length} Works</p>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="rounded-2xl border-2 border-nb-ink bg-nb-sky p-3">
+                                                <p className="font-mono text-[10px] uppercase tracking-[0.14em]">Articles</p>
+                                                <p className="font-brico font-extrabold text-2xl">{articles.length}</p>
                                             </div>
-                                            <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
-                                                <span className="text-[9px] font-orbitron text-slate-400 uppercase tracking-wider block">Edition Release</span>
-                                                <p className="font-orbitron font-bold text-lg text-pink-400 mt-0.5">
-                                                    {mag.edition || "Annual 2025-26"}
-                                                </p>
+                                            <div className="rounded-2xl border-2 border-nb-ink bg-nb-peach p-3">
+                                                <p className="font-mono text-[10px] uppercase tracking-[0.14em]">Edition</p>
+                                                <p className="font-brico font-extrabold text-2xl">{mag.edition || "2025-26"}</p>
                                             </div>
                                         </div>
-
-                                        {/* Action Buttons */}
-                                        <div className="pt-3 flex flex-wrap items-center gap-3">
-                                            <button
-                                                disabled={articles.length === 0}
-                                                onClick={() => setPageIdx(0)}
-                                                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 text-slate-950 font-orbitron font-bold text-xs flex items-center gap-2 hover:scale-105 transition-all shadow-xl shadow-orange-500/25 cursor-pointer disabled:opacity-40"
-                                            >
-                                                <span>Open &amp; Read Article #1</span>
-                                                <ChevronRight size={15} />
-                                            </button>
-
-                                            <button
-                                                onClick={() => setShowShare(true)}
-                                                className="px-5 py-3 rounded-2xl glass border border-white/15 text-slate-200 hover:text-white font-orbitron font-semibold text-xs flex items-center gap-2 hover:border-aira-cyan/40 transition-all cursor-pointer"
-                                            >
-                                                <Share2 size={14} />
-                                                <span>Share Publication</span>
-                                            </button>
+                                        <div className="flex flex-wrap gap-3 pt-2 no-print">
+                                            <Button disabled={articles.length === 0} onClick={() => setPageIdx(0)}>
+                                                Start reading <ChevronRight size={16} />
+                                            </Button>
+                                            <Button onClick={() => setShowShare(true)} tone="white">
+                                                <Share2 size={15} /> Share issue
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="magazine-stripe-bottom w-full rounded-full" />
                             </motion.div>
                         ) : current ? (
-                            /* ═══════════════════════════════════════════════════════════
-                               ARTICLE SPREAD (AUTHENTIC PRINT MAGAZINE PDF STYLE)
-                               ═══════════════════════════════════════════════════════════ */
                             <motion.article
                                 key={current.id}
-                                initial={{ opacity: 0, x: 20 }}
+                                initial={{ opacity: 0, x: 24 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
+                                exit={{ opacity: 0, x: -24 }}
                                 transition={{ duration: 0.3 }}
-                                className="magazine-folio-paper rounded-3xl border border-white/15 overflow-hidden shadow-2xl p-6 sm:p-10 space-y-8"
+                                className="magazine-folio-paper rounded-[26px] overflow-hidden p-6 sm:p-10 space-y-8"
                             >
-                                {/* Top Multi-Color Decorative Stripe (as in PDF) */}
                                 <div className="magazine-stripe-top w-full rounded-full" />
-
-                                {/* ── SPREAD HEADER BANNER (PDF STYLE) ── */}
-                                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2.5 h-6 rounded-full bg-gradient-to-b from-orange-500 to-pink-500" />
-                                        <span className="font-orbitron font-bold text-xs sm:text-sm text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-pink-400 to-cyan-400 uppercase tracking-widest">
-                                            {current.topic?.title || "ACADEMIC GROWTH & INNOVATION"}
-                                        </span>
-                                    </div>
-
-                                    <span className="text-[11px] font-mono text-slate-400">
-                                        AiRA Digital Magazine • {mag.edition || "2025-26"}
+                                <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-nb-ink pb-4">
+                                    <span className="rounded-full border-2 border-nb-ink bg-nb-sun px-3 py-0.5 font-brico font-bold text-sm uppercase tracking-wide">
+                                        {current.topic?.title || "Growth & innovation"}
                                     </span>
+                                    <span className="font-mono text-[11px] text-nb-muted">AiRA Magazine · {mag.edition || "2025-26"}</span>
                                 </div>
 
-                                {/* ── ARTICLE TITLE & EDITORIAL SUBHEAD ── */}
-                                <div className="space-y-3">
-                                    <h1 className="font-orbitron font-black text-2xl sm:text-4xl lg:text-5xl text-white leading-tight tracking-tight">
-                                        {current.title}
-                                    </h1>
-                                    <p className="text-sm sm:text-base text-slate-300 italic font-serif">
-                                        “A transformative perspective on engineering, leadership, and human impact.”
-                                    </p>
+                                <div>
+                                    <h1 className="font-brico font-extrabold tracking-[-0.04em] leading-[1] text-[clamp(2rem,4.5vw,3.75rem)]">{current.title}</h1>
+                                    <p className="mt-3 text-nb-muted italic">&ldquo;A transformative perspective on engineering, leadership and human impact.&rdquo;</p>
                                 </div>
 
-                                {/* ── AUTHOR PORTRAIT CARD & PULL-QUOTE HERO SPREAD ── */}
-                                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-5 rounded-2xl bg-white/[0.03] border border-white/10">
-                                    {/* Author Portrait Frame (PDF Style) */}
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center rounded-2xl border-2 border-nb-ink bg-nb-lilac p-5">
                                     <div className="md:col-span-4 flex items-center gap-4">
-                                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 border-aira-cyan/50 shadow-lg shadow-cyan-500/20 shrink-0">
-                                            {current.author?.avatar ? (
-                                                <img
-                                                    src={current.author.avatar}
-                                                    alt={current.author.name}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full bg-gradient-to-br from-indigo-900 via-slate-900 to-pink-900 flex items-center justify-center font-orbitron font-bold text-lg text-white">
-                                                    {current.author?.name?.[0] || "A"}
-                                                </div>
-                                            )}
-                                        </div>
+                                        {current.author?.avatar ? (
+                                            <img src={current.author.avatar} alt={current.author.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-2 border-nb-ink object-cover shrink-0" />
+                                        ) : (
+                                            <span className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-2 border-nb-ink bg-nb-sun flex items-center justify-center font-brico font-extrabold text-2xl shrink-0">
+                                                {current.author?.name?.[0] || "A"}
+                                            </span>
+                                        )}
                                         <div>
-                                            <h4 className="font-orbitron font-bold text-sm sm:text-base text-white">
-                                                {current.author?.name || "AiRA Contributor"}
-                                            </h4>
-                                            <span className="text-[11px] text-pink-400 font-mono block">
-                                                {current.author?.role || "Tech Wing Member"}
-                                            </span>
-                                            <span className="text-[10px] text-slate-400 block mt-0.5">
-                                                AiRA Lab Research Division
-                                            </span>
+                                            <p className="font-brico font-extrabold">{current.author?.name || "AiRA member"}</p>
+                                            <p className="font-mono text-[11px] text-nb-violet">{current.author?.role || "Tech wing member"}</p>
+                                            <p className="text-[11px] text-nb-ink/60">AiRA Lab community</p>
                                         </div>
                                     </div>
-
-                                    {/* Pull-Quote Banner */}
-                                    <div className="md:col-span-8 flex items-center gap-3 border-t md:border-t-0 md:border-l border-white/10 pt-3 md:pt-0 md:pl-6">
-                                        <Quote size={24} className="text-amber-400 shrink-0 opacity-70" />
-                                        <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-serif italic">
-                                            “We are not a generation that merely observes — we question, engineer, and build impactful technological breakthroughs.”
+                                    <div className="md:col-span-8 flex items-center gap-3 border-t-2 md:border-t-0 md:border-l-2 border-nb-ink/20 pt-3 md:pt-0 md:pl-6">
+                                        <Quote size={26} className="shrink-0" />
+                                        <p className="font-brico text-lg leading-snug">
+                                            &ldquo;We are not a generation that merely observes — we question, engineer and build.&rdquo;
                                         </p>
                                     </div>
                                 </div>
 
-                                {/* ── COVER IMAGE HERO (IF PRESENT) ── */}
                                 {current.coverImage && (
-                                    <div className="relative aspect-[16/7] w-full rounded-2xl overflow-hidden border border-white/10 shadow-xl">
+                                    <div className="relative aspect-[16/7] w-full rounded-2xl overflow-hidden border-2 border-nb-ink">
                                         <img src={current.coverImage} alt="" className="w-full h-full object-cover" />
-                                        <div className="absolute bottom-2 right-3 px-2.5 py-1 rounded-md bg-slate-950/80 backdrop-blur-md text-[10px] font-mono text-slate-300 border border-white/10">
-                                            Photo: AiRA Lab Field Documentation
-                                        </div>
+                                        <span className="absolute bottom-2 right-3 rounded-md border-2 border-nb-ink bg-white px-2 py-0.5 font-mono text-[10px]">Photo: AiRA Lab</span>
                                     </div>
                                 )}
 
-                                {/* ── TWO-COLUMN EDITORIAL ARTICLE BODY (PDF STYLE) ── */}
                                 <div
-                                    className={`magazine-columns-2 magazine-dropcap ${
-                                        fontSize === "large"
-                                            ? "text-base sm:text-lg leading-relaxed"
-                                            : fontSize === "extra"
-                                            ? "text-lg sm:text-xl leading-loose"
-                                            : "text-xs sm:text-sm leading-relaxed"
-                                    } text-slate-200 font-sans`}
+                                    className={`${viewMode === "spread" ? "magazine-columns-2" : ""} magazine-dropcap ${
+                                        fontSize === "large" ? "text-lg sm:text-xl" : fontSize === "extra" ? "text-xl sm:text-2xl" : "text-[15px] sm:text-base"
+                                    }`}
                                 >
-                                    <MediumArticleContent content={current.content} />
+                                    <MediumArticleContent content={current.content} variant="light" />
                                 </div>
 
-                                {/* ── AUTHENTIC CORNER QR CODE WIDGET (AS IN PDF PAGES 8, 11, 14) ── */}
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-slate-950/70 border border-white/10 mt-8">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border-2 border-nb-ink bg-nb-paper p-4">
                                     <div className="flex items-center gap-3.5">
-                                        <div className="w-14 h-14 rounded-xl overflow-hidden border border-aira-cyan/40 p-1 bg-slate-900 shrink-0">
-                                            <img
-                                                src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(
-                                                    shareUrl
-                                                )}&color=00D4FF&bgcolor=0a0f1d`}
-                                                alt="Article QR"
-                                                className="w-full h-full object-contain"
-                                            />
-                                        </div>
+                                        <img
+                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(shareUrl)}&color=111111&bgcolor=ffffff`}
+                                            alt="Article QR code"
+                                            className="w-14 h-14 rounded-lg border-2 border-nb-ink bg-white p-0.5"
+                                        />
                                         <div>
-                                            <p className="font-orbitron font-bold text-xs text-white flex items-center gap-1.5">
-                                                <QrCode size={13} className="text-aira-cyan" /> Scan with Phone
-                                            </p>
-                                            <p className="text-[10px] text-slate-400 mt-0.5">
-                                                Access the interactive case study, source code &amp; video demo
-                                            </p>
+                                            <p className="flex items-center gap-1.5 font-brico font-bold"><QrCode size={14} /> Scan with your phone</p>
+                                            <p className="text-xs text-nb-muted">Open this article on mobile</p>
                                         </div>
                                     </div>
-
-                                    {/* Page Number Badge & Metadata */}
-                                    <div className="flex items-center gap-3">
-                                        <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 font-mono font-bold text-xs text-amber-400">
-                                            Page #{String(pageIdx + 1).padStart(2, "0")}
-                                        </span>
-                                    </div>
+                                    <span className="rounded-lg border-2 border-nb-ink bg-nb-sun px-3 py-1 font-mono font-bold text-sm">Page {String(pageIdx + 1).padStart(2, "0")}</span>
                                 </div>
 
-                                {/* Bottom Multi-Color Decorative Stripe (PDF Style) */}
                                 <div className="magazine-stripe-bottom w-full rounded-full" />
-
-                                {/* ── RUNNING FOOTER FOLIO ── */}
-                                <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-2 border-t border-white/5">
-                                    <span>AiRA Chronicles • {mag.edition || "2025-26"}</span>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => setPageIdx((curr) => Math.max(-1, curr - 1))}
-                                            className="hover:text-white underline cursor-pointer"
-                                        >
-                                            ← Prev
-                                        </button>
-                                        <span>•</span>
-                                        <button
-                                            disabled={pageIdx >= articles.length - 1}
-                                            onClick={() => setPageIdx((curr) => curr + 1)}
-                                            className="hover:text-white underline cursor-pointer disabled:opacity-30"
-                                        >
-                                            Next →
-                                        </button>
-                                    </div>
+                                <div className="flex items-center justify-between font-mono text-xs text-nb-muted no-print">
+                                    <span>AiRA Chronicles · {mag.edition || "2025-26"}</span>
+                                    <span className="flex gap-3">
+                                        <button onClick={() => setPageIdx((curr) => Math.max(-1, curr - 1))} className="font-bold text-nb-ink underline underline-offset-4">← Prev</button>
+                                        <button disabled={pageIdx >= articles.length - 1} onClick={() => setPageIdx((curr) => curr + 1)} className="font-bold text-nb-ink underline underline-offset-4 disabled:opacity-30">Next →</button>
+                                    </span>
                                 </div>
                             </motion.article>
                         ) : (
-                            <div className="glass rounded-3xl border border-white/10 p-12 text-center text-slate-500">
-                                <BookOpen size={48} className="mx-auto mb-3 opacity-30 text-orange-400" />
-                                <p className="font-orbitron text-sm">No articles in this edition yet.</p>
-                            </div>
+                            <Empty icon={<BookOpen size={24} />} title="No articles in this edition yet." />
                         )}
                     </AnimatePresence>
                 </main>
             </div>
 
-            {/* Worldwide Share Modal */}
             <WorldwideShareModal isOpen={showShare} mag={mag} onClose={() => setShowShare(false)} />
         </div>
     );

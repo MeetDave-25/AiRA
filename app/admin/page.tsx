@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { CalendarDays, FileText, TrendingUp, Trophy, Users, Crown } from "lucide-react";
 
@@ -161,20 +162,32 @@ export default function AdminAnalyticsPage() {
                     </div>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass rounded-2xl border border-white/10 p-5">
-                    <h2 className="font-orbitron text-sm text-slate-300 uppercase tracking-widest mb-4">Applications Pipeline</h2>
-                    <div className="space-y-3">
-                        <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-3">
-                            <p className="text-[11px] text-amber-300 uppercase">Pending</p>
-                            <p className="text-2xl font-orbitron font-bold text-amber-200">{pipeline.pending}</p>
+                <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass rounded-2xl border border-white/10 p-5 flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="font-orbitron text-sm text-slate-300 uppercase tracking-widest">Applications Pipeline</h2>
+                            <Link href="/admin/applications" className="text-xs font-semibold text-aira-cyan hover:underline flex items-center gap-1">
+                                Manage Leads &rarr;
+                            </Link>
                         </div>
-                        <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-3">
-                            <p className="text-[11px] text-emerald-300 uppercase">Approved</p>
-                            <p className="text-2xl font-orbitron font-bold text-emerald-200">{pipeline.approved}</p>
-                        </div>
-                        <div className="rounded-xl border border-rose-400/30 bg-rose-400/10 p-3">
-                            <p className="text-[11px] text-rose-300 uppercase">Rejected</p>
-                            <p className="text-2xl font-orbitron font-bold text-rose-200">{pipeline.rejected}</p>
+                        <div className="space-y-3">
+                            <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 flex justify-between items-center">
+                                <div>
+                                    <p className="text-[11px] text-amber-300 uppercase font-semibold">Pending Review</p>
+                                    <p className="text-2xl font-orbitron font-bold text-amber-200">{pipeline.pending}</p>
+                                </div>
+                                <Link href="/admin/applications" className="px-3 py-1.5 rounded-lg bg-amber-400/20 text-amber-200 text-xs font-bold hover:bg-amber-400/30 transition-all">
+                                    Review
+                                </Link>
+                            </div>
+                            <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-3">
+                                <p className="text-[11px] text-emerald-300 uppercase font-semibold">Approved & Registered</p>
+                                <p className="text-2xl font-orbitron font-bold text-emerald-200">{pipeline.approved}</p>
+                            </div>
+                            <div className="rounded-xl border border-rose-400/30 bg-rose-400/10 p-3">
+                                <p className="text-[11px] text-rose-300 uppercase font-semibold">Rejected</p>
+                                <p className="text-2xl font-orbitron font-bold text-rose-200">{pipeline.rejected}</p>
+                            </div>
                         </div>
                     </div>
                 </motion.div>

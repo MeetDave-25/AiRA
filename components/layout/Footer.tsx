@@ -1,111 +1,119 @@
 import Link from "next/link";
-import { Github, Linkedin, Instagram, Mail, MapPin, Phone } from "lucide-react";
-import { Logo } from "@/components/ui/Logo";
+import Image from "next/image";
+import { Github, Linkedin, Instagram, Mail, MapPin, Phone, ArrowUpRight } from "lucide-react";
+import { CookieSettingsButton } from "@/components/ui/CookieConsent";
+
+const NAV = [
+    { href: "/about", label: "About" },
+    { href: "/projects", label: "Projects" },
+    { href: "/events", label: "Events" },
+    { href: "/blog", label: "Blog" },
+    { href: "/magazine", label: "Magazine" },
+    { href: "/achievements", label: "Achievements" },
+    { href: "/leadership", label: "Leadership" },
+    { href: "/join", label: "Join us" },
+];
+
+const SOCIAL = [
+    { icon: Github, href: "https://github.com/MeetDave-25/AiRA", label: "GitHub" },
+    { icon: Linkedin, href: "https://www.linkedin.com/company/aira-lab", label: "LinkedIn" },
+    { icon: Instagram, href: "https://www.instagram.com", label: "Instagram" },
+];
 
 export default function Footer() {
     return (
-        <footer className="mt-16 sm:mt-20 border-t border-aira-border/50 grid-bg relative z-10">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10 md:gap-12">
-                    {/* Brand */}
-                    <div className="sm:col-span-2 md:col-span-1">
-                        <div className="mb-4">
-                            <Logo href="/" size="md" showText />
-                        </div>
-                        <p className="text-slate-400 text-xs sm:text-sm leading-relaxed max-w-xs">
-                            A premier college innovation lab fostering creativity, technology, and excellence through events, research, and collaborative projects.
+        <footer className="relative z-10 bg-nb-paper text-nb-ink px-3 sm:px-6 pb-6">
+            <div className="mx-auto max-w-[1360px] rounded-[28px] border-2 border-nb-ink bg-nb-ink text-nb-paper shadow-nb-lg overflow-hidden">
+                {/* Big call to action */}
+                <div className="p-8 sm:p-12 lg:p-14 border-b-2 border-nb-paper/15 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+                    <div>
+                        <p className="font-mono text-xs uppercase tracking-[0.16em] text-nb-paper/50">Student-led · Software · AI · Robotics</p>
+                        <p className="mt-3 font-brico font-extrabold tracking-[-0.04em] leading-[0.92] text-[clamp(2.6rem,6.5vw,5.75rem)]">
+                            Come build
+                            <br />
+                            with <span className="inline-block rotate-[-2deg] rounded-xl border-2 border-nb-paper bg-nb-violet px-3">us.</span>
                         </p>
-                        <div className="flex gap-3 mt-5 sm:mt-6">
-                            {[
-                                { icon: Github, href: "https://github.com/MeetDave-25/AiRA", label: "GitHub" },
-                                { icon: Linkedin, href: "https://www.linkedin.com/company/aira-lab", label: "LinkedIn" },
-                                { icon: Instagram, href: "https://www.instagram.com", label: "Instagram" },
-                            ].map(({ icon: Icon, href, label }, i) => (
+                    </div>
+                    <Link
+                        href="/join"
+                        className="self-start lg:self-auto inline-flex items-center gap-2 rounded-xl border-2 border-nb-paper bg-nb-sun text-nb-ink px-6 py-3.5 font-brico font-bold text-lg shadow-[5px_5px_0_0_#F3EFE4] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_0_#F3EFE4]"
+                    >
+                        Join the community <ArrowUpRight size={20} />
+                    </Link>
+                </div>
+
+                <div className="p-8 sm:p-12 lg:p-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-12">
+                    <div className="lg:col-span-5">
+                        <Link href="/" className="inline-flex items-center gap-3">
+                            <Image src="/logo.png" alt="" width={40} height={40} className="rounded-lg border-2 border-nb-paper" />
+                            <span className="font-brico font-extrabold text-2xl tracking-tight">AiRA Lab</span>
+                        </Link>
+                        <p className="mt-4 max-w-sm text-nb-paper/70 leading-relaxed">
+                            A student-led community at L J College of Computer Application building software, AI and robotics — together.
+                        </p>
+                        <div className="mt-6 flex gap-2">
+                            {SOCIAL.map(({ icon: Icon, href, label }) => (
                                 <a
-                                    key={i}
+                                    key={label}
                                     href={href}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label={label}
-                                    className="w-9 h-9 rounded-lg glass flex items-center justify-center text-slate-400 hover:text-aira-cyan hover:border-aira-cyan/50 hover:scale-110 active:scale-95 transition-all"
+                                    className="w-11 h-11 rounded-xl border-2 border-nb-paper/30 flex items-center justify-center hover:bg-nb-paper hover:text-nb-ink transition-colors"
                                 >
-                                    <Icon size={16} />
+                                    <Icon size={18} />
                                 </a>
                             ))}
                         </div>
                     </div>
 
-                    {/* Links */}
-                    <div>
-                        <h3 className="font-orbitron font-semibold text-xs sm:text-sm text-aira-cyan mb-3 sm:mb-4 tracking-widest uppercase">
-                            Navigate
-                        </h3>
-                        <ul className="space-y-2 sm:space-y-3">
-                            {[
-                                { href: "/", label: "Home" },
-                                { href: "/projects", label: "Community Project Showcase" },
-                                { href: "/leadership", label: "Leadership & Visionaries" },
-                                { href: "/events", label: "Events & Workshops" },
-                                { href: "/about", label: "About Us" },
-                                { href: "/magazine", label: "AiRA Magazine" },
-                                { href: "/achievements", label: "Achievements" },
-                                { href: "/join", label: "Join AIRA Labs" },
-                            ].map((link) => (
-                                <li key={link.href}>
-                                    <Link
-                                        href={link.href}
-                                        className="text-slate-400 hover:text-aira-cyan text-xs sm:text-sm transition-colors flex items-center gap-2 group py-0.5"
-                                    >
-                                        <span className="w-1.5 h-1.5 rounded-full bg-aira-cyan opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                                        {link.label}
+                    <nav aria-label="Footer" className="lg:col-span-3">
+                        <p className="font-mono text-xs uppercase tracking-[0.16em] text-nb-paper/50 mb-4">Explore</p>
+                        <ul className="grid grid-cols-2 gap-x-6 gap-y-2.5">
+                            {NAV.map((l) => (
+                                <li key={l.href}>
+                                    <Link href={l.href} className="font-brico font-semibold hover:text-nb-sun transition-colors">
+                                        {l.label}
                                     </Link>
                                 </li>
                             ))}
                         </ul>
-                    </div>
+                    </nav>
 
-                    {/* Contact */}
-                    <div>
-                        <h3 className="font-orbitron font-semibold text-xs sm:text-sm text-aira-cyan mb-3 sm:mb-4 tracking-widest uppercase">
-                            Contact
-                        </h3>
-                        <ul className="space-y-2.5 sm:space-y-3">
-                            <li className="flex items-start sm:items-center gap-3 text-slate-400 text-xs sm:text-sm">
-                                <Mail size={14} className="text-aira-cyan shrink-0 mt-0.5 sm:mt-0" />
-                                <a 
-                                    href="mailto:info@aira-lab.in" 
-                                    className="hover:text-aira-cyan hover:underline transition-colors break-all"
-                                >
-                                    info@aira-lab.in
+                    <div className="lg:col-span-4">
+                        <p className="font-mono text-xs uppercase tracking-[0.16em] text-nb-paper/50 mb-4">Say hello</p>
+                        <ul className="space-y-3">
+                            <li>
+                                <a href="mailto:info@aira-lab.in" className="flex items-center gap-3 hover:text-nb-sun transition-colors">
+                                    <Mail size={16} /> info@aira-lab.in
                                 </a>
                             </li>
-                            <li className="flex items-center gap-3 text-slate-400 text-xs sm:text-sm">
-                                <Phone size={14} className="text-aira-cyan shrink-0" />
-                                <a 
-                                    href="tel:+918160901481" 
-                                    className="hover:text-aira-cyan transition-colors"
-                                >
-                                    +91 81609 01481
+                            <li>
+                                <a href="tel:+918160901481" className="flex items-center gap-3 hover:text-nb-sun transition-colors">
+                                    <Phone size={16} /> +91 81609 01481
                                 </a>
                             </li>
-                            <li className="flex items-start gap-3 text-slate-400 text-xs sm:text-sm">
-                                <MapPin size={14} className="text-aira-cyan shrink-0 mt-0.5" />
-                                <span>LJCCA, L J College of Computer Application, Vastrapur, Ahmedabad</span>
+                            <li className="flex items-start gap-3 text-nb-paper/80">
+                                <MapPin size={16} className="mt-1 shrink-0" /> LJCCA, L J College of Computer Application, Vastrapur, Ahmedabad
                             </li>
                         </ul>
                     </div>
                 </div>
 
-                <div className="mt-10 sm:mt-12 pt-6 border-t border-aira-border/30 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="text-center sm:text-left">
-                        <p className="text-slate-400 text-xs sm:text-sm">
-                            © {new Date().getFullYear()} AIRA Labs. All rights reserved.
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-slate-500 text-xs">Powered by</span>
-                        <span className="text-aira-cyan text-xs font-medium font-orbitron">AIRA Labs</span>
-                    </div>
+                <div className="px-8 sm:px-12 lg:px-14 py-5 border-t-2 border-nb-paper/15 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-nb-paper/60">
+                    <p>© {new Date().getFullYear()} AiRA Lab. Built by students, for students.</p>
+                    <nav aria-label="Legal" className="flex flex-wrap justify-center gap-x-5 gap-y-1">
+                        <Link href="/privacy" className="hover:text-nb-paper transition-colors">
+                            Privacy
+                        </Link>
+                        <Link href="/terms" className="hover:text-nb-paper transition-colors">
+                            Terms
+                        </Link>
+                        <Link href="/cookies" className="hover:text-nb-paper transition-colors">
+                            Cookies
+                        </Link>
+                        <CookieSettingsButton className="hover:text-nb-paper transition-colors" />
+                    </nav>
                 </div>
             </div>
         </footer>

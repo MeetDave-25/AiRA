@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// Cache for 60 seconds (ISR) to reduce DB load
+export const revalidate = 60;
 
 export async function GET() {
     try {

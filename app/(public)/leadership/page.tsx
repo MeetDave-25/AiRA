@@ -1,29 +1,9 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-    Crown, 
-    Sparkles, 
-    Linkedin, 
-    Github, 
-    ExternalLink, 
-    X, 
-    Shield, 
-    BrainCircuit, 
-    Rocket, 
-    Zap, 
-    Users, 
-    ArrowRight, 
-    Target, 
-    Award, 
-    Mail, 
-    Globe2, 
-    Layers, 
-    Quote,
-    RefreshCw
-} from "lucide-react";
+import { Crown, Linkedin, Github, ExternalLink, X, ArrowUpRight, Quote, RefreshCw } from "lucide-react";
+import { BLOCK_COLORS, Btn, Button, Card, Chip, EASE, Empty, PageHero, WRAP } from "@/components/nb/kit";
 
 interface LeaderProfile {
     id: string;
@@ -38,6 +18,24 @@ interface LeaderProfile {
     isPresident?: boolean;
 }
 
+const avatarFallback = (name: string, size = 300) =>
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=D6CEFF&color=111111&size=${size}&bold=true`;
+
+const externalHref = (url: string) => (url.startsWith("http") ? url : `https://${url}`);
+
+function Photo({ leader, className }: { leader: LeaderProfile; className: string }) {
+    return (
+        <img
+            src={leader.photo || avatarFallback(leader.name)}
+            alt={leader.name}
+            loading="lazy"
+            decoding="async"
+            className={className}
+            onError={(e) => { (e.target as HTMLImageElement).src = avatarFallback(leader.name); }}
+        />
+    );
+}
+
 function LeaderDetailModal({ leader, onClose }: { leader: LeaderProfile | null; onClose: () => void }) {
     if (!leader) return null;
 
@@ -47,151 +45,70 @@ function LeaderDetailModal({ leader, onClose }: { leader: LeaderProfile | null; 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[99999] bg-slate-950/85 backdrop-blur-xl overflow-y-auto overscroll-contain p-3 sm:p-6 md:p-8 flex items-start sm:items-center justify-center min-h-screen"
+                className="fixed inset-0 z-[99999] bg-nb-ink/60 backdrop-blur-sm overflow-y-auto overscroll-contain p-3 sm:p-6 flex items-start sm:items-center justify-center"
                 onClick={onClose}
             >
                 <motion.div
-                    initial={{ scale: 0.94, opacity: 0, y: 20 }}
-                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    initial={{ scale: 0.94, opacity: 0, y: 20, rotate: -1.5 }}
+                    animate={{ scale: 1, opacity: 1, y: 0, rotate: 0 }}
                     exit={{ scale: 0.94, opacity: 0, y: 20 }}
-                    transition={{ type: "spring", stiffness: 350, damping: 28 }}
-                    className="glass-strong rounded-3xl border border-white/20 shadow-2xl shadow-aira-cyan/20 w-full max-w-4xl max-h-[90vh] sm:max-h-[86vh] flex flex-col relative overflow-hidden my-auto z-10"
+                    transition={{ type: "spring", stiffness: 320, damping: 26 }}
+                    className="my-auto w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden rounded-[26px] border-2 border-nb-ink bg-nb-paper text-nb-ink shadow-nb-lg"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Background glow orbs */}
-                    <div className="absolute -top-24 -right-24 w-80 h-80 bg-aira-cyan/15 blur-[90px] rounded-full pointer-events-none" />
-                    <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-aira-purple/15 blur-[90px] rounded-full pointer-events-none" />
-
-                    {/* Top Bar with Badge & Close button */}
-                    <div className="flex items-center justify-between px-5 sm:px-8 py-3.5 sm:py-4 border-b border-white/10 bg-slate-950/40 shrink-0 relative z-20">
-                        <div className="flex items-center gap-2">
-                            {leader.isPresident ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-orbitron font-bold">
-                                    <Crown size={13} className="text-amber-400" /> Executive Board Profile
-                                </span>
-                            ) : (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aira-cyan/15 text-aira-cyan border border-aira-cyan/30 text-[11px] font-orbitron font-bold">
-                                    <Sparkles size={13} /> Leadership Profile
-                                </span>
-                            )}
-                            {leader.teamGroup && (
-                                <span className="hidden sm:inline-block text-[11px] text-slate-400 font-mono">
-                                    • {leader.teamGroup}
-                                </span>
-                            )}
-                        </div>
-
-                        <button 
-                            onClick={onClose} 
-                            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full glass border border-white/15 flex items-center justify-center text-slate-300 hover:text-white hover:bg-rose-500/20 hover:border-rose-500/40 transition-all"
-                            aria-label="Close modal"
-                        >
-                            <X size={18} />
+                    <div className="flex items-center justify-between px-5 sm:px-7 py-3.5 border-b-2 border-nb-ink bg-nb-sun shrink-0">
+                        <span className="inline-flex items-center gap-2 font-brico font-bold">
+                            {leader.isPresident ? <><Crown size={16} /> Executive board</> : "Leadership profile"}
+                            {leader.teamGroup && <span className="hidden sm:inline font-mono text-xs font-normal">· {leader.teamGroup}</span>}
+                        </span>
+                        <button onClick={onClose} aria-label="Close profile" className="w-9 h-9 rounded-full border-2 border-nb-ink bg-white flex items-center justify-center">
+                            <X size={17} />
                         </button>
                     </div>
 
-                    {/* Modal Main Body (2 Columns on Laptop / 1 Column on Mobile) */}
-                    <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] divide-y md:divide-y-0 md:divide-x divide-white/10 overflow-y-auto overscroll-contain flex-1">
-                        {/* Left Sidebar: Photo, Identity & Social Links */}
-                        <div className="p-5 sm:p-7 flex flex-col items-center md:items-start text-center md:text-left space-y-4 bg-slate-950/20">
-                            {/* Profile Photo */}
-                            <div className="relative group">
-                                <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-3xl overflow-hidden border-2 border-aira-cyan/60 glow-cyan bg-slate-900 shadow-2xl">
-                                    <img
-                                        src={leader.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=0d1526&color=00D4FF&size=300`}
-                                        alt={leader.name}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => { 
-                                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=0d1526&color=00D4FF&size=300`; 
-                                        }}
-                                    />
-                                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-[290px_1fr] overflow-y-auto overscroll-contain flex-1">
+                        <div className="p-6 sm:p-7 flex flex-col items-center md:items-start text-center md:text-left gap-4 md:border-r-2 border-nb-ink bg-nb-lilac">
+                            <div className="relative">
+                                <Photo leader={leader} className="w-36 h-36 md:w-44 md:h-44 rounded-3xl border-2 border-nb-ink object-cover shadow-nb bg-white" />
                                 {leader.isPresident && (
-                                    <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 flex items-center gap-1 text-[10px] font-bold text-slate-950 shadow-lg ring-2 ring-slate-950">
-                                        <Crown size={11} className="fill-slate-950" /> FOUNDER
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Name & Title */}
-                            <div className="w-full">
-                                <h2 className="font-orbitron font-bold text-xl sm:text-2xl text-white tracking-tight break-words">
-                                    {leader.name}
-                                </h2>
-                                <p className="text-aira-cyan font-semibold text-xs sm:text-sm mt-1 leading-snug">
-                                    {leader.role}
-                                </p>
-                                {leader.teamGroup && (
-                                    <span className="inline-block px-3 py-1 mt-2 text-[11px] font-semibold rounded-full bg-aira-purple/25 text-violet-300 border border-aira-purple/40">
-                                        {leader.teamGroup}
+                                    <span className="absolute -top-2 -right-2 inline-flex items-center gap-1 rounded-full border-2 border-nb-ink bg-nb-sun px-2.5 py-0.5 text-[11px] font-bold rotate-6">
+                                        <Crown size={11} /> Founder
                                     </span>
                                 )}
                             </div>
-
-                            {/* Social Buttons */}
-                            <div className="flex flex-col gap-2 w-full pt-2">
+                            <div>
+                                <h2 className="font-brico font-extrabold text-2xl tracking-tight">{leader.name}</h2>
+                                <p className="font-semibold text-nb-violet">{leader.role}</p>
+                            </div>
+                            <div className="w-full space-y-2">
                                 {leader.linkedin && (
-                                    <a 
-                                        href={leader.linkedin.startsWith("http") ? leader.linkedin : `https://${leader.linkedin}`} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="flex items-center justify-center md:justify-start gap-2.5 px-4 py-2.5 rounded-xl bg-[#0077b5]/20 border border-[#0077b5]/50 text-blue-300 text-xs font-semibold hover:bg-[#0077b5]/30 hover:scale-[1.02] transition-all shadow-md w-full"
-                                    >
-                                        <Linkedin size={15} className="shrink-0" />
-                                        <span className="truncate">Connect on LinkedIn</span>
-                                        <ExternalLink size={12} className="ml-auto opacity-70 hidden md:inline" />
+                                    <a href={externalHref(leader.linkedin)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl border-2 border-nb-ink bg-white px-4 py-2.5 font-bold text-sm shadow-nb-sm hover:shadow-none transition-shadow">
+                                        <Linkedin size={16} /> LinkedIn <ExternalLink size={13} className="ml-auto" />
                                     </a>
                                 )}
                                 {leader.github && (
-                                    <a 
-                                        href={leader.github.startsWith("http") ? leader.github : `https://${leader.github}`} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="flex items-center justify-center md:justify-start gap-2.5 px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white text-xs font-semibold hover:bg-white/20 hover:scale-[1.02] transition-all shadow-md w-full"
-                                    >
-                                        <Github size={15} className="shrink-0" />
-                                        <span className="truncate">GitHub Workspace</span>
-                                        <ExternalLink size={12} className="ml-auto opacity-70 hidden md:inline" />
+                                    <a href={externalHref(leader.github)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl border-2 border-nb-ink bg-white px-4 py-2.5 font-bold text-sm shadow-nb-sm hover:shadow-none transition-shadow">
+                                        <Github size={16} /> GitHub <ExternalLink size={13} className="ml-auto" />
                                     </a>
                                 )}
                             </div>
                         </div>
 
-                        {/* Right Main Content: Bio Statement & Background */}
-                        <div className="p-5 sm:p-8 flex flex-col justify-between space-y-6">
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 text-xs font-orbitron font-bold uppercase tracking-wider text-slate-400 pb-2 border-b border-white/10">
-                                    <Quote size={15} className="text-aira-cyan" />
-                                    <span>Leadership Statement & Vision</span>
-                                </div>
-
+                        <div className="p-6 sm:p-8 flex flex-col justify-between gap-6">
+                            <div>
+                                <p className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.14em] text-nb-muted pb-3 border-b-2 border-nb-ink/15">
+                                    <Quote size={14} /> In their words
+                                </p>
                                 {leader.bio ? (
-                                    <div className="text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed font-sans space-y-3 break-words">
-                                        {leader.bio.split("\n\n").map((para, i) => (
-                                            <p key={i} className="leading-relaxed text-slate-300">
-                                                {para}
-                                            </p>
-                                        ))}
+                                    <div className="mt-4 space-y-3 leading-relaxed text-nb-ink/85 break-words">
+                                        {leader.bio.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
                                     </div>
                                 ) : (
-                                    <p className="text-slate-500 text-sm italic">
-                                        No bio statement provided yet for this leader.
-                                    </p>
+                                    <p className="mt-4 italic text-nb-muted">No bio yet.</p>
                                 )}
                             </div>
-
-                            {/* Bottom Metadata Badges */}
-                            <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
-                                <div className="flex items-center gap-2">
-                                    <Shield size={14} className="text-aira-cyan" />
-                                    <span>Verified AiRA Labs Leader</span>
-                                </div>
-                                <button
-                                    onClick={onClose}
-                                    className="px-4 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 text-xs font-medium transition-colors"
-                                >
-                                    Close Profile
-                                </button>
+                            <div className="flex justify-end">
+                                <Button onClick={onClose} tone="white" size="sm">Close profile</Button>
                             </div>
                         </div>
                     </div>
@@ -201,10 +118,73 @@ function LeaderDetailModal({ leader, onClose }: { leader: LeaderProfile | null; 
     );
 }
 
+const DEFAULT_LEADERS: LeaderProfile[] = [
+    {
+        id: "default-founder-1",
+        name: "Parth D. Joshi",
+        role: "Founder & President",
+        bio: "Pioneering autonomous intelligence systems, student research initiatives, and strategic lab expansion. Guiding AiRA Lab's core vision toward frontier AI and robotics.",
+        photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80",
+        teamGroup: "Founders & Executive Board",
+        isPresident: true,
+        sortOrder: 1,
+    },
+    {
+        id: "default-founder-2",
+        name: "Meet Dave",
+        role: "Founder & Lead Architect",
+        bio: "Architecting high-throughput distributed software platforms, full-stack web infrastructure, and machine learning telemetry pipelines.",
+        photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80",
+        teamGroup: "Founders & Executive Board",
+        isPresident: false,
+        sortOrder: 2,
+    },
+    {
+        id: "default-lead-3",
+        name: "Pruthvi",
+        role: "Lead Architect & Researcher",
+        bio: "Focusing on neural vision pipelines, autonomous mobile robotics, and deep reinforcement learning algorithms.",
+        photo: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800&auto=format&fit=crop&q=80",
+        teamGroup: "Technical Leads",
+        isPresident: false,
+        sortOrder: 3,
+    },
+    {
+        id: "default-lead-4",
+        name: "Prit Jivrajjani",
+        role: "Full-Stack & Systems Lead",
+        bio: "Engineering real-time telemetry backends, secure API endpoints, and scalable cloud microservices.",
+        photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&auto=format&fit=crop&q=80",
+        teamGroup: "Technical Leads",
+        isPresident: false,
+        sortOrder: 4,
+    },
+    {
+        id: "default-lead-5",
+        name: "Dashrath",
+        role: "Robotics & Sensor Fusion Lead",
+        bio: "Specializing in LiDAR SLAM, ROS2 kinematics, micro-ROS firmware, and custom PCB hardware integrations.",
+        photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&auto=format&fit=crop&q=80",
+        teamGroup: "Technical Leads",
+        isPresident: false,
+        sortOrder: 5,
+    },
+    {
+        id: "default-lead-6",
+        name: "Dhyey",
+        role: "AI Vision & Neural Systems Lead",
+        bio: "Training real-time object detection models, PyTorch neural networks, and TensorRT edge inference engines.",
+        photo: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&auto=format&fit=crop&q=80",
+        teamGroup: "Technical Leads",
+        isPresident: false,
+        sortOrder: 6,
+    },
+];
+
 export default function LeadershipPage() {
-    const [leaders, setLeaders] = useState<LeaderProfile[]>([]);
+    const [leaders, setLeaders] = useState<LeaderProfile[]>(DEFAULT_LEADERS);
     const [settings, setSettings] = useState<Record<string, string>>({});
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<string>("ALL");
     const [selectedLeader, setSelectedLeader] = useState<LeaderProfile | null>(null);
 
@@ -213,7 +193,7 @@ export default function LeadershipPage() {
             fetch("/api/team-members").then(r => r.ok ? r.json() : []).catch(() => []),
             fetch("/api/settings").then(r => r.ok ? r.json() : {}).catch(() => ({}))
         ]).then(([membersData, settingsData]) => {
-            if (Array.isArray(membersData)) {
+            if (Array.isArray(membersData) && membersData.length > 0) {
                 // Filter only leaders/presidents/board/directors from the database
                 const dbLeaders = membersData.filter((m: any) => {
                     const grp = (m.teamGroup || "").toLowerCase();
@@ -227,16 +207,15 @@ export default function LeadershipPage() {
                         grp.includes("lead")
                     );
                 });
-                setLeaders(dbLeaders);
-            } else {
-                setLeaders([]);
+                if (dbLeaders.length > 0) {
+                    setLeaders(dbLeaders);
+                }
             }
             setSettings(settingsData || {});
             setIsLoading(false);
         });
     }, []);
 
-    // Filter categories
     const categories = useMemo(() => {
         const groups = new Set<string>();
         leaders.forEach(l => {
@@ -245,7 +224,6 @@ export default function LeadershipPage() {
         return ["ALL", ...Array.from(groups)];
     }, [leaders]);
 
-    // Executive/Founders vs Grid list
     const executiveSpotlight = useMemo(() => {
         return leaders.filter(l => l.isPresident || l.sortOrder === 1 || (l.role || "").toLowerCase().includes("founder") || (l.role || "").toLowerCase().includes("president"));
     }, [leaders]);
@@ -256,292 +234,127 @@ export default function LeadershipPage() {
     }, [leaders, activeTab]);
 
     return (
-        <div className="min-h-screen pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16 relative overflow-hidden">
-            {/* Background Ambience */}
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] bg-gradient-to-br from-aira-cyan/15 via-aira-purple/15 to-transparent blur-[140px] pointer-events-none rounded-full" />
-            <div className="absolute top-3/4 right-0 w-[450px] h-[450px] bg-aira-magenta/10 blur-[130px] pointer-events-none rounded-full" />
-
-            {/* ══ HERO SECTION ══ */}
-            <motion.div 
-                initial={{ opacity: 0, y: 25 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="text-center space-y-4 max-w-3xl mx-auto relative z-10"
-            >
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-amber-400/40 text-amber-300 text-xs font-bold uppercase tracking-wider mb-2 shadow-lg shadow-amber-500/10">
-                    <Crown size={15} className="text-amber-400 animate-pulse" />
-                    <span>Executive Board & Leadership</span>
-                </div>
-
-                <h1 className="font-orbitron font-extrabold text-3xl sm:text-5xl lg:text-6xl text-white tracking-tight leading-tight">
-                    Visionaries Steering <br />
-                    <span className="gradient-text-cyan">AiRA Lab</span> Tomorrow
-                </h1>
-
-                <p className="text-slate-300 text-sm sm:text-base md:text-lg leading-relaxed font-sans font-normal">
-                    {settings.leadership_hero_subtitle || 
-                     "Meet the founders, research directors, and student leaders pioneering cutting-edge artificial intelligence and autonomous robotics systems."}
-                </p>
-
-                {/* Quick stats ribbon */}
-                <div className="pt-4 flex flex-wrap items-center justify-center gap-6 text-xs sm:text-sm text-slate-400">
-                    <div className="flex items-center gap-2">
-                        <Rocket size={16} className="text-aira-cyan" />
-                        <span>Student-Led Innovation</span>
-                    </div>
-                    <span className="text-slate-700">•</span>
-                    <div className="flex items-center gap-2">
-                        <BrainCircuit size={16} className="text-aira-purple" />
-                        <span>Autonomous Intelligence</span>
-                    </div>
-                    <span className="text-slate-700">•</span>
-                    <div className="flex items-center gap-2">
-                        <Award size={16} className="text-amber-400" />
-                        <span>National Hackathon Champions</span>
-                    </div>
-                </div>
-            </motion.div>
-
-            {/* Loading Indicator */}
-            {isLoading && (
-                <div className="text-center py-16 text-slate-400 text-sm flex items-center justify-center gap-2">
-                    <RefreshCw size={18} className="animate-spin text-aira-cyan" /> Loading leadership directory...
-                </div>
-            )}
-
-            {/* Empty State when 0 leaders exist in database */}
-            {!isLoading && leaders.length === 0 && (
-                <div className="glass p-12 rounded-3xl border border-white/10 text-center max-w-lg mx-auto space-y-4">
-                    <Crown size={44} className="mx-auto text-amber-400/50" />
-                    <h3 className="font-orbitron font-bold text-lg text-white">Leadership Profiles Coming Soon</h3>
-                    <p className="text-slate-400 text-xs leading-relaxed">
-                        Our executive board and leadership directory is currently being updated. Check back shortly or explore our active laboratory projects.
-                    </p>
-                    <div className="pt-2 flex justify-center gap-3">
-                        <Link 
-                            href="/about" 
-                            className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-xs font-semibold hover:bg-white/10 hover:text-white"
-                        >
-                            Explore About Us →
-                        </Link>
-                        <Link 
-                            href="/join" 
-                            className="px-4 py-2 rounded-xl bg-aira-cyan text-slate-950 font-orbitron font-bold text-xs hover:scale-105 transition-transform"
-                        >
-                            Join AiRA Lab
-                        </Link>
-                    </div>
-                </div>
-            )}
-
-            {/* ══ FOUNDER & EXECUTIVE SPOTLIGHT CARDS ══ */}
-            {!isLoading && executiveSpotlight.length > 0 && (
-                <div className="space-y-8 relative z-10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-amber-400 to-orange-500" />
-                        <h2 className="font-orbitron font-bold text-xl sm:text-2xl text-white flex items-center gap-2">
-                            Founders & Executive Council
-                        </h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {executiveSpotlight.map((leader, index) => (
-                            <motion.div
-                                key={leader.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                onClick={() => setSelectedLeader(leader)}
-                                className="group relative rounded-3xl p-[2px] bg-gradient-to-b from-amber-400/40 via-aira-cyan/20 to-aira-purple/30 hover:from-amber-400 hover:via-aira-cyan hover:to-aira-magenta transition-all duration-500 cursor-pointer shadow-xl hover:shadow-amber-400/20"
-                            >
-                                <div className="bg-slate-950/90 backdrop-blur-2xl rounded-[22px] p-6 h-full flex flex-col justify-between space-y-6 relative overflow-hidden">
-                                    {/* Top badge */}
-                                    <div className="flex items-center justify-between">
-                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-[11px] font-bold">
-                                            <Crown size={12} className="text-amber-400" /> Executive Lead
-                                        </span>
-                                        <span className="text-[11px] text-slate-500 font-mono">#{leader.sortOrder || index + 1}</span>
-                                    </div>
-
-                                    {/* Center Image & Bio */}
-                                    <div className="flex flex-col items-center text-center space-y-3">
-                                        <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden border-2 border-amber-400/60 shadow-xl group-hover:scale-105 transition-transform duration-300 bg-slate-900">
-                                            <img
-                                                src={leader.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=0d1526&color=F59E0B&size=200`}
-                                                alt={leader.name}
-                                                className="w-full h-full object-cover"
-                                                onError={(e) => { 
-                                                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=0d1526&color=F59E0B&size=200`; 
-                                                }}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <h3 className="font-orbitron font-bold text-lg text-white group-hover:text-amber-300 transition-colors">
-                                                {leader.name}
-                                            </h3>
-                                            <p className="text-xs font-semibold text-aira-cyan mt-0.5">
-                                                {leader.role}
-                                            </p>
-                                        </div>
-
-                                        {leader.bio && (
-                                            <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed font-sans">
-                                                "{leader.bio}"
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* Footer Links & Read More */}
-                                    <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-                                        <div className="flex items-center gap-2">
-                                            {leader.linkedin && (
-                                                <span className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-blue-400 transition-colors">
-                                                    <Linkedin size={14} />
-                                                </span>
-                                            )}
-                                            {leader.github && (
-                                                <span className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white transition-colors">
-                                                    <Github size={14} />
-                                                </span>
-                                            )}
-                                        </div>
-                                        <span className="text-[11px] font-semibold text-aira-cyan group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
-                                            View Profile <ArrowRight size={12} />
-                                        </span>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* ══ ALL LEADERS & DOMAIN LEADS SECTION ══ */}
-            {!isLoading && filteredLeaders.length > 0 && (
-                <div className="space-y-6 relative z-10 pt-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-aira-cyan to-aira-purple" />
-                            <h2 className="font-orbitron font-bold text-xl sm:text-2xl text-white">
-                                Domain Leads & Team Directory
-                            </h2>
-                        </div>
-
-                        {/* Category Filter Tabs */}
-                        {categories.length > 2 && (
-                            <div className="flex flex-wrap gap-2">
-                                {categories.map((cat) => (
-                                    <button
-                                        key={cat}
-                                        onClick={() => setActiveTab(cat)}
-                                        className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                                            activeTab === cat
-                                                ? "bg-aira-cyan text-slate-950 font-bold shadow-md shadow-aira-cyan/30"
-                                                : "glass border border-white/10 text-slate-400 hover:text-white hover:border-white/20"
-                                        }`}
-                                    >
-                                        {cat === "ALL" ? "All Profiles" : cat}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Grid of All Leaders */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                        {filteredLeaders.map((leader, idx) => (
-                            <motion.div
-                                key={leader.id}
-                                initial={{ opacity: 0, y: 15 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: idx * 0.05 }}
-                                onClick={() => setSelectedLeader(leader)}
-                                className="group glass p-5 rounded-2xl border border-white/10 hover:border-aira-cyan/40 hover:shadow-xl hover:shadow-aira-cyan/10 transition-all cursor-pointer flex flex-col justify-between space-y-4"
-                            >
-                                <div className="space-y-3">
-                                    <div className="relative w-20 h-20 mx-auto rounded-2xl overflow-hidden border border-white/15 bg-slate-900 group-hover:scale-105 transition-transform">
-                                        <img
-                                            src={leader.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=0d1526&color=00D4FF&size=150`}
-                                            alt={leader.name}
-                                            className="w-full h-full object-cover"
-                                            onError={(e) => { 
-                                                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=0d1526&color=00D4FF&size=150`; 
-                                            }}
-                                        />
-                                        {leader.isPresident && (
-                                            <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center text-[10px]">
-                                                👑
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="text-center">
-                                        <h3 className="font-orbitron font-bold text-sm text-white group-hover:text-aira-cyan transition-colors truncate">
-                                            {leader.name}
-                                        </h3>
-                                        <p className="text-xs text-slate-400 truncate mt-0.5">{leader.role}</p>
-
-                                        {leader.teamGroup && (
-                                            <span className="inline-block px-2 py-0.5 mt-2 text-[10px] font-medium rounded-full bg-white/5 text-slate-300 border border-white/10">
-                                                {leader.teamGroup}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {leader.bio && (
-                                        <p className="text-[11px] text-slate-400 line-clamp-2 text-center font-sans leading-relaxed">
-                                            {leader.bio}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-500">
-                                    <span>View bio</span>
-                                    <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform text-aira-cyan" />
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* ══ CALL TO ACTION ══ */}
-            <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="glass-strong rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden border border-white/15 shadow-2xl"
-            >
-                <div className="max-w-2xl mx-auto space-y-5 relative z-10">
-                    <h2 className="font-orbitron font-bold text-2xl sm:text-3xl text-white">
-                        Want to Lead Autonomous Innovations?
-                    </h2>
-                    <p className="text-slate-300 text-sm sm:text-base font-sans">
-                        AiRA Lab is always looking for passionate student researchers, robotics builders, and software engineers ready to push the frontiers of technology.
-                    </p>
-                    <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-                        <Link
-                            href="/join"
-                            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-aira-cyan via-blue-500 to-aira-purple text-white font-orbitron font-bold text-xs sm:text-sm hover:scale-105 transition-transform shadow-xl shadow-aira-cyan/25 flex items-center gap-2"
-                        >
-                            Apply to Join AiRA <ArrowRight size={16} />
-                        </Link>
-                        <Link
-                            href="/about"
-                            className="px-6 py-3 rounded-2xl glass border border-white/10 text-slate-300 hover:text-white font-semibold text-xs sm:text-sm hover:scale-105 transition-transform flex items-center gap-2"
-                        >
-                            Meet Lab Team Members →
-                        </Link>
-                    </div>
-                </div>
-            </motion.div>
-
-            {/* Detail Modal */}
-            <LeaderDetailModal 
-                leader={selectedLeader} 
-                onClose={() => setSelectedLeader(null)} 
+        <div className="min-h-screen pb-24">
+            <PageHero
+                kicker="Leadership & team"
+                title="The people behind it."
+                says="These are the students and mentors who keep our community running. Tap anyone to read their story!"
+                desc={settings.leadership_hero_subtitle || "AiRA Lab is student-led. Meet the founders, leads and mentors who organise the teams, run the events and help everyone build."}
             />
+
+            <div className={`${WRAP} space-y-16`}>
+                {isLoading && (
+                    <p className="flex items-center justify-center gap-2 py-16 text-nb-muted">
+                        <RefreshCw size={18} className="animate-spin" /> Loading the team…
+                    </p>
+                )}
+
+                {!isLoading && leaders.length === 0 && (
+                    <Empty icon={<Crown size={24} />} title="Leadership profiles coming soon" desc="Our directory is being updated — check back shortly.">
+                        <Btn href="/about" tone="white">About us</Btn>
+                        <Btn href="/join">Join AiRA Lab</Btn>
+                    </Empty>
+                )}
+
+                {!isLoading && executiveSpotlight.length > 0 && (
+                    <section>
+                        <h2 className="font-brico font-extrabold text-3xl tracking-tight flex items-center gap-2">
+                            <Crown size={24} /> Founders & executive council
+                        </h2>
+                        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {executiveSpotlight.map((leader, index) => (
+                                <motion.button
+                                    type="button"
+                                    key={leader.id}
+                                    initial={{ opacity: 0, y: 30, rotate: index % 2 ? 2 : -2 }}
+                                    whileInView={{ opacity: 1, y: 0, rotate: index % 2 ? 1 : -1 }}
+                                    whileHover={{ rotate: 0, y: -6 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.55, ease: EASE, delay: index * 0.08 }}
+                                    onClick={() => setSelectedLeader(leader)}
+                                    className={`text-left rounded-[24px] border-2 border-nb-ink shadow-nb-lg overflow-hidden ${BLOCK_COLORS[index % BLOCK_COLORS.length]}`}
+                                >
+                                    <div className="relative aspect-[4/3] border-b-2 border-nb-ink bg-white overflow-hidden">
+                                        <Photo leader={leader} className="w-full h-full object-cover" />
+                                        <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full border-2 border-nb-ink bg-nb-sun px-2.5 py-0.5 text-[11px] font-bold">
+                                            <Crown size={11} /> Executive lead
+                                        </span>
+                                    </div>
+                                    <div className="p-5">
+                                        <h3 className="font-brico font-extrabold text-2xl tracking-tight">{leader.name}</h3>
+                                        <p className="font-semibold text-nb-ink/75">{leader.role}</p>
+                                        {leader.bio && <p className="mt-3 text-sm text-nb-ink/75 line-clamp-3">&ldquo;{leader.bio}&rdquo;</p>}
+                                        <div className="mt-4 pt-3 border-t-2 border-nb-ink/15 flex items-center justify-between">
+                                            <span className="flex gap-2">
+                                                {leader.linkedin && <Linkedin size={16} />}
+                                                {leader.github && <Github size={16} />}
+                                            </span>
+                                            <span className="inline-flex items-center gap-1 font-brico font-bold text-sm">
+                                                View profile <ArrowUpRight size={15} />
+                                            </span>
+                                        </div>
+                                    </div>
+                                </motion.button>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {!isLoading && filteredLeaders.length > 0 && (
+                    <section>
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                            <h2 className="font-brico font-extrabold text-3xl tracking-tight">Leads & team directory</h2>
+                            {categories.length > 2 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {categories.map((cat) => (
+                                        <Chip key={cat} active={activeTab === cat} onClick={() => setActiveTab(cat)}>
+                                            {cat === "ALL" ? "Everyone" : cat}
+                                        </Chip>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                            {filteredLeaders.map((leader, idx) => (
+                                <motion.button
+                                    type="button"
+                                    key={leader.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.45, ease: EASE, delay: (idx % 4) * 0.05 }}
+                                    onClick={() => setSelectedLeader(leader)}
+                                    className="group text-left rounded-[22px] border-2 border-nb-ink bg-white shadow-nb p-5 transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-nb-lg"
+                                >
+                                    <div className="relative w-20 h-20">
+                                        <Photo leader={leader} className="w-20 h-20 rounded-2xl border-2 border-nb-ink object-cover bg-nb-lilac" />
+                                        {leader.isPresident && <span className="absolute -top-2 -right-2 text-lg">👑</span>}
+                                    </div>
+                                    <h3 className="mt-4 font-brico font-extrabold text-lg leading-tight truncate group-hover:text-nb-violet transition-colors">{leader.name}</h3>
+                                    <p className="text-sm text-nb-muted truncate">{leader.role}</p>
+                                    {leader.teamGroup && (
+                                        <span className="mt-2 inline-block rounded-full border-2 border-nb-ink bg-nb-paper px-2 py-0.5 text-[10px] font-bold">{leader.teamGroup}</span>
+                                    )}
+                                    {leader.bio && <p className="mt-3 text-xs text-nb-muted line-clamp-2">{leader.bio}</p>}
+                                </motion.button>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                <Card className="p-8 sm:p-12 text-center" color="bg-nb-violet">
+                    <div className="text-white max-w-2xl mx-auto">
+                        <h2 className="font-brico font-extrabold text-3xl sm:text-4xl tracking-tight">Want to lead something?</h2>
+                        <p className="mt-3 text-white/80">Every lead here started as a member. Join the community, build things, and step up when you&apos;re ready.</p>
+                        <div className="mt-6 flex flex-wrap justify-center gap-3">
+                            <Btn href="/join" tone="sun">Join AiRA Lab →</Btn>
+                            <Btn href="/about" tone="white">About the community</Btn>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+
+            <LeaderDetailModal leader={selectedLeader} onClose={() => setSelectedLeader(null)} />
         </div>
     );
 }

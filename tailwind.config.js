@@ -8,20 +8,42 @@ module.exports = {
     theme: {
         extend: {
             colors: {
-                "aira-bg": "#060B14",
-                "aira-surface": "#0C1424",
-                "aira-card": "#101B30",
-                "aira-border": "#1E2E48",
+                "aira-bg": "#07080C",
+                "aira-surface": "#0D0F15",
+                "aira-card": "#12151D",
+                "aira-border": "#1E2330",
                 "aira-cyan": "#38BDF8",
                 "aira-magenta": "#E2E8F0",
                 "aira-purple": "#60A5FA",
                 "aira-gold": "#F59E0B",
                 "aira-green": "#10B981",
+                "neon-green": "#00FF66",
+                "neon-bright": "#00FF7F",
+                "neon-black": "#000000",
+                "neon-dark": "#08080A",
+                "neon-card": "#0D0D10",
+                "neon-border": "rgba(0, 255, 102, 0.3)",
+                // Homepage neo-brutal palette: warm paper, hard ink lines, AiRA violet + four block colours.
+                "nb-paper": "#F3EFE4",
+                "nb-ink": "#111111",
+                "nb-muted": "#5E5A52",
+                "nb-violet": "#6C5CE7",
+                "nb-sky": "#9DD6FF",
+                "nb-peach": "#FFB48A",
+                "nb-mint": "#A8EFC9",
+                "nb-lilac": "#D6CEFF",
+                "nb-sun": "#FFD84D",
             },
             fontFamily: {
-                orbitron: ["Orbitron", "sans-serif"],
-                grotesk: ["Space Grotesk", "sans-serif"],
-                inter: ["Inter", "sans-serif"],
+                // `font-orbitron` is used across ~460 headings; it now maps to the modern display face.
+                // The original Orbitron wordmark is kept only for the logo via `font-brand`.
+                orbitron: ["var(--font-display)", "Inter Tight", "sans-serif"],
+                display: ["var(--font-display)", "Inter Tight", "sans-serif"],
+                brand: ["var(--font-orbitron)", "Orbitron", "sans-serif"],
+                mono: ["var(--font-mono)", "IBM Plex Mono", "ui-monospace", "SFMono-Regular", "monospace"],
+                brico: ["var(--font-brico)", "Bricolage Grotesque", "sans-serif"],
+                grotesk: ["var(--font-grotesk)", "Space Grotesk", "sans-serif"],
+                inter: ["var(--font-display)", "Inter Tight", "sans-serif"],
             },
             animation: {
                 "spin-slow": "spin 8s linear infinite",
@@ -62,6 +84,12 @@ module.exports = {
                 "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
                 "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
                 "hero-glow": "radial-gradient(ellipse at center, rgba(56,189,248,0.18) 0%, transparent 70%)",
+            },
+            boxShadow: {
+                // Hard offset shadows — the neo-brutal signature.
+                "nb-sm": "3px 3px 0 0 #111111",
+                nb: "5px 5px 0 0 #111111",
+                "nb-lg": "8px 8px 0 0 #111111",
             },
             backdropBlur: {
                 xs: "2px",

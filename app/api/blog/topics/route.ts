@@ -4,9 +4,9 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
 
-const AUTHORIZED_ROLES = ["ADMIN", "SUPER_ADMIN", "CONTENT_MANAGER", "TEAM_LEAD", "LEAD", "PRESIDENT", "VICE_PRESIDENT"];
+const AUTHORIZED_ROLES = ["ADMIN", "SUPER_ADMIN"];
 
-function isManagementRole(role?: string): boolean {
+function isAdminRole(role?: string): boolean {
     if (!role) return false;
     return AUTHORIZED_ROLES.includes(role.toUpperCase().trim());
 }
@@ -54,6 +54,11 @@ export async function POST(req: NextRequest) {
         const session: any = await getServerSession(authOptions as any);
         if (!session?.user) {
             return NextResponse.json({ error: "Please log in to create a topic" }, { status: 401 });
+        }
+
+        const role = session.user.role || "";
+        if (!isAdminRole(role)) {
+            return NextResponse.json({ error: "Only Admins can create blog topics" }, { status: 403 });
         }
 
         const body = await req.json().catch(() => ({}));
@@ -126,7 +131,7 @@ export async function PATCH(req: NextRequest) {
         }
 
         const role = session.user.role || "";
-        if (!isManagementRole(role)) {
+        if (!isAdminRole(role)) {
             return NextResponse.json({ error: "Permission denied" }, { status: 403 });
         }
 
@@ -167,7 +172,7 @@ export async function DELETE(req: NextRequest) {
         }
 
         const role = session.user.role || "";
-        if (!isManagementRole(role)) {
+        if (!isAdminRole(role)) {
             return NextResponse.json({ error: "Permission denied" }, { status: 403 });
         }
 

@@ -4,6 +4,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
 
+const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+};
+
+export async function OPTIONS() {
+    return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
@@ -14,7 +24,7 @@ export async function GET(req: NextRequest) {
         let query = db
             .from("Project")
             .select("*, reviews:ProjectReview(*)")
-            .eq("status", "PUBLISHED")
+            .in("status", ["PUBLISHED"])
             .order("createdAt", { ascending: false });
 
         if (category && category !== "ALL") {
@@ -45,10 +55,10 @@ export async function GET(req: NextRequest) {
             };
         });
 
-        return NextResponse.json(projects);
+        return NextResponse.json(projects, { headers: corsHeaders });
     } catch (error: any) {
         console.error("Fetch projects error:", error);
-        return NextResponse.json([], { status: 200 });
+        return NextResponse.json([], { status: 200, headers: corsHeaders });
     }
 }
 
@@ -58,7 +68,7 @@ export async function POST(req: NextRequest) {
         if (!session?.user) {
             return NextResponse.json(
                 { error: "Unauthorized. You must be logged in to upload a project." },
-                { status: 401 }
+                { status: 401, headers: corsHeaders }
             );
         }
 
@@ -75,7 +85,7 @@ export async function POST(req: NextRequest) {
         const authorName = (session.user.name || body.authorName || "AiRA Lab Member").trim();
 
         if (!title || !description) {
-            return NextResponse.json({ error: "Project title and description are required" }, { status: 400 });
+            return NextResponse.json({ error: "Project title and description are required" }, { status: 400, headers: corsHeaders });
         }
 
         const newProject = {
@@ -88,8 +98,8 @@ export async function POST(req: NextRequest) {
             demoUrl,
             githubUrl,
             tags,
-            featured: body.featured === true,
-            status: "PUBLISHED",
+            featured: false,
+            status: body.status || "PUBLISHED",
             authorId: session?.user?.id || null,
             authorName,
             likes: 0,
@@ -105,9 +115,9 @@ export async function POST(req: NextRequest) {
 
         if (error) throw error;
 
-        return NextResponse.json(data, { status: 201 });
+        return NextResponse.json(data, { status: 201, headers: corsHeaders });
     } catch (error: any) {
         console.error("Create project error:", error);
-        return NextResponse.json({ error: error?.message || "Failed to create project" }, { status: 500 });
+        return NextResponse.json({ error: error?.message || "Failed to create project" }, { status: 500, headers: corsHeaders });
     }
 }

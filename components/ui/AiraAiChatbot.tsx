@@ -252,44 +252,76 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
     return (
         <>
             {/* ══ STARK ARC REACTOR TRIGGER BUTTON (FLOATING HUD ICON) ══ */}
-            <div className={`${className} font-sans select-none pointer-events-auto`}>
-                <motion.button
-                    whileHover={{ scale: 1.06 }}
-                    whileTap={{ scale: 0.94 }}
-                    type="button"
-                    onClick={() => {
-                        const nextOpen = !isOpen;
-                        setIsOpen(nextOpen);
-                        setIsMinimized(false);
-                        if (soundEnabled) playJarvisChime();
-                    }}
-                    className="relative group p-2.5 sm:p-3 rounded-full bg-[#070b1a]/95 hover:bg-[#0c142e] border-2 border-sky-400/80 hover:border-cyan-300 shadow-[0_0_35px_rgba(56,189,248,0.5)] text-white flex items-center justify-center cursor-pointer transition-all backdrop-blur-2xl"
-                    title="Chat with Mevy - AiRA Lab AI Guide"
+            <div className={`${className} font-sans select-none pointer-events-auto flex items-center justify-end`}>
+                <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                    className="relative flex items-center"
                 >
-                    {/* Rotating Arc Reactor Aura Rings */}
-                    <div className="absolute -inset-1.5 rounded-full border border-dashed border-sky-400/50 animate-spin [animation-duration:12s] pointer-events-none" />
-                    <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-sky-400/40 via-cyan-400/30 to-purple-600/40 blur-md opacity-80 group-hover:opacity-100 transition-opacity pointer-events-none" />
-
-                    {isOpen ? (
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-sky-300 relative z-10">
-                            <X size={22} className="group-hover:rotate-90 transition-transform" />
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-2.5 px-1 relative z-10">
-                            <JarvisAvatar size={36} isSpeaking={isSpeaking} />
-                            <div className="flex flex-col items-start text-left pr-2">
-                                <span className="font-orbitron font-black text-xs tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-sky-200 to-cyan-300 group-hover:to-white transition-colors flex items-center gap-1">
-                                    MEVY
-                                    <Sparkles size={11} className="text-cyan-300 animate-pulse" />
-                                </span>
-                                <div className="flex items-center gap-1 text-[9px] text-sky-400/90 font-mono">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                                    <span>AI GUIDE · v4.2</span>
-                                </div>
-                            </div>
-                        </div>
+                    {/* Floating Label / Tooltip (Visible when closed) */}
+                    {!isOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, x: 10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="mr-3 hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-950/90 border border-sky-400/40 text-xs text-sky-300 font-orbitron font-bold shadow-[0_0_20px_rgba(56,189,248,0.25)] backdrop-blur-xl pointer-events-none"
+                        >
+                            <Sparkles size={12} className="text-cyan-300 animate-pulse" />
+                            <span>Ask MEVY AI</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+                        </motion.div>
                     )}
-                </motion.button>
+
+                    {/* Circular Arc Reactor Button */}
+                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center">
+                        {/* Perfect Circular Rotating Reactor Rings */}
+                        <div className="absolute -inset-1.5 rounded-full border border-dashed border-sky-400/40 animate-spin [animation-duration:14s] pointer-events-none" />
+                        <div className="absolute -inset-0.5 rounded-full bg-gradient-to-tr from-sky-400/30 via-cyan-400/20 to-purple-600/30 blur-md opacity-80 pointer-events-none" />
+
+                        <motion.button
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.92 }}
+                            type="button"
+                            onClick={() => {
+                                const nextOpen = !isOpen;
+                                setIsOpen(nextOpen);
+                                setIsMinimized(false);
+                                if (soundEnabled) playJarvisChime();
+                            }}
+                            className="relative w-full h-full rounded-full bg-[#070b1a] hover:bg-[#0c142e] border-2 border-sky-400 hover:border-cyan-300 shadow-[0_0_30px_rgba(56,189,248,0.55)] text-white flex items-center justify-center cursor-pointer transition-all overflow-hidden z-10"
+                            title="Chat with Mevy - AiRA Lab AI Guide"
+                            aria-label="Open AI Assistant"
+                        >
+                            {isOpen ? (
+                                <div className="flex items-center justify-center text-sky-300">
+                                    <X size={24} className="hover:rotate-90 transition-transform" />
+                                </div>
+                            ) : (
+                                <div className="relative w-full h-full flex items-center justify-center">
+                                    <video
+                                        src="/aira-mascot-loop.mp4"
+                                        autoPlay
+                                        loop
+                                        muted
+                                        playsInline
+                                        preload="auto"
+                                        poster="/mascot.png"
+                                        className="w-full h-full object-cover object-center"
+                                        onEnded={(e) => {
+                                            e.currentTarget.currentTime = 0;
+                                            e.currentTarget.play().catch(() => {});
+                                        }}
+                                    />
+                                    {isSpeaking && (
+                                        <div className="absolute inset-0 bg-sky-400/30 blur-sm animate-pulse pointer-events-none" />
+                                    )}
+                                    {/* Live status dot */}
+                                    <span className="absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#070b1a] shadow-[0_0_8px_#34d399]" />
+                                </div>
+                            )}
+                        </motion.button>
+                    </div>
+                </motion.div>
             </div>
 
             {/* ══ FULL MEVY / JARVIS HOLOGRAPHIC CHAT HUD PORTAL ══ */}

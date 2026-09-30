@@ -28,20 +28,22 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 
 const adminLinks = [
-    { label: "Analytics", href: "/admin", icon: BarChart3 },
-    { label: "Live Broadcast", href: "/admin/broadcast", icon: Radio, highlight: true },
-    { label: "Poster Studio", href: "/admin/posters", icon: Sparkles },
-    { label: "Leadership & People", href: "/admin/team-members", icon: Crown },
-    { label: "User Accounts", href: "/admin/users", icon: UserCheck },
-    { label: "Teams", href: "/admin/teams", icon: UsersRound },
-    { label: "Tasks", href: "/admin/tasks", icon: CheckSquare },
-    { label: "Events", href: "/admin/events", icon: CalendarDays },
-    { label: "Applications", href: "/admin/applications", icon: FileText },
-    { label: "Certificates", href: "/admin/certificates", icon: ClipboardList },
-    { label: "Reports", href: "/admin/reports", icon: BarChart3 },
-    { label: "Achievements", href: "/admin/achievements", icon: Trophy },
-    { label: "Settings", href: "/admin/settings", icon: Settings },
+    { label: "Analytics",           href: "/admin",                icon: BarChart3 },
+    { label: "Live Broadcast",      href: "/admin/broadcast",      icon: Radio, highlight: true },
+    { label: "Poster Studio",       href: "/admin/posters",        icon: Sparkles },
+    { label: "Projects",            href: "/admin/projects",       icon: Globe },
+    { label: "Leadership & People", href: "/admin/team-members",   icon: Crown },
+    { label: "User Accounts",       href: "/admin/users",          icon: UserCheck },
+    { label: "Teams",               href: "/admin/teams",          icon: UsersRound },
+    { label: "Tasks",               href: "/admin/tasks",          icon: CheckSquare },
+    { label: "Events",              href: "/admin/events",         icon: CalendarDays },
+    { label: "Applications",        href: "/admin/applications",   icon: FileText },
+    { label: "Certificates",        href: "/admin/certificates",   icon: ClipboardList },
+    { label: "Reports",             href: "/admin/reports",        icon: BarChart3 },
+    { label: "Achievements",        href: "/admin/achievements",   icon: Trophy },
+    { label: "Settings",            href: "/admin/settings",       icon: Settings },
 ];
+
 
 export default function FloatingAdminMenu() {
     const [isOpen, setIsOpen] = useState(false);

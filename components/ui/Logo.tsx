@@ -56,17 +56,17 @@ export function Logo({
             {/* Optional Brand Text */}
             {showText && (
                 <div className="flex flex-col">
-                    <span className={cn("font-orbitron font-bold tracking-tight text-white flex items-center", config.text)}>
+                    <span className={cn("font-brand font-bold tracking-tight text-white flex items-center", config.text)}>
                         AiRA
                         <span className="text-sky-400 ml-1.5">Lab</span>
                     </span>
                     {textVariant === "portal" && (
-                        <span className={cn("text-slate-400 font-orbitron tracking-wider uppercase font-medium", config.subtitle)}>
+                        <span className={cn("text-slate-400 font-brand tracking-wider uppercase font-medium", config.subtitle)}>
                             Member Portal
                         </span>
                     )}
                     {textVariant === "admin" && (
-                        <span className={cn("text-sky-400/80 font-orbitron tracking-wider uppercase font-semibold", config.subtitle)}>
+                        <span className={cn("text-sky-400/80 font-brand tracking-wider uppercase font-semibold", config.subtitle)}>
                             Admin Control
                         </span>
                     )}

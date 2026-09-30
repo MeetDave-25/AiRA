@@ -50,6 +50,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         if (body.githubUrl !== undefined) updateData.githubUrl = body.githubUrl || null;
         if (body.tags) updateData.tags = Array.isArray(body.tags) ? body.tags : body.tags.split(",").map((t: string) => t.trim());
         if (body.featured !== undefined) updateData.featured = Boolean(body.featured);
+        // Admin-controlled fields
+        if (body.status && ["PENDING", "PUBLISHED", "REJECTED"].includes(body.status)) {
+            updateData.status = body.status;
+        }
+
 
         const { data, error } = await db
             .from("Project")

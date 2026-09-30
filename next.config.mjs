@@ -19,15 +19,28 @@ const securityHeaders = [
   {
     key: 'Permissions-Policy',
     value: 'camera=(), microphone=(), geolocation=()'
+  },
+  {
+    key: 'X-Content-Type-Options',
+    value: 'nosniff'
   }
 ];
 
 const nextConfig = {
+  poweredByHeader: false,
+  compress: true,
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: securityHeaders,
+      },
+      {
+        // Heavy static media (videos, 3D models, images) rarely change — let browsers/CDN cache them.
+        source: '/:path*.:ext(mp4|webm|glb|gltf|png|jpg|jpeg|webp|avif|svg|ico)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=86400' },
+        ],
       },
     ];
   },
@@ -43,6 +56,13 @@ const nextConfig = {
   },
   experimental: {
     serverComponentsExternalPackages: ["@prisma/client", "bcryptjs"],
+    optimizePackageImports: [
+      "lucide-react",
+      "framer-motion",
+      "@react-three/drei",
+      "@react-three/fiber",
+      "three"
+    ],
   },
 };
 

@@ -4,9 +4,18 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Star, Clock, User, BookOpen, Send, Share2 } from "lucide-react";
+import { ArrowLeft, Star, Clock, Send } from "lucide-react";
 import Link from "next/link";
 import MediumArticleContent from "@/components/ui/MediumArticleContent";
+import { Btn, Button, Card, EASE, Empty, SkeletonCard, Tag, inputClass } from "@/components/nb/kit";
+
+function Avatar({ person, size = "w-10 h-10" }: { person: any; size?: string }) {
+    return person?.avatar ? (
+        <img src={person.avatar} alt="" className={`${size} rounded-full border-2 border-nb-ink object-cover`} />
+    ) : (
+        <span className={`${size} rounded-full border-2 border-nb-ink bg-nb-sun flex items-center justify-center font-bold`}>{person?.name?.[0]}</span>
+    );
+}
 
 export default function BlogPostPage() {
     const { id }       = useParams<{ id: string }>();
@@ -53,182 +62,134 @@ export default function BlogPostPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen pt-28 px-4 max-w-4xl mx-auto">
-                <div className="glass rounded-2xl h-96 animate-pulse" />
+            <div className="min-h-screen pt-36 px-5 max-w-3xl mx-auto">
+                <SkeletonCard className="h-96" />
             </div>
         );
     }
     if (!post) {
         return (
-            <div className="min-h-screen pt-28 text-center text-slate-400">
-                <p className="font-orbitron text-2xl">Post not found</p>
-                <Link href="/blog" className="mt-4 inline-block text-aira-cyan underline">← Back to Blog</Link>
+            <div className="min-h-screen pt-36 px-5 max-w-3xl mx-auto">
+                <Empty title="Post not found" desc="It may have been unpublished.">
+                    <Btn href="/blog" tone="white">← Back to the blog</Btn>
+                </Empty>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen pt-24 pb-20 px-4 max-w-4xl mx-auto">
-            {/* Back */}
-            <motion.button
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                onClick={() => router.back()}
-                className="flex items-center gap-2 text-slate-400 hover:text-white mb-8 text-sm transition-colors"
-            >
-                <ArrowLeft size={16} /> Back to Blog
-            </motion.button>
+        <article className="min-h-screen pt-32 sm:pt-36 pb-24 px-5 max-w-3xl mx-auto">
+            <button onClick={() => router.back()} className="inline-flex items-center gap-2 font-brico font-bold text-sm hover:text-nb-violet transition-colors">
+                <ArrowLeft size={16} /> Back to the blog
+            </button>
 
-            {/* Cover Image */}
-            {post.coverImage && (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.6 }}
-                    className="relative rounded-2xl overflow-hidden aspect-[16/7] mb-8"
-                >
-                    <img src={post.coverImage} alt={post.title} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-aira-bg/80 via-transparent to-transparent" />
-                </motion.div>
-            )}
-
-            {/* Header */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                <span className="inline-block px-3 py-1 rounded-full bg-aira-cyan/20 text-aira-cyan text-[11px] font-orbitron border border-aira-cyan/30 mb-4">
-                    {post.topic?.title}
-                </span>
-                <h1 className="font-orbitron font-black text-2xl sm:text-4xl text-white mb-4 leading-snug">
-                    {post.title}
-                </h1>
-
-                {/* Tags */}
+            <motion.header initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }} className="mt-6">
+                {post.topic?.title && <Tag className="bg-nb-lilac">{post.topic.title}</Tag>}
+                <h1 className="mt-4 font-brico font-extrabold tracking-[-0.035em] leading-[1.02] text-[clamp(2.2rem,5.5vw,3.75rem)]">{post.title}</h1>
                 {post.tags?.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4">
+                    <div className="mt-4 flex flex-wrap gap-2">
                         {post.tags.map((t: string) => (
-                            <span key={t} className="px-2 py-0.5 rounded bg-purple-900/40 text-purple-300 text-[11px] font-mono">#{t}</span>
+                            <span key={t} className="font-mono text-xs text-nb-violet">#{t}</span>
                         ))}
                     </div>
                 )}
 
-                {/* Meta */}
-                <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400 mb-8 pb-6 border-b border-white/10">
-                    <div className="flex items-center gap-2">
-                        {post.author?.avatar ? (
-                            <img src={post.author.avatar} alt="" className="w-8 h-8 rounded-full object-cover" />
-                        ) : (
-                            <div className="w-8 h-8 rounded-full bg-aira-purple flex items-center justify-center text-sm font-bold text-white">
-                                {post.author?.name?.[0]}
-                            </div>
-                        )}
+                <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3 pb-6 border-b-2 border-nb-ink">
+                    <div className="flex items-center gap-3">
+                        <Avatar person={post.author} />
                         <div>
-                            <p className="text-white text-sm font-medium">{post.author?.name}</p>
-                            <p className="text-[11px]">{post.author?.role}</p>
+                            <p className="font-brico font-bold leading-tight">{post.author?.name}</p>
+                            <p className="text-xs text-nb-muted">{post.author?.role}</p>
                         </div>
                     </div>
-                    <span className="flex items-center gap-1"><Clock size={13} /> {post.readTime ?? "5 min read"}</span>
+                    <span className="flex items-center gap-1 text-sm text-nb-muted"><Clock size={14} /> {post.readTime ?? "5 min read"}</span>
                     {avgRating && (
-                        <span className="flex items-center gap-1 text-aira-gold">
-                            <Star size={13} fill="currentColor" /> {avgRating} ({post.reviews.length} reviews)
+                        <span className="flex items-center gap-1 text-sm font-semibold">
+                            <Star size={14} className="fill-nb-sun" /> {avgRating} ({post.reviews.length} reviews)
                         </span>
                     )}
-                    <span className="text-[12px]">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : ""}</span>
+                    {post.publishedAt && (
+                        <span className="text-sm text-nb-muted">
+                            {new Date(post.publishedAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+                        </span>
+                    )}
                 </div>
+            </motion.header>
+
+            {post.coverImage && (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.6, ease: EASE }} className="my-10">
+                    <img src={post.coverImage} alt={post.title} className="w-full aspect-[16/8] object-cover rounded-[22px] border-2 border-nb-ink shadow-nb-lg" />
+                </motion.div>
+            )}
+
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="mt-10 mb-16">
+                <MediumArticleContent content={post.content} variant="light" className="text-[17px] sm:text-[19px]" />
             </motion.div>
 
-            {/* Content (Medium-style Typography & Spacing) */}
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="mb-14"
-            >
-                <MediumArticleContent content={post.content} />
-            </motion.div>
-
-            {/* ── Reviews Section ── */}
-            <div className="border-t border-white/10 pt-10">
-                <h2 className="font-orbitron font-bold text-lg text-white mb-6">
-                    Community Reviews <span className="text-slate-500 font-normal text-base">({post.reviews?.length ?? 0})</span>
+            {/* Reviews */}
+            <section className="pt-10 border-t-2 border-nb-ink">
+                <h2 className="font-brico font-extrabold text-3xl tracking-tight">
+                    Community reviews <span className="text-nb-muted">({post.reviews?.length ?? 0})</span>
                 </h2>
 
-                {/* Submit review (members only) */}
                 {session ? (
-                    <div className="glass rounded-2xl p-5 border border-white/10 mb-8">
-                        <p className="text-sm text-slate-300 font-medium mb-3">Leave Your Review</p>
-                        {/* Star picker */}
-                        <div className="flex gap-1 mb-3">
-                            {[1,2,3,4,5].map(s => (
-                                <button key={s} onClick={() => setRating(s)} className="transition-transform hover:scale-110">
-                                    <Star
-                                        size={22}
-                                        fill={s <= rating ? "#f59e0b" : "transparent"}
-                                        className={s <= rating ? "text-aira-gold" : "text-slate-600"}
-                                    />
+                    <Card className="mt-6 p-5 sm:p-6" color="bg-nb-sun">
+                        <p className="font-brico font-bold">Leave your review</p>
+                        <div className="mt-3 flex gap-1">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                                <button key={s} aria-label={`${s} stars`} onClick={() => setRating(s)} className="transition-transform hover:scale-110">
+                                    <Star size={26} className={s <= rating ? "fill-nb-ink text-nb-ink" : "text-nb-ink/30"} />
                                 </button>
                             ))}
                         </div>
                         <textarea
                             value={reviewBody}
-                            onChange={e => setReviewBody(e.target.value)}
+                            onChange={(e) => setReviewBody(e.target.value)}
                             rows={3}
-                            placeholder="Share your thoughts about this article..."
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white placeholder-slate-500 resize-none focus:outline-none focus:border-aira-cyan/40 mb-3"
+                            placeholder="Share your thoughts about this article…"
+                            className={`${inputClass} mt-3 resize-none`}
                         />
-                        {reviewMsg && <p className="text-xs mb-2 text-aira-cyan">{reviewMsg}</p>}
-                        <button
-                            onClick={submitReview}
-                            disabled={submitting || !reviewBody.trim()}
-                            className="flex items-center gap-2 px-4 py-2 bg-aira-cyan text-black rounded-xl text-sm font-semibold hover:bg-cyan-400 transition-colors disabled:opacity-50"
-                        >
-                            <Send size={14} /> {submitting ? "Posting…" : "Post Review"}
-                        </button>
-                    </div>
+                        {reviewMsg && <p className="mt-2 text-sm font-semibold">{reviewMsg}</p>}
+                        <Button onClick={submitReview} disabled={submitting || !reviewBody.trim()} tone="ink" className="mt-4">
+                            <Send size={15} /> {submitting ? "Posting…" : "Post review"}
+                        </Button>
+                    </Card>
                 ) : (
-                    <div className="glass rounded-xl p-4 border border-white/10 mb-8 text-center">
-                        <p className="text-slate-400 text-sm">
-                            <Link href="/portal/login" className="text-aira-cyan hover:underline">Login</Link> to leave a review.
+                    <Card className="mt-6 p-5 text-center" color="bg-nb-lilac">
+                        <p>
+                            <Link href="/portal/login" className="font-bold underline underline-offset-4">Log in</Link> to leave a review.
                         </p>
-                    </div>
+                    </Card>
                 )}
 
-                {/* Reviews list */}
                 {post.reviews?.length === 0 ? (
-                    <p className="text-slate-500 text-sm text-center py-8">No reviews yet. Be the first to review!</p>
+                    <p className="mt-8 text-center text-nb-muted">No reviews yet. Be the first to review!</p>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="mt-8 space-y-4">
                         {post.reviews.map((review: any) => (
-                            <motion.div
-                                key={review.id}
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="glass rounded-xl p-4 border border-white/8"
-                            >
-                                <div className="flex items-center gap-3 mb-2">
-                                    {review.author?.avatar ? (
-                                        <img src={review.author.avatar} alt="" className="w-8 h-8 rounded-full object-cover" />
-                                    ) : (
-                                        <div className="w-8 h-8 rounded-full bg-aira-purple flex items-center justify-center text-xs font-bold text-white">
-                                            {review.author?.name?.[0]}
+                            <motion.div key={review.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                                <Card className="p-5">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar person={review.author} size="w-9 h-9" />
+                                        <div>
+                                            <p className="font-brico font-bold leading-tight">{review.author?.name}</p>
+                                            <div className="flex gap-0.5 mt-0.5">
+                                                {[1, 2, 3, 4, 5].map((s) => (
+                                                    <Star key={s} size={12} className={s <= review.rating ? "fill-nb-ink text-nb-ink" : "text-nb-ink/25"} />
+                                                ))}
+                                            </div>
                                         </div>
-                                    )}
-                                    <div>
-                                        <p className="text-sm font-medium text-white">{review.author?.name}</p>
-                                        <div className="flex gap-0.5 mt-0.5">
-                                            {[1,2,3,4,5].map(s => (
-                                                <Star key={s} size={11} fill={s <= review.rating ? "#f59e0b" : "transparent"} className={s <= review.rating ? "text-aira-gold" : "text-slate-600"} />
-                                            ))}
-                                        </div>
+                                        <span className="ml-auto font-mono text-xs text-nb-muted">
+                                            {new Date(review.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                                        </span>
                                     </div>
-                                    <span className="ml-auto text-[11px] text-slate-500">
-                                        {new Date(review.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                                    </span>
-                                </div>
-                                <p className="text-sm text-slate-300 leading-relaxed">{review.body}</p>
+                                    <p className="mt-3 text-nb-ink/80 leading-relaxed">{review.body}</p>
+                                </Card>
                             </motion.div>
                         ))}
                     </div>
                 )}
-            </div>
-        </div>
+            </section>
+        </article>
     );
 }

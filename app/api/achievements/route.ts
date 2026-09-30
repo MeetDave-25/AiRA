@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-guard";
 import { v4 as uuidv4 } from "uuid";
 
+export const revalidate = 60; // Cache for 60 seconds (ISR)
+
 export async function GET() {
     try {
         const { data, error } = await db

@@ -5,6 +5,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
 
+import { unstable_cache } from "next/cache";
+
 export async function GET(req: NextRequest) {
     try {
         const session: any = await getServerSession(authOptions as any);
@@ -12,6 +14,28 @@ export async function GET(req: NextRequest) {
         const role = (session?.user as any)?.role;
         const { searchParams } = new URL(req.url);
         const teamId = searchParams.get("teamId");
+
+        // Cache public requests (no teamId, no userId)
+        if (!teamId && !userId) {
+            const getCachedPublicEvents = unstable_cache(
+                async () => {
+                    const { data: events, error } = await db
+                        .from("Event")
+                        .select("*, EventImage(*), EventAssignment(*, Team(*))")
+                        .order("date", { ascending: false });
+                    if (error) throw error;
+                    return (events || []).map((e: any) => ({
+                        ...e,
+                        images: e.EventImage || [],
+                        assignments: e.EventAssignment || []
+                    }));
+                },
+                ['public-events-list'],
+                { revalidate: 60 }
+            );
+            const mappedEvents = await getCachedPublicEvents();
+            return NextResponse.json(mappedEvents);
+        }
 
         let query = db
             .from("Event")
