@@ -14,6 +14,19 @@ const avatarFallback = (name: string, size = 300) =>
 const externalHref = (url: string) => (url.startsWith("http") ? url : `https://${url}`);
 
 function MemberModal({ member, onClose }: { member: any; onClose: () => void }) {
+    // Lock the page behind the profile and close on Escape.
+    useEffect(() => {
+        if (!member) return;
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+        window.addEventListener("keydown", onKey);
+        return () => {
+            document.body.style.overflow = prev;
+            window.removeEventListener("keydown", onKey);
+        };
+    }, [member, onClose]);
+
     if (!member) return null;
 
     return (
@@ -22,6 +35,9 @@ function MemberModal({ member, onClose }: { member: any; onClose: () => void }) 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                role="dialog"
+                aria-modal="true"
+                data-lenis-prevent
                 className="fixed inset-0 z-[99999] bg-nb-ink/60 backdrop-blur-sm overflow-y-auto overscroll-contain p-3 sm:p-6 flex items-start sm:items-center justify-center"
                 onClick={onClose}
             >

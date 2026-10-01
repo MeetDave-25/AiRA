@@ -177,11 +177,19 @@ export default function RootLayout({
                             <Toaster
                                 position="top-right"
                                 toastOptions={{
+                                    // Neo-brutal toasts: paper card, ink outline, hard shadow.
                                     style: {
-                                        background: "#0d1526",
-                                        color: "#e2e8f0",
-                                        border: "1px solid rgba(0, 212, 255, 0.3)",
+                                        background: "#F3EFE4",
+                                        color: "#111111",
+                                        border: "2px solid #111111",
+                                        borderRadius: "14px",
+                                        boxShadow: "4px 4px 0 0 #111111",
+                                        padding: "10px 14px",
+                                        fontWeight: 600,
+                                        fontSize: "14px",
                                     },
+                                    success: { iconTheme: { primary: "#6C5CE7", secondary: "#F3EFE4" } },
+                                    error: { iconTheme: { primary: "#E5484D", secondary: "#F3EFE4" } },
                                 }}
                             />
                         </NotificationProvider>

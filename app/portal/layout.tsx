@@ -155,7 +155,7 @@ export default function PortalLayout({
                             <p className="font-brico font-bold text-sm text-[#F3EFE4] truncate">{session.user?.name}</p>
                             <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-nb-sun truncate">{roleLabel}</p>
                         </div>
-                        <NotificationBell />
+                        <NotificationBell placement="sidebar" />
                     </div>
                     <button
                         onClick={() => signOut({ callbackUrl: "/" })}

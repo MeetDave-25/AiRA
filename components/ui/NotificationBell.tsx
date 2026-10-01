@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Bell, Check, ExternalLink, Trash2, Smartphone, Volume2 } from "lucide-react";
+import { Bell, Check, ExternalLink, Smartphone } from "lucide-react";
 import { useNotifications } from "@/components/providers/NotificationProvider";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 
-export function NotificationBell() {
+/** `placement="sidebar"` opens the panel beside the portal sidebar (the bell sits at its bottom). */
+export function NotificationBell({ placement = "down" }: { placement?: "down" | "sidebar" }) {
     const { 
         notifications, 
         unreadCount, 
@@ -71,141 +72,131 @@ export function NotificationBell() {
         }
     };
 
+    const panelPos =
+        placement === "sidebar"
+            ? "fixed left-[280px] bottom-4 origin-bottom-left"
+            : "absolute right-0 mt-3 origin-top-right";
+
     return (
         <div className="relative" ref={ref}>
             <button
                 onClick={toggleOpen}
-                className="relative p-2.5 rounded-xl text-current hover:text-nb-violet hover:bg-black/5 transition-all focus:outline-none focus:ring-2 focus:ring-nb-violet/50"
+                className="relative p-2.5 rounded-xl text-current hover:text-nb-sun hover:bg-black/5 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-nb-violet/50"
                 aria-label="Notifications"
+                aria-expanded={open}
             >
-                <Bell size={20} className={unreadBadge ? "text-aira-cyan" : ""} />
+                <Bell size={20} />
                 {unreadCount > 0 ? (
-                    <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-aira-magenta text-white font-bold text-[10px] flex items-center justify-center shadow-lg shadow-aira-magenta/40 animate-pulse">
+                    <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full border-2 border-nb-ink bg-nb-peach text-nb-ink font-bold text-[10px] flex items-center justify-center">
                         {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                 ) : unreadBadge ? (
-                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-aira-cyan shadow-sm shadow-aira-cyan animate-ping" />
+                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full border border-nb-ink bg-nb-sun animate-ping" />
                 ) : null}
             </button>
 
             <AnimatePresence>
                 {open && (
                     <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        initial={{ opacity: 0, y: 10, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.96 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-3 w-[330px] sm:w-[380px] max-h-[85vh] flex flex-col glass border border-aira-cyan/30 bg-slate-950/95 backdrop-blur-2xl rounded-2xl shadow-2xl shadow-black overflow-hidden z-[9999]"
+                        className={`${panelPos} w-[min(360px,calc(100vw-24px))] max-h-[min(560px,80vh)] flex flex-col rounded-[20px] border-2 border-nb-ink bg-nb-paper text-nb-ink shadow-[6px_6px_0_0_#111] overflow-hidden z-[9999]`}
+                        role="dialog"
+                        aria-label="Notifications"
                     >
                         {/* Header */}
-                        <div className="p-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-slate-900/60">
+                        <div className="px-4 py-3 border-b-2 border-nb-ink bg-nb-sun flex items-center justify-between gap-2 shrink-0">
                             <div className="flex items-center gap-2">
-                                <Bell size={16} className="text-aira-cyan" />
-                                <h3 className="font-orbitron font-bold text-sm text-white">Notifications</h3>
+                                <Bell size={16} />
+                                <h3 className="font-brico font-extrabold text-base">Notifications</h3>
                                 {unreadCount > 0 && (
-                                    <span className="px-2 py-0.5 rounded-full bg-aira-cyan/20 border border-aira-cyan/30 text-[10px] text-aira-cyan font-bold">
-                                        {unreadCount} new
-                                    </span>
+                                    <span className="rounded-full border-2 border-nb-ink bg-white px-2 py-0.5 text-[10px] font-bold">{unreadCount} new</span>
                                 )}
                             </div>
-
-                            {notifications.some(n => !n.read) && (
-                                <button
-                                    onClick={markAllAsRead}
-                                    className="text-[11px] text-aira-cyan hover:underline flex items-center gap-1 font-semibold"
-                                >
+                            {notifications.some((n) => !n.read) && (
+                                <button onClick={markAllAsRead} className="inline-flex items-center gap-1 text-xs font-bold underline underline-offset-4">
                                     <Check size={13} /> Mark all read
                                 </button>
                             )}
                         </div>
 
-                        {/* Push Permission Prompt (if default or prompt) */}
+                        {/* Push prompt */}
                         {pushPermission !== "granted" && (
-                            <div className="p-3 bg-gradient-to-r from-aira-cyan/10 to-aira-purple/10 border-b border-white/10 flex items-center justify-between gap-2 text-xs">
-                                <div className="flex items-center gap-2 text-slate-300">
-                                    <Smartphone size={15} className="text-aira-cyan shrink-0" />
-                                    <span className="text-[11px]">Get lock screen alerts</span>
-                                </div>
+                            <div className="px-4 py-2.5 border-b-2 border-nb-ink/15 bg-nb-lilac/50 flex items-center justify-between gap-2">
+                                <span className="inline-flex items-center gap-2 text-xs font-semibold">
+                                    <Smartphone size={14} /> Get alerts on your lock screen
+                                </span>
                                 <button
-                                    onClick={() => {
-                                        setOpen(false);
-                                        openPushPrompt();
-                                    }}
-                                    className="px-2.5 py-1 rounded-lg bg-aira-cyan text-aira-bg font-bold text-[11px] hover:scale-105 transition-transform shrink-0"
+                                    onClick={() => { setOpen(false); openPushPrompt(); }}
+                                    className="shrink-0 rounded-lg border-2 border-nb-ink bg-nb-violet px-2.5 py-1 font-brico font-bold text-[11px] text-white shadow-[2px_2px_0_0_#111]"
                                 >
                                     Enable
                                 </button>
                             </div>
                         )}
 
-                        {/* Notification List */}
-                        <div className="flex-1 overflow-y-auto max-h-[380px] divide-y divide-white/5">
+                        {/* List */}
+                        <div className="flex-1 overflow-y-auto overscroll-contain" data-lenis-prevent>
                             {notifications.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500 space-y-2">
-                                    <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-slate-600">
-                                        <Bell size={24} />
-                                    </div>
-                                    <p className="text-sm text-slate-400 font-medium">No notifications yet</p>
-                                    <p className="text-xs text-slate-600">You will be alerted instantly when announcements, tasks, or events are posted.</p>
+                                <div className="flex flex-col items-center justify-center gap-2 p-8 text-center">
+                                    <span className="w-12 h-12 rounded-2xl border-2 border-nb-ink bg-white flex items-center justify-center shadow-[2px_2px_0_0_#111]">
+                                        <Bell size={22} />
+                                    </span>
+                                    <p className="font-brico font-bold">All caught up</p>
+                                    <p className="text-xs text-nb-muted">Announcements, tasks and events will show up here.</p>
                                 </div>
                             ) : (
-                                notifications.map((notif) => (
-                                    <div
-                                        key={notif.id}
-                                        onClick={() => {
-                                            if (!notif.read) markAsRead(notif.id);
-                                        }}
-                                        className={`p-4 transition-colors hover:bg-white/5 cursor-pointer ${
-                                            !notif.read ? "bg-aira-cyan/5 border-l-2 border-aira-cyan" : ""
-                                        }`}
-                                    >
-                                        <div className="flex gap-3 items-start">
-                                            {!notif.read && (
-                                                <span className="w-2 h-2 rounded-full bg-aira-cyan mt-1.5 shrink-0 animate-pulse" />
-                                            )}
-                                            <div className={`flex-1 min-w-0 ${notif.read ? "pl-2" : ""}`}>
-                                                <p className={`text-xs sm:text-sm leading-snug ${notif.read ? "text-slate-300" : "text-white font-bold"}`}>
-                                                    {notif.title}
-                                                </p>
-                                                <p className="text-xs text-slate-400 line-clamp-3 mt-1 leading-relaxed">
-                                                    {notif.message}
-                                                </p>
-                                                <div className="flex items-center justify-between mt-2.5 pt-1">
-                                                    <span className="text-[10px] text-slate-500 font-mono">
-                                                        {timeAgo(notif.createdAt)}
-                                                    </span>
-                                                    {notif.link && (
-                                                        <Link
-                                                            href={notif.link}
-                                                            onClick={() => setOpen(false)}
-                                                            className="text-[11px] text-aira-cyan font-semibold flex items-center gap-1 hover:underline ml-auto"
-                                                        >
-                                                            View <ExternalLink size={11} />
-                                                        </Link>
-                                                    )}
+                                <ul className="p-2 space-y-2">
+                                    {notifications.map((notif) => (
+                                        <li
+                                            key={notif.id}
+                                            onClick={() => { if (!notif.read) markAsRead(notif.id); }}
+                                            className={`rounded-xl border-2 p-3 cursor-pointer transition-colors ${
+                                                notif.read ? "border-nb-ink/15 bg-white/60 hover:bg-white" : "border-nb-ink bg-white shadow-[2px_2px_0_0_#111]"
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-2.5">
+                                                <span className={`mt-1.5 w-2 h-2 shrink-0 rounded-full ${notif.read ? "bg-nb-ink/20" : "bg-nb-violet"}`} />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className={`text-sm leading-snug ${notif.read ? "text-nb-ink/70" : "font-brico font-bold"}`}>{notif.title}</p>
+                                                    <p className="mt-0.5 text-xs text-nb-muted line-clamp-3 leading-relaxed">{notif.message}</p>
+                                                    <div className="mt-2 flex items-center justify-between">
+                                                        <span className="font-mono text-[10px] text-nb-muted">{timeAgo(notif.createdAt)}</span>
+                                                        {notif.link && (
+                                                            <Link
+                                                                href={notif.link}
+                                                                onClick={() => setOpen(false)}
+                                                                className="inline-flex items-center gap-1 text-[11px] font-bold text-nb-violet hover:underline"
+                                                            >
+                                                                View <ExternalLink size={11} />
+                                                            </Link>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                ))
+                                        </li>
+                                    ))}
+                                </ul>
                             )}
                         </div>
 
-                        {/* Test Lock Screen Alert Footer */}
-                        <div className="p-2.5 bg-slate-900/80 border-t border-white/10 flex items-center justify-between shrink-0">
-                            <span className="text-[10px] text-slate-400 font-sans">Lock screen notifications</span>
+                        {/* Footer */}
+                        <div className="px-4 py-2.5 border-t-2 border-nb-ink/15 flex items-center justify-between gap-2 shrink-0">
+                            <span className="text-[11px] text-nb-muted">Lock screen alerts</span>
                             <button
                                 onClick={() => {
                                     setOpen(false);
                                     triggerDelayedOutsideTest({
-                                        title: "🔔 AiRA Lab: Lock Screen Test!",
-                                        message: "Lock screen notification working successfully!",
+                                        title: "🔔 AiRA Lab: lock screen test",
+                                        message: "Lock screen notifications are working!",
                                         link: "/",
                                     }, 3);
                                 }}
-                                className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-aira-cyan/20 hover:text-aira-cyan text-slate-300 text-[11px] font-semibold flex items-center gap-1.5 transition-colors"
+                                className="inline-flex items-center gap-1.5 rounded-lg border-2 border-nb-ink bg-white px-2.5 py-1 text-[11px] font-bold"
                             >
-                                <Smartphone size={12} className="text-aira-cyan" /> Test Lock Screen
+                                <Smartphone size={12} /> Send a test
                             </button>
                         </div>
                     </motion.div>

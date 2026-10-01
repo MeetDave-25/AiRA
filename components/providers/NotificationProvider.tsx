@@ -3,22 +3,7 @@
 import { createContext, useContext, useEffect, useState, useRef, ReactNode, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { createClient } from "@supabase/supabase-js";
-import { 
-    Bell, 
-    ExternalLink, 
-    X, 
-    Smartphone, 
-    Sparkles, 
-    Volume2, 
-    ShieldCheck, 
-    Check, 
-    Zap, 
-    Radio, 
-    CheckCircle2,
-    Lock,
-    Settings,
-    Flame
-} from "lucide-react";
+import { Bell, ExternalLink, X, Volume2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -566,246 +551,185 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         >
             {children}
 
-            {/* ══ PREMIUM INSTAGRAM / SNAPCHAT STYLE PERMISSION PROMPT MODAL ══ */}
+            {/* Notification permission prompt — compact neo-brutal card */}
             <AnimatePresence>
                 {showPushPrompt && (
                     <motion.div
-                        initial={{ opacity: 0, y: 60, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 40, scale: 0.95 }}
-                        transition={{ type: "spring", stiffness: 380, damping: 28 }}
-                        className="fixed bottom-4 inset-x-3 sm:bottom-6 sm:right-6 sm:inset-x-auto sm:w-[410px] z-[99995] pointer-events-auto mx-auto max-w-md"
+                        initial={{ opacity: 0, y: 50, rotate: 2 }}
+                        animate={{ opacity: 1, y: 0, rotate: 0 }}
+                        exit={{ opacity: 0, y: 40 }}
+                        transition={{ type: "spring", stiffness: 380, damping: 26 }}
+                        className="fixed bottom-3 inset-x-3 sm:bottom-6 sm:right-6 sm:left-auto sm:w-[360px] z-[99995] pointer-events-auto"
+                        role="dialog"
+                        aria-label="Turn on AiRA Lab notifications"
                     >
-                        <div className="relative bg-slate-950/95 backdrop-blur-2xl border border-aira-cyan/40 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-black/90 ring-1 ring-white/20 overflow-hidden">
-                            {/* Ambient Glows */}
-                            <div className="absolute -top-14 -right-14 w-40 h-40 bg-aira-cyan/25 blur-3xl rounded-full pointer-events-none" />
-                            <div className="absolute -bottom-14 -left-14 w-40 h-40 bg-aira-purple/25 blur-3xl rounded-full pointer-events-none" />
-
-                            {/* Header / Brand */}
-                            <div className="flex items-start justify-between gap-3 relative z-10 mb-3.5">
-                                <div className="flex items-center gap-3">
-                                    <div className="relative">
-                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-aira-cyan via-blue-600 to-aira-purple p-0.5 shadow-lg shadow-aira-cyan/30 flex items-center justify-center">
-                                            <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-                                                <Bell size={22} className="text-aira-cyan animate-bounce" />
-                                            </div>
-                                        </div>
-                                        <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-slate-950 flex items-center justify-center">
-                                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-orbitron font-bold text-sm text-white">AiRA Labs</span>
-                                            <span className="px-2 py-0.5 rounded-full bg-aira-cyan/20 border border-aira-cyan/40 text-aira-cyan text-[10px] font-bold">
-                                                LIVE ALERTS
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-slate-400 font-sans mt-0.5">Premier Innovation & Robotics Hub</p>
-                                    </div>
+                        <div className="rounded-[20px] border-2 border-nb-ink bg-nb-paper text-nb-ink p-4 shadow-[5px_5px_0_0_#111]">
+                            <div className="flex items-start gap-3">
+                                <span className="relative w-11 h-11 shrink-0 rounded-xl border-2 border-nb-ink bg-nb-sun flex items-center justify-center shadow-[2px_2px_0_0_#111]">
+                                    <Bell size={19} />
+                                    <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-nb-ink bg-nb-mint" />
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-brico font-extrabold text-base leading-tight">Never miss a lab drop</p>
+                                    <p className="mt-1 text-[13px] leading-snug text-nb-ink/70">
+                                        Get a ping for new events, hackathons and broadcasts from AiRA Lab.
+                                    </p>
                                 </div>
-
                                 <button
                                     onClick={handleDecline}
-                                    className="w-7 h-7 rounded-full glass border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-white/30 transition-all shrink-0"
+                                    className="w-7 h-7 shrink-0 rounded-lg border-2 border-nb-ink bg-white flex items-center justify-center hover:bg-nb-peach transition-colors"
                                     aria-label="Close"
                                 >
-                                    <X size={14} />
+                                    <X size={13} />
                                 </button>
                             </div>
 
-                            {/* Value Proposition bullets */}
-                            <div className="space-y-2 mb-4 relative z-10 font-sans text-xs text-slate-300">
-                                <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/5 border border-white/5">
-                                    <Sparkles size={14} className="text-amber-400 shrink-0" />
-                                    <span>Instant broadcast drops, hackathons & lab events</span>
-                                </div>
-                                <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/5 border border-white/5">
-                                    <Smartphone size={14} className="text-aira-cyan shrink-0" />
-                                    <span>Lock screen notifications like Instagram & Snapchat</span>
-                                </div>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex flex-col gap-2 relative z-10">
+                            <div className="mt-3.5 flex flex-wrap gap-2">
                                 <button
                                     onClick={requestPushPermission}
-                                    className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-aira-cyan via-blue-500 to-aira-purple text-slate-950 font-orbitron font-bold text-xs sm:text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-aira-cyan/30 flex items-center justify-center gap-2"
+                                    className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-nb-ink bg-nb-violet px-3 py-2.5 font-brico font-bold text-sm text-white shadow-[3px_3px_0_0_#111] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#111] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
                                 >
-                                    <Bell size={16} className="text-slate-950 fill-slate-950" /> Allow Notifications
+                                    <Bell size={14} /> Allow
                                 </button>
-
-                                <div className="grid grid-cols-2 gap-2 mt-1">
-                                    <button
-                                        onClick={handleSessionOnly}
-                                        className="py-2.5 px-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
-                                    >
-                                        <Volume2 size={13} className="text-aira-cyan" /> While In App
-                                    </button>
-
-                                    <button
-                                        onClick={handleDecline}
-                                        className="py-2.5 px-3 rounded-xl glass border border-white/10 text-slate-400 hover:text-white font-semibold text-xs transition-colors flex items-center justify-center"
-                                    >
-                                        Not Now
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={handleSessionOnly}
+                                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-nb-ink bg-white px-3 py-2.5 font-brico font-bold text-sm shadow-[3px_3px_0_0_#111] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#111]"
+                                >
+                                    <Volume2 size={14} /> While here
+                                </button>
+                                <button
+                                    onClick={handleDecline}
+                                    className="px-2 py-2.5 font-brico font-semibold text-sm text-nb-ink/60 underline underline-offset-4 hover:text-nb-ink"
+                                >
+                                    Not now
+                                </button>
                             </div>
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* ══ BROWSER UNBLOCK GUIDE MODAL (If user previously clicked 'Block' in browser) ══ */}
+            {/* Browser unblock guide (shown if notifications were blocked before) */}
             <AnimatePresence>
                 {showBlockedGuide && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[99998] bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+                        className="fixed inset-0 z-[99998] bg-nb-ink/60 backdrop-blur-sm flex items-center justify-center p-4"
                         onClick={() => setShowBlockedGuide(false)}
+                        role="dialog"
+                        aria-modal="true"
+                        data-lenis-prevent
                     >
                         <motion.div
-                            initial={{ scale: 0.9, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.9, y: 20 }}
+                            initial={{ scale: 0.94, y: 20, rotate: -1 }}
+                            animate={{ scale: 1, y: 0, rotate: 0 }}
+                            exit={{ scale: 0.94, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="w-full max-w-md bg-slate-950 border border-aira-cyan/50 rounded-3xl p-6 shadow-2xl shadow-aira-cyan/20 ring-1 ring-white/10 relative overflow-hidden"
+                            className="w-full max-w-md rounded-[24px] border-2 border-nb-ink bg-nb-paper text-nb-ink shadow-[8px_8px_0_0_#111] overflow-hidden"
                         >
-                            <div className="absolute -top-12 -right-12 w-36 h-36 bg-aira-cyan/20 blur-3xl rounded-full pointer-events-none" />
-
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
-                                        <ShieldCheck size={20} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-orbitron font-bold text-sm text-white">Unblock in Browser</h3>
-                                        <p className="text-xs text-slate-400">AiRA Lab Notifications</p>
-                                    </div>
-                                </div>
+                            <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b-2 border-nb-ink bg-nb-sun">
+                                <span className="inline-flex items-center gap-2 font-brico font-extrabold">
+                                    <ShieldCheck size={18} /> Unblock notifications
+                                </span>
                                 <button
                                     onClick={() => setShowBlockedGuide(false)}
-                                    className="p-1.5 rounded-full glass border border-white/10 text-slate-400 hover:text-white"
+                                    className="w-8 h-8 rounded-full border-2 border-nb-ink bg-white flex items-center justify-center"
+                                    aria-label="Close"
                                 >
-                                    <X size={16} />
+                                    <X size={15} />
                                 </button>
                             </div>
 
-                            <p className="text-xs text-slate-300 mb-4 leading-relaxed font-sans">
-                                Your browser is currently blocking notifications for AiRA Lab. Follow these quick steps to enable them:
-                            </p>
+                            <div className="p-5">
+                                <p className="text-sm text-nb-ink/75 leading-relaxed">
+                                    Your browser is blocking notifications for AiRA Lab. Three quick steps to turn them on:
+                                </p>
+                                <ol className="mt-4 space-y-2.5">
+                                    {[
+                                        <>Click the <strong>🔒 lock / settings icon</strong> in the address bar.</>,
+                                        <>Find <strong>Notifications</strong> and switch it to <strong>Allow</strong>.</>,
+                                        <>Refresh the page, or press the button below to check.</>,
+                                    ].map((step, i) => (
+                                        <li key={i} className="flex items-start gap-3 rounded-xl border-2 border-nb-ink bg-white p-3 text-sm">
+                                            <span className="w-6 h-6 shrink-0 rounded-full border-2 border-nb-ink bg-nb-lilac font-brico font-extrabold text-xs flex items-center justify-center">{i + 1}</span>
+                                            <span>{step}</span>
+                                        </li>
+                                    ))}
+                                </ol>
 
-                            <div className="space-y-2.5 mb-6">
-                                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-900/60 border border-white/5">
-                                    <span className="w-6 h-6 rounded-full bg-aira-cyan/20 text-aira-cyan font-bold text-xs flex items-center justify-center shrink-0">1</span>
-                                    <p className="text-xs text-slate-300">
-                                        Click the <strong className="text-white">🔒 Lock / Settings icon</strong> in your browser address bar.
-                                    </p>
-                                </div>
-
-                                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-900/60 border border-white/5">
-                                    <span className="w-6 h-6 rounded-full bg-aira-cyan/20 text-aira-cyan font-bold text-xs flex items-center justify-center shrink-0">2</span>
-                                    <p className="text-xs text-slate-300">
-                                        Find <strong className="text-white">Notifications</strong> and switch it to <strong className="text-emerald-400">Allow</strong>.
-                                    </p>
-                                </div>
-
-                                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-900/60 border border-white/5">
-                                    <span className="w-6 h-6 rounded-full bg-aira-cyan/20 text-aira-cyan font-bold text-xs flex items-center justify-center shrink-0">3</span>
-                                    <p className="text-xs text-slate-300">
-                                        Refresh the page or click below to verify.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => {
-                                        if (typeof window !== "undefined" && "Notification" in window) {
-                                            if (Notification.permission === "granted") {
-                                                setPushPermission("granted");
-                                                setShowBlockedGuide(false);
-                                                toast.success("Notifications are active!");
-                                                playBellChime();
-                                            } else {
-                                                window.location.reload();
+                                <div className="mt-5 flex gap-3">
+                                    <button
+                                        onClick={() => {
+                                            if (typeof window !== "undefined" && "Notification" in window) {
+                                                if (Notification.permission === "granted") {
+                                                    setPushPermission("granted");
+                                                    setShowBlockedGuide(false);
+                                                    toast.success("Notifications are active!");
+                                                    playBellChime();
+                                                } else {
+                                                    window.location.reload();
+                                                }
                                             }
-                                        }
-                                    }}
-                                    className="flex-1 py-2.5 rounded-xl bg-aira-cyan text-slate-950 font-orbitron font-bold text-xs hover:scale-105 transition-transform text-center shadow-lg shadow-aira-cyan/20"
-                                >
-                                    Verify / Reload
-                                </button>
-                                <button
-                                    onClick={() => setShowBlockedGuide(false)}
-                                    className="px-4 py-2.5 rounded-xl glass border border-white/10 text-slate-400 hover:text-white text-xs font-semibold"
-                                >
-                                    Close
-                                </button>
+                                        }}
+                                        className="flex-1 rounded-xl border-2 border-nb-ink bg-nb-violet py-2.5 font-brico font-bold text-sm text-white shadow-[3px_3px_0_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#111] transition-all"
+                                    >
+                                        Check again
+                                    </button>
+                                    <button
+                                        onClick={() => setShowBlockedGuide(false)}
+                                        className="px-4 rounded-xl border-2 border-nb-ink bg-white py-2.5 font-brico font-bold text-sm shadow-[3px_3px_0_0_#111]"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* ══ INSTAGRAM / SNAPCHAT STYLE DYNAMIC DROP-DOWN PUSH BANNER (Top-Slide) ══ */}
-            <div className="fixed top-4 inset-x-0 z-[99999] flex justify-center px-4 pointer-events-none">
+            {/* Drop-down notification banner */}
+            <div className="fixed top-3 sm:top-4 inset-x-0 z-[99999] flex justify-center px-3 pointer-events-none">
                 <AnimatePresence>
                     {activeBanner && (
                         <motion.div
-                            initial={{ opacity: 0, y: -70, scale: 0.9 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -60, scale: 0.9 }}
+                            initial={{ opacity: 0, y: -70, rotate: -1.5 }}
+                            animate={{ opacity: 1, y: 0, rotate: 0 }}
+                            exit={{ opacity: 0, y: -60 }}
                             transition={{ type: "spring", stiffness: 450, damping: 30 }}
-                            className="pointer-events-auto w-full max-w-md bg-slate-950/95 backdrop-blur-2xl border border-aira-cyan/40 rounded-3xl p-4 shadow-2xl shadow-aira-cyan/20 ring-1 ring-white/10"
+                            className="pointer-events-auto w-full max-w-md rounded-[20px] border-2 border-nb-ink bg-nb-paper text-nb-ink shadow-[5px_5px_0_0_#111] overflow-hidden"
+                            role="status"
+                            aria-live="polite"
                         >
-                            {/* App Header Tag */}
-                            <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-white/10">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 rounded-md overflow-hidden bg-slate-950 border border-white/20 shrink-0">
-                                        <img src="/logo.png" alt="AiRA Lab" className="w-full h-full object-contain" />
-                                    </div>
-                                    <span className="text-[11px] font-orbitron font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                                        AiRA Lab <span className="w-1.5 h-1.5 rounded-full bg-aira-cyan animate-ping" />
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[10px] text-slate-400 font-sans">Just now</span>
-                                    <button
-                                        onClick={dismissBanner}
-                                        className="p-1 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-                                        aria-label="Dismiss notification"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                </div>
+                            <div className="flex items-center justify-between gap-2 px-4 py-2 border-b-2 border-nb-ink bg-nb-lilac">
+                                <span className="inline-flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em]">
+                                    <span className="w-2 h-2 rounded-full border border-nb-ink bg-nb-mint" /> AiRA Lab · just now
+                                </span>
+                                <button
+                                    onClick={dismissBanner}
+                                    className="w-6 h-6 rounded-md border-2 border-nb-ink bg-white flex items-center justify-center"
+                                    aria-label="Dismiss notification"
+                                >
+                                    <X size={12} />
+                                </button>
                             </div>
-
-                            {/* Notification Body */}
-                            <div className="flex items-start gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-aira-cyan/20 to-aira-purple/20 border border-aira-cyan/30 flex items-center justify-center shrink-0 text-aira-cyan shadow-inner">
-                                    <Bell size={18} className="animate-bounce" />
-                                </div>
+                            <div className="flex items-start gap-3 p-4">
+                                <span className="w-10 h-10 shrink-0 rounded-xl border-2 border-nb-ink bg-nb-sun flex items-center justify-center shadow-[2px_2px_0_0_#111]">
+                                    <Bell size={17} />
+                                </span>
                                 <div className="flex-1 min-w-0">
-                                    <h4 className="text-sm font-bold text-white truncate font-orbitron tracking-tight">
-                                        {activeBanner.title}
-                                    </h4>
-                                    <p className="text-xs text-slate-300 line-clamp-2 mt-0.5 font-sans leading-relaxed">
-                                        {activeBanner.message}
-                                    </p>
-
+                                    <h4 className="font-brico font-extrabold text-[15px] leading-tight truncate">{activeBanner.title}</h4>
+                                    <p className="mt-0.5 text-[13px] leading-snug text-nb-ink/70 line-clamp-2">{activeBanner.message}</p>
                                     {activeBanner.link && (
-                                        <div className="mt-3 flex items-center justify-end">
-                                            <Link
-                                                href={activeBanner.link}
-                                                onClick={dismissBanner}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-aira-cyan text-slate-950 font-semibold text-xs hover:scale-105 transition-transform shadow-md shadow-aira-cyan/30"
-                                            >
-                                                Open Details <ExternalLink size={12} />
-                                            </Link>
-                                        </div>
+                                        <Link
+                                            href={activeBanner.link}
+                                            onClick={dismissBanner}
+                                            className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg border-2 border-nb-ink bg-nb-violet px-3 py-1 font-brico font-bold text-xs text-white shadow-[2px_2px_0_0_#111]"
+                                        >
+                                            Open <ExternalLink size={12} />
+                                        </Link>
                                     )}
                                 </div>
                             </div>
