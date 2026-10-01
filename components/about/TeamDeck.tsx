@@ -14,6 +14,7 @@ export type DeckMember = {
     photo?: string | null;
     isPresident?: boolean;
     isLead?: boolean;
+    badge?: string; // overrides the Founder/Lead label (e.g. "Director")
     team?: string;
     color?: string; // tailwind bg class for the team stripe
 };
@@ -140,9 +141,9 @@ export default function TeamDeck({ members, onSelect }: { members: DeckMember[];
                                 </div>
                                 <div className="relative mx-3 mt-3 aspect-[4/5] rounded-2xl border-2 border-nb-ink overflow-hidden bg-nb-paper">
                                     <Face m={m} />
-                                    {(m.isPresident || m.isLead) && (
+                                    {(m.isPresident || m.isLead || m.badge) && (
                                         <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full border-2 border-nb-ink bg-nb-sun px-2 py-0.5 text-[10px] font-bold">
-                                            {m.isPresident ? <Crown size={11} /> : <Star size={11} />} {m.isPresident ? "Founder" : "Lead"}
+                                            {m.isPresident || m.badge ? <Crown size={11} /> : <Star size={11} />} {m.badge || (m.isPresident ? "Founder" : "Lead")}
                                         </span>
                                     )}
                                 </div>

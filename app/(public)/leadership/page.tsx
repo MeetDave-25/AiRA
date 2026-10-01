@@ -175,8 +175,13 @@ export default function LeadershipPage() {
         return ["ALL", ...Array.from(groups)];
     }, [leaders]);
 
+    // Director first, then founders/presidents.
+    const isDirectorRole = (l: LeaderProfile) => (l.role || "").trim().toLowerCase() === "director";
     const executiveSpotlight = useMemo(() => {
-        return leaders.filter(l => l.isPresident || l.sortOrder === 1 || (l.role || "").toLowerCase().includes("founder") || (l.role || "").toLowerCase().includes("president"));
+        return leaders
+            .filter(l => isDirectorRole(l) || l.isPresident || l.sortOrder === 1 || (l.role || "").toLowerCase().includes("founder") || (l.role || "").toLowerCase().includes("president"))
+            .sort((a, b) => Number(isDirectorRole(b)) - Number(isDirectorRole(a)));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [leaders]);
 
     const filteredLeaders = useMemo(() => {
@@ -229,7 +234,7 @@ export default function LeadershipPage() {
                                         <Photo leader={leader} className="w-full h-full object-cover object-[50%_20%]" />
                                         <span aria-hidden="true" className={`absolute bottom-0 inset-x-0 h-2 border-t-2 border-nb-ink ${BLOCK_COLORS[index % BLOCK_COLORS.length]}`} />
                                         <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full border-2 border-nb-ink bg-nb-sun px-2.5 py-0.5 text-[11px] font-bold">
-                                            <Crown size={11} /> Executive lead
+                                            <Crown size={11} /> {isDirectorRole(leader) ? "Director" : "Executive lead"}
                                         </span>
                                     </div>
                                     <div className="p-5">

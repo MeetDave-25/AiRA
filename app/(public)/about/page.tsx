@@ -5,6 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Github, Linkedin, ExternalLink, Sparkles, Zap, Cpu, Code2, BrainCircuit, Trophy, Users, Rocket, Crown, Quote, Orbit as OrbitIcon } from "lucide-react";
 import LabDNA from "@/components/about/LabDNA";
 import TeamDeck, { type DeckMember } from "@/components/about/TeamDeck";
+import DirectorNote from "@/components/about/DirectorNote";
+
+// The Director heads the lab: always first, above the founders.
+const isDirector = (m: any) => (m?.role || "").trim().toLowerCase() === "director" || (m?.teamGroup || "").trim().toLowerCase() === "director";
 import { BLOCK_COLORS, Block, Btn, Button, Card, Chip, EASE, Empty, Mask, MevySays, SearchInput, SectionHead, WRAP } from "@/components/nb/kit";
 
 
@@ -280,6 +284,7 @@ export default function AboutPage() {
         // Hierarchy: founders/executives first, then mentors/advisors, then the tech wing, then the rest by size.
         const rank = (name: string) => {
             const n = name.toLowerCase();
+            if (n === "director" || n.startsWith("director")) return -1;
             if (n.includes("founder") || n.includes("president") || n.includes("executive") || n.includes("board")) return 0;
             if (n.includes("mentor") || n.includes("advisor") || n.includes("faculty")) return 1;
             if (n.includes("tech")) return 2;
@@ -302,7 +307,7 @@ export default function AboutPage() {
             if (!teamOf.has(m.id)) teamOf.set(m.id, { name: div.name, color: BLOCK_COLORS[i % BLOCK_COLORS.length] });
         }));
         const source = activeTeamDivision ? activeTeamDivision.allMembers : members;
-        const rank = (m: any) => (m.isPresident ? 0 : isLeaderMember(m) ? 1 : 2);
+        const rank = (m: any) => (isDirector(m) ? -1 : m.isPresident ? 0 : isLeaderMember(m) ? 1 : 2);
         return [...source]
             .sort((a, b) => rank(a) - rank(b) || (a.sortOrder || 0) - (b.sortOrder || 0))
             .map((m) => ({
@@ -312,6 +317,7 @@ export default function AboutPage() {
                 photo: m.photo,
                 isPresident: !!m.isPresident,
                 isLead: !m.isPresident && isLeaderMember(m),
+                badge: isDirector(m) ? "Director" : undefined,
                 team: teamOf.get(m.id)?.name || m.teamGroup,
                 color: teamOf.get(m.id)?.color,
             }));
@@ -382,6 +388,11 @@ export default function AboutPage() {
                     ))}
                 </div>
             </header>
+
+            {/* Director's note — first, above the founders */}
+            <section className={`${WRAP} pb-24`}>
+                <DirectorNote />
+            </section>
 
             {/* Team deck */}
             <section id="about-content" className={`${WRAP} scroll-mt-28`}>
@@ -600,7 +611,7 @@ export default function AboutPage() {
                                                     <p className="text-xs text-nb-muted line-clamp-1">{member.role}</p>
                                                     {isLead && (
                                                         <span className="mt-2 inline-block rounded-full border-2 border-nb-ink bg-nb-sun px-2 py-0.5 text-[10px] font-bold">
-                                                            {member.isPresident ? "Founder" : "Lead"}
+                                                            {isDirector(member) ? "Director" : member.isPresident ? "Founder" : "Lead"}
                                                         </span>
                                                     )}
                                                 </motion.button>
