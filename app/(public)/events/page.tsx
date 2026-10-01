@@ -72,47 +72,18 @@ function EventCard({ event, index }: { event: any; index: number }) {
     );
 }
 
-const DEFAULT_EVENTS = [
-    {
-        id: "evt-ai-symposium-2026",
-        title: "National AI & Autonomous Systems Symposium",
-        date: "2026-09-15T10:00:00Z",
-        venue: "AiRA Innovation Auditorium & Online Stream",
-        participantCount: 350,
-        images: [{ url: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=80", isPrimary: true }],
-    },
-    {
-        id: "evt-robotics-hackathon-2026",
-        title: "Autonomous Robotics & SLAM Hackathon 2026",
-        date: "2026-10-20T09:00:00Z",
-        venue: "AiRA Hardware & Robotics Arena",
-        participantCount: 200,
-        images: [{ url: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=800&auto=format&fit=crop&q=80", isPrimary: true }],
-    },
-    {
-        id: "evt-cyber-workshop-2026",
-        title: "Embedded Systems & Firmware Defense Workshop",
-        date: "2026-05-10T14:00:00Z",
-        venue: "AiRA Cyber Security Wing",
-        participantCount: 150,
-        images: [{ url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80", isPrimary: true }],
-    },
-];
-
 export default function EventsPage() {
-    const [events, setEvents] = useState<any[]>(DEFAULT_EVENTS);
+    const [events, setEvents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState<"all" | "upcoming" | "completed">("all");
 
     useEffect(() => {
         fetch("/api/events")
             .then((r) => r.ok ? r.json() : [])
-            .then((d) => {
-                if (Array.isArray(d) && d.length > 0) {
-                    setEvents(d);
-                }
-            })
-            .catch(() => {});
+            .then((d) => setEvents(Array.isArray(d) ? d : []))
+            .catch(() => {})
+            .finally(() => setLoading(false));
     }, []);
 
     const filtered = events.filter((e) => {
@@ -148,7 +119,9 @@ export default function EventsPage() {
             </PageHero>
 
             <div className={WRAP}>
-                {filtered.length === 0 ? (
+                {loading ? (
+                    <p className="py-20 text-center text-nb-muted">Loading events…</p>
+                ) : filtered.length === 0 ? (
                     <Empty icon={<Calendar size={24} />} title="No events match that filter." desc="Try another search, or check back soon." />
                 ) : (
                     <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -19,7 +19,7 @@ interface LeaderProfile {
 }
 
 const avatarFallback = (name: string, size = 300) =>
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=D6CEFF&color=111111&size=${size}&bold=true`;
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=F3EFE4&color=111111&size=${size}&bold=true`;
 
 const externalHref = (url: string) => (url.startsWith("http") ? url : `https://${url}`);
 
@@ -118,73 +118,10 @@ function LeaderDetailModal({ leader, onClose }: { leader: LeaderProfile | null; 
     );
 }
 
-const DEFAULT_LEADERS: LeaderProfile[] = [
-    {
-        id: "default-founder-1",
-        name: "Parth D. Joshi",
-        role: "Founder & President",
-        bio: "Pioneering autonomous intelligence systems, student research initiatives, and strategic lab expansion. Guiding AiRA Lab's core vision toward frontier AI and robotics.",
-        photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80",
-        teamGroup: "Founders & Executive Board",
-        isPresident: true,
-        sortOrder: 1,
-    },
-    {
-        id: "default-founder-2",
-        name: "Meet Dave",
-        role: "Founder & Lead Architect",
-        bio: "Architecting high-throughput distributed software platforms, full-stack web infrastructure, and machine learning telemetry pipelines.",
-        photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80",
-        teamGroup: "Founders & Executive Board",
-        isPresident: false,
-        sortOrder: 2,
-    },
-    {
-        id: "default-lead-3",
-        name: "Pruthvi",
-        role: "Lead Architect & Researcher",
-        bio: "Focusing on neural vision pipelines, autonomous mobile robotics, and deep reinforcement learning algorithms.",
-        photo: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800&auto=format&fit=crop&q=80",
-        teamGroup: "Technical Leads",
-        isPresident: false,
-        sortOrder: 3,
-    },
-    {
-        id: "default-lead-4",
-        name: "Prit Jivrajjani",
-        role: "Full-Stack & Systems Lead",
-        bio: "Engineering real-time telemetry backends, secure API endpoints, and scalable cloud microservices.",
-        photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&auto=format&fit=crop&q=80",
-        teamGroup: "Technical Leads",
-        isPresident: false,
-        sortOrder: 4,
-    },
-    {
-        id: "default-lead-5",
-        name: "Dashrath",
-        role: "Robotics & Sensor Fusion Lead",
-        bio: "Specializing in LiDAR SLAM, ROS2 kinematics, micro-ROS firmware, and custom PCB hardware integrations.",
-        photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&auto=format&fit=crop&q=80",
-        teamGroup: "Technical Leads",
-        isPresident: false,
-        sortOrder: 5,
-    },
-    {
-        id: "default-lead-6",
-        name: "Dhyey",
-        role: "AI Vision & Neural Systems Lead",
-        bio: "Training real-time object detection models, PyTorch neural networks, and TensorRT edge inference engines.",
-        photo: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&auto=format&fit=crop&q=80",
-        teamGroup: "Technical Leads",
-        isPresident: false,
-        sortOrder: 6,
-    },
-];
-
 export default function LeadershipPage() {
-    const [leaders, setLeaders] = useState<LeaderProfile[]>(DEFAULT_LEADERS);
+    const [leaders, setLeaders] = useState<LeaderProfile[]>([]);
     const [settings, setSettings] = useState<Record<string, string>>({});
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<string>("ALL");
     const [selectedLeader, setSelectedLeader] = useState<LeaderProfile | null>(null);
 
@@ -193,7 +130,7 @@ export default function LeadershipPage() {
             fetch("/api/team-members").then(r => r.ok ? r.json() : []).catch(() => []),
             fetch("/api/settings").then(r => r.ok ? r.json() : {}).catch(() => ({}))
         ]).then(([membersData, settingsData]) => {
-            if (Array.isArray(membersData) && membersData.length > 0) {
+            if (Array.isArray(membersData)) {
                 // Filter only leaders/presidents/board/directors from the database
                 const dbLeaders = membersData.filter((m: any) => {
                     const grp = (m.teamGroup || "").toLowerCase();
@@ -207,9 +144,7 @@ export default function LeadershipPage() {
                         grp.includes("lead")
                     );
                 });
-                if (dbLeaders.length > 0) {
-                    setLeaders(dbLeaders);
-                }
+                setLeaders(dbLeaders);
             }
             setSettings(settingsData || {});
             setIsLoading(false);
@@ -272,10 +207,11 @@ export default function LeadershipPage() {
                                     viewport={{ once: true }}
                                     transition={{ duration: 0.55, ease: EASE, delay: index * 0.08 }}
                                     onClick={() => setSelectedLeader(leader)}
-                                    className={`text-left rounded-[24px] border-2 border-nb-ink shadow-nb-lg overflow-hidden ${BLOCK_COLORS[index % BLOCK_COLORS.length]}`}
+                                    className="text-left rounded-[24px] border-2 border-nb-ink shadow-nb-lg overflow-hidden bg-white"
                                 >
-                                    <div className="relative aspect-[4/3] border-b-2 border-nb-ink bg-white overflow-hidden">
-                                        <Photo leader={leader} className="w-full h-full object-cover" />
+                                    <div className="relative m-3 mb-0 aspect-[4/5] rounded-[18px] border-2 border-nb-ink bg-nb-paper overflow-hidden">
+                                        <Photo leader={leader} className="w-full h-full object-cover object-[50%_20%]" />
+                                        <span aria-hidden="true" className={`absolute bottom-0 inset-x-0 h-2 border-t-2 border-nb-ink ${BLOCK_COLORS[index % BLOCK_COLORS.length]}`} />
                                         <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full border-2 border-nb-ink bg-nb-sun px-2.5 py-0.5 text-[11px] font-bold">
                                             <Crown size={11} /> Executive lead
                                         </span>
@@ -327,7 +263,7 @@ export default function LeadershipPage() {
                                     className="group text-left rounded-[22px] border-2 border-nb-ink bg-white shadow-nb p-5 transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-nb-lg"
                                 >
                                     <div className="relative w-20 h-20">
-                                        <Photo leader={leader} className="w-20 h-20 rounded-2xl border-2 border-nb-ink object-cover bg-nb-lilac" />
+                                        <Photo leader={leader} className="w-20 h-20 rounded-2xl border-2 border-nb-ink object-cover object-[50%_20%] bg-nb-paper" />
                                         {leader.isPresident && <span className="absolute -top-2 -right-2 text-lg">👑</span>}
                                     </div>
                                     <h3 className="mt-4 font-brico font-extrabold text-lg leading-tight truncate group-hover:text-nb-violet transition-colors">{leader.name}</h3>

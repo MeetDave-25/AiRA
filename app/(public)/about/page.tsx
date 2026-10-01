@@ -3,21 +3,13 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Github, Linkedin, ExternalLink, Sparkles, Zap, Cpu, Code2, BrainCircuit, Trophy, Users, Rocket, Crown, Quote, Orbit as OrbitIcon } from "lucide-react";
-import dynamic from "next/dynamic";
 import LabDNA from "@/components/about/LabDNA";
+import TeamDeck, { type DeckMember } from "@/components/about/TeamDeck";
 import { BLOCK_COLORS, Block, Btn, Button, Card, Chip, EASE, Empty, Mask, MevySays, SearchInput, SectionHead, WRAP } from "@/components/nb/kit";
 
-const TeamTunnelSystem = dynamic(() => import("@/components/ui/TeamTunnelSystem"), {
-    ssr: false,
-    loading: () => (
-        <div className="w-full h-[470px] sm:h-[620px] flex items-center justify-center font-mono text-xs text-white/50 animate-pulse">
-            Loading the 3D team tunnel…
-        </div>
-    ),
-});
 
 const avatarFallback = (name: string, size = 300) =>
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=D6CEFF&color=111111&size=${size}&bold=true`;
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=F3EFE4&color=111111&size=${size}&bold=true`;
 
 const externalHref = (url: string) => (url.startsWith("http") ? url : `https://${url}`);
 
@@ -56,7 +48,7 @@ function MemberModal({ member, onClose }: { member: any; onClose: () => void }) 
                             <img
                                 src={member.photo || avatarFallback(member.name)}
                                 alt={member.name}
-                                className="w-36 h-36 md:w-44 md:h-44 rounded-3xl border-2 border-nb-ink object-cover shadow-nb bg-white"
+                                className="w-36 h-36 md:w-44 md:h-44 rounded-3xl border-2 border-nb-ink object-cover object-[50%_20%] shadow-nb bg-nb-paper"
                                 onError={(e) => { (e.target as HTMLImageElement).src = avatarFallback(member.name); }}
                             />
                             <div>
@@ -287,42 +279,28 @@ export default function AboutPage() {
         return teamDivisions.find((d) => d.id === selectedTeamId) || null;
     }, [selectedTeamId, teamDivisions]);
 
-    const centerPerson = useMemo(() => {
-        if (activeTeamDivision) {
-            return activeTeamDivision.lead || president;
-        }
-        return president;
-    }, [activeTeamDivision, president]);
-
-    // Overview: one representative per team (topped up with members); focused: that team's members.
-    const currentOrbitingItems = useMemo(() => {
-        if (!activeTeamDivision) {
-            const leads = teamDivisions
-                .map((div) => div.lead)
-                .filter((lead) => lead && lead.id !== president?.id);
-
-            if (leads.length < 6) {
-                const leadIds = new Set(leads.map((l) => l?.id));
-                const extra = members
-                    .filter((m) => m.id !== president?.id && !leadIds.has(m.id))
-                    .slice(0, 8 - leads.length);
-                return [...leads, ...extra];
-            }
-            return leads;
-        }
-
-        if (activeTeamDivision.members.length > 0) {
-            return activeTeamDivision.members;
-        }
-        return activeTeamDivision.allMembers.filter((m) => m.id !== centerPerson?.id);
-    }, [activeTeamDivision, teamDivisions, president, members, centerPerson]);
-
-    const tunnelMembers = useMemo(() => {
-        if (centerPerson && !currentOrbitingItems.some(m => m?.id === centerPerson.id)) {
-            return [centerPerson, ...currentOrbitingItems];
-        }
-        return currentOrbitingItems.length > 0 ? currentOrbitingItems : members;
-    }, [centerPerson, currentOrbitingItems, members]);
+    // Deck: everyone (founder first, then leads, then members), or one team when it's focused.
+    const deckMembers = useMemo<DeckMember[]>(() => {
+        const teamOf = new Map<string, { name: string; color: string }>();
+        teamDivisions.forEach((div, i) => div.allMembers.forEach((m) => {
+            if (!teamOf.has(m.id)) teamOf.set(m.id, { name: div.name, color: BLOCK_COLORS[i % BLOCK_COLORS.length] });
+        }));
+        const source = activeTeamDivision ? activeTeamDivision.allMembers : members;
+        const rank = (m: any) => (m.isPresident ? 0 : isLeaderMember(m) ? 1 : 2);
+        return [...source]
+            .sort((a, b) => rank(a) - rank(b) || (a.sortOrder || 0) - (b.sortOrder || 0))
+            .map((m) => ({
+                id: m.id,
+                name: m.name,
+                role: m.role,
+                photo: m.photo,
+                isPresident: !!m.isPresident,
+                isLead: !m.isPresident && isLeaderMember(m),
+                team: teamOf.get(m.id)?.name || m.teamGroup,
+                color: teamOf.get(m.id)?.color,
+            }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTeamDivision, members, teamDivisions]);
 
     const filteredDivisions = useMemo(() => {
         let list = teamDivisions;
@@ -389,32 +367,39 @@ export default function AboutPage() {
                 </div>
             </header>
 
-            {/* 3D team tunnel — kept as a dark "screen" inside the page */}
-            <section id="about-content" className={WRAP}>
-                <div className="-mx-2 sm:mx-0 rounded-[22px] sm:rounded-[28px] border-2 border-nb-ink bg-nb-ink shadow-nb sm:shadow-nb-lg overflow-hidden">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 px-4 sm:px-5 py-3 border-b-2 border-white/10 text-white">
-                        <span className="flex items-center gap-2 font-brico font-bold text-sm sm:text-base">
-                            <span className="flex gap-1.5" aria-hidden="true">
-                                <span className="w-3 h-3 rounded-full bg-nb-peach" />
-                                <span className="w-3 h-3 rounded-full bg-nb-sun" />
-                                <span className="w-3 h-3 rounded-full bg-nb-mint" />
-                            </span>
-                            <OrbitIcon size={16} className="ml-2" /> The team, in 3D
-                        </span>
-                        {activeTeamDivision ? (
-                            <span className="flex flex-wrap items-center gap-x-2 gap-y-1.5 font-mono text-xs">
-                                <span className="min-w-0 truncate">Focused: <strong>{activeTeamDivision.name}</strong> · {activeTeamDivision.allMembers.length} members</span>
-                                <button onClick={() => setSelectedTeamId(null)} className="shrink-0 rounded-lg border border-white/30 px-2 py-0.5 hover:bg-white/10">
-                                    Show everyone ✕
-                                </button>
-                            </span>
-                        ) : (
-                            <span className="font-mono text-xs text-white/50">Tap anyone to open their profile</span>
-                        )}
+            {/* Team deck */}
+            <section id="about-content" className={`${WRAP} scroll-mt-28`}>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-5">
+                    <SectionHead kicker="The team" title={activeTeamDivision ? `${activeTeamDivision.name}.` : "Deal me in."} />
+                    <p className="max-w-sm text-nb-muted">
+                        {activeTeamDivision
+                            ? `${activeTeamDivision.allMembers.length} members on this team. Flip through, or tap the front card for their story.`
+                            : "Every member of the lab, one card each. Swipe through the deck, or tap the front card to read their story."}
+                    </p>
+                </div>
+
+                {teamDivisions.length > 1 && (
+                    <div className="mt-6 flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 [scrollbar-width:none]">
+                        <Chip active={!activeTeamDivision} onClick={() => setSelectedTeamId(null)}>Everyone</Chip>
+                        {teamDivisions.map((div) => (
+                            <Chip key={div.id} active={activeTeamDivision?.id === div.id} onClick={() => setSelectedTeamId(div.id)}>
+                                <span className="whitespace-nowrap">{div.shortName}</span>
+                            </Chip>
+                        ))}
                     </div>
-                    <div className="px-1.5 sm:px-4">
-                        <TeamTunnelSystem items={tunnelMembers} onSelectMember={(m) => setSelectedMember(m)} />
-                    </div>
+                )}
+
+                <div className="mt-6 rounded-[28px] border-2 border-nb-ink bg-nb-lilac/60 shadow-nb px-2 pt-6 pb-6 overflow-hidden [background-image:radial-gradient(rgba(17,17,17,0.12)_1px,transparent_1px)] [background-size:18px_18px]">
+                    {isLoading ? (
+                        <p className="h-[430px] sm:h-[470px] flex items-center justify-center text-nb-muted">Shuffling the deck…</p>
+                    ) : deckMembers.length === 0 ? (
+                        <p className="h-[200px] flex items-center justify-center text-nb-muted">Team cards are on their way.</p>
+                    ) : (
+                        <TeamDeck
+                            members={deckMembers}
+                            onSelect={(id) => setSelectedMember(members.find((m) => m.id === id) || null)}
+                        />
+                    )}
                 </div>
             </section>
 
@@ -509,11 +494,16 @@ export default function AboutPage() {
                 </div>
 
                 <div className="mt-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    <div className="flex flex-wrap gap-2">
-                        <Chip active={activeGroup === "ALL"} onClick={() => setActiveGroup("ALL")}>Everyone ({members.length})</Chip>
+                    {/* One swipeable row on phones, wraps on larger screens */}
+                    <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 sm:flex-wrap sm:overflow-visible sm:pb-0 [scrollbar-width:none]">
+                        <Chip active={activeGroup === "ALL"} onClick={() => setActiveGroup("ALL")}>
+                            <span className="whitespace-nowrap">Everyone ({members.length})</span>
+                        </Chip>
                         {teamDivisions.map((div) => (
                             <Chip key={div.id} active={activeGroup === div.name || activeGroup === div.id} onClick={() => setActiveGroup(div.name)}>
-                                {div.shortName} <span className="opacity-60">{div.allMembers.length}</span>
+                                <span className="whitespace-nowrap">
+                                    {div.shortName} <span className="opacity-60">{div.allMembers.length}</span>
+                                </span>
                             </Chip>
                         ))}
                     </div>
@@ -557,7 +547,7 @@ export default function AboutPage() {
                                                 document.getElementById("about-content")?.scrollIntoView({ behavior: "smooth", block: "center" });
                                             }}
                                         >
-                                            <OrbitIcon size={14} /> View in 3D ↑
+                                            <OrbitIcon size={14} /> See their cards ↑
                                         </Button>
                                     </div>
 
@@ -573,9 +563,7 @@ export default function AboutPage() {
                                                     viewport={{ once: true }}
                                                     transition={{ duration: 0.4, ease: EASE, delay: (i % 5) * 0.04 }}
                                                     onClick={() => setSelectedMember(member)}
-                                                    className={`group text-center rounded-[20px] border-2 border-nb-ink p-4 shadow-nb-sm transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-nb ${
-                                                        isLead ? "bg-nb-sun" : "bg-white"
-                                                    }`}
+                                                    className="group text-center rounded-[20px] border-2 border-nb-ink bg-white p-4 shadow-nb-sm transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-nb"
                                                 >
                                                     <div className="relative w-20 h-20 mx-auto">
                                                         <img
@@ -583,7 +571,7 @@ export default function AboutPage() {
                                                             alt={member.name}
                                                             loading="lazy"
                                                             decoding="async"
-                                                            className="w-20 h-20 rounded-full border-2 border-nb-ink object-cover bg-nb-lilac"
+                                                            className={`w-20 h-20 rounded-full border-2 border-nb-ink object-cover object-[50%_20%] bg-nb-paper ${isLead ? "ring-4 ring-nb-sun ring-offset-2 ring-offset-white" : ""}`}
                                                             onError={(e) => { (e.target as HTMLImageElement).src = avatarFallback(member.name, 200); }}
                                                         />
                                                         {member.isPresident ? (
@@ -595,7 +583,7 @@ export default function AboutPage() {
                                                     <h4 className="mt-3 font-brico font-bold truncate group-hover:text-nb-violet transition-colors">{member.name}</h4>
                                                     <p className="text-xs text-nb-muted line-clamp-1">{member.role}</p>
                                                     {isLead && (
-                                                        <span className="mt-2 inline-block rounded-full border-2 border-nb-ink bg-white px-2 py-0.5 text-[10px] font-bold">
+                                                        <span className="mt-2 inline-block rounded-full border-2 border-nb-ink bg-nb-sun px-2 py-0.5 text-[10px] font-bold">
                                                             {member.isPresident ? "Founder" : "Lead"}
                                                         </span>
                                                     )}

@@ -97,33 +97,18 @@ function ShareModal({ mag, onClose }: { mag: any; onClose: () => void }) {
     );
 }
 
-const DEFAULT_MAGAZINES = [
-    {
-        id: "flagship-2025-26",
-        title: "AiRA Chronicles: The Campus Revolution",
-        edition: "Vol. 2025-26",
-        description: "Official annual lab reflection magazine spotlighting breakthrough autonomous robotics, AI neural architectures, and student innovation reflections.",
-        coverImage: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80",
-        status: "PUBLISHED",
-        posts: [{ id: "1" }, { id: "2" }, { id: "3" }, { id: "4" }],
-    },
-];
-
 export default function MagazinePage() {
-    const [magazines, setMagazines] = useState<any[]>(DEFAULT_MAGAZINES);
-    const [loading]     = useState(false);
+    const [magazines, setMagazines] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [shareMag, setShareMag] = useState<any | null>(null);
 
     useEffect(() => {
         fetch("/api/magazine")
             .then((r) => r.ok ? r.json() : [])
-            .then((d) => {
-                if (Array.isArray(d) && d.length > 0) {
-                    setMagazines(d);
-                }
-            })
-            .catch(() => {});
+            .then((d) => setMagazines(Array.isArray(d) ? d : []))
+            .catch(() => {})
+            .finally(() => setLoading(false));
     }, []);
 
     const filteredMagazines = magazines.filter((m) => {

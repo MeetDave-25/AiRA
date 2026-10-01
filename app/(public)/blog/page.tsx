@@ -6,53 +6,19 @@ import { motion } from "framer-motion";
 import { BookOpen, Star, Clock } from "lucide-react";
 import { BLOCK_COLORS, Btn, Chip, EASE, Empty, PageHero, SearchInput, SkeletonCard, WRAP } from "@/components/nb/kit";
 
-const DEFAULT_POSTS = [
-    {
-        id: "post-autonomous-ros2",
-        slug: "autonomous-ros2-kinematics",
-        title: "Engineering Real-Time ROS2 Swarm Kinematics for Mobile Rovers",
-        excerpt: "A technical breakdown of integrating ROS2 micro-nodes, LiDAR SLAM, and custom hardware motor controllers for real-time autonomous navigation.",
-        coverImage: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=80",
-        authorName: "Dashrath & Meet Dave",
-        tags: ["ROS2", "Robotics", "SLAM", "C++"],
-        publishedAt: "2026-08-10T10:00:00Z",
-    },
-    {
-        id: "post-edge-ai-yolo",
-        slug: "edge-ai-vision-tensorrt",
-        title: "Optimizing YOLOv8 Neural Vision Models for Embedded Edge AI",
-        excerpt: "How we achieved 60 FPS real-time object classification on Jetson Xavier hardware using TensorRT FP16 quantization and custom CUDA kernels.",
-        coverImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
-        authorName: "Dhyey & Parth Joshi",
-        tags: ["AI & ML", "PyTorch", "TensorRT", "Computer Vision"],
-        publishedAt: "2026-08-05T12:00:00Z",
-    },
-    {
-        id: "post-cyber-firmware",
-        slug: "embedded-firmware-defense",
-        title: "Hardening IoT Microcontroller Firmware Against Side-Channel Attacks",
-        excerpt: "Exploring memory protection units (MPU), secure boot chains, and encrypted telemetry pipelines for ESP32 and ARM Cortex microcontrollers.",
-        coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80",
-        authorName: "Bhavesh",
-        tags: ["Cyber Security", "Embedded", "IoT", "Firmware"],
-        publishedAt: "2026-07-28T14:00:00Z",
-    },
-];
-
 export default function BlogPage() {
-    const [posts, setPosts]     = useState<any[]>(DEFAULT_POSTS);
-    const [loading, setLoading] = useState(false);
+    const [posts, setPosts]     = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
     const [search, setSearch]   = useState("");
     const [tag, setTag]         = useState("");
 
     useEffect(() => {
         const url = tag ? `/api/blog/posts?tag=${encodeURIComponent(tag)}` : "/api/blog/posts";
+        setLoading(true);
         fetch(url)
             .then(r => r.ok ? r.json() : [])
             .then(d => {
-                if (Array.isArray(d) && d.length > 0) {
-                    setPosts(d);
-                }
+                setPosts(Array.isArray(d) ? d : []);
                 setLoading(false);
             })
             .catch(() => { setLoading(false); });

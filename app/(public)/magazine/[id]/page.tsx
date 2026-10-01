@@ -97,15 +97,8 @@ function WorldwideShareModal({ isOpen, mag, onClose }: { isOpen: boolean; mag: a
 function CoverDiamondCollage({ articles, edition }: { articles: any[]; edition: string }) {
     const sampleImages = useMemo(() => {
         const extracted = articles.map((a) => a.coverImage).filter(Boolean);
-        const defaults = [
-            "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80",
-            "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80",
-            "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=600&q=80",
-            "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
-            "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=600&q=80",
-            "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80",
-        ];
-        return [...extracted, ...defaults].slice(0, 6);
+        // Real article covers only; empty slots become plain brand-colour tiles.
+        return Array.from({ length: 6 }, (_, i) => (extracted[i] as string | undefined) ?? null);
     }, [articles]);
     const tints = ["bg-nb-sun", "bg-nb-sky", "bg-nb-peach"];
 
@@ -124,7 +117,11 @@ function CoverDiamondCollage({ articles, edition }: { articles: any[]; edition: 
                             i % 3 === 0 ? "rotate-2" : i % 3 === 1 ? "-rotate-2" : "rotate-1"
                         }`}
                     >
-                        <img src={src} alt="Lab moment" className="w-full h-full object-cover rounded-xl" />
+                        {src ? (
+                            <img src={src} alt="Lab moment" className="w-full h-full object-cover rounded-xl" />
+                        ) : (
+                            <div className="w-full h-full rounded-xl bg-white/50 flex items-center justify-center font-brico font-extrabold text-xl text-nb-ink/30">✦</div>
+                        )}
                     </div>
                 ))}
             </div>
@@ -138,110 +135,6 @@ function CoverDiamondCollage({ articles, edition }: { articles: any[]; edition: 
         </div>
     );
 }
-
-// ── DEFAULT ARTICLES INSPIRED BY MAGAZINE.PDF ──
-const DEFAULT_ARTICLES = [
-    {
-        id: "mag-sample-1",
-        title: "Generation Z: A Shift, Not A Phase",
-        readTime: "4 min read",
-        coverImage: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
-        topic: { title: "STUDENT ESSAY • GENERATION DISPATCH" },
-        author: {
-            name: "Niki Narsiana",
-            role: "Tech Wing Member · F.Y. B.Com",
-            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80"
-        },
-        content: `“Too sharp.” “Too lazy.” “Too rude.”
-
-These are some of the most common labels attached to Generation Z. Yet the reality is far more nuanced, dynamic, and exciting than these stereotypes suggest. To understand Gen Z is to recognize a generation that is informed, emotionally aware, and purpose-driven.
-
-We are perhaps the most informed generation the world has ever seen. Growing up in a world shaped by technology and instant access to knowledge has allowed us to question, analyse, and form opinions with evidence. But what truly distinguishes Gen Z is not just information — it is emotional awareness and empathy.
-
-We speak openly about emotions, something previous generations were often hesitant to do. We understand that words carry weight and that even the smallest remarks can leave lasting marks on someone's mind. What some dismiss as being "too sensitive" is, in reality, a deeper awareness of human impact.
-
-Our idea of success has also evolved. Wealth alone no longer defines class or respect. To us, a truly successful person is someone disciplined enough to take care of their health, avoid harmful habits, pursue meaningful goals, and stay relentlessly devoted to their dreams.
-
-Gen Z is also the generation that prioritizes mental health. We understand burnout, we value balance, and we refuse to glorify exhaustion as success. Hobbies are no longer "time-pass"; they are passions worth nurturing. Many of us quietly chase one simple but powerful goal: to make our younger selves proud.
-
-We are also learning to protect our energy. Gentle is not weakness, and negativity is no longer entertaining; cutting off toxic environments is not seen as rebellion but as self-respect. At the same time, we are more conscious of what may be offensive or insensitive, and we actively try to correct ignorance with awareness.
-
-Interestingly, while parents often find this generation difficult to understand, many Gen Z individuals are actively working to understand their families more deeply. They are willing to bridge generational divides with patience and compassion.
-
-And when it comes to work, we are not lazy — we are selective. We simply refuse to invest our time and energy in things that lack meaning or purpose. Generation Z is not trying to be the "cool generation". We are striving to be the conscious generation.
-
-**Not just a generation that exists — but one that questions, evolves, and creates impact.**`
-    },
-    {
-        id: "mag-sample-2",
-        title: "Academic Growth: The Role of Autonomous Intelligence in Shaping Future Leaders",
-        readTime: "6 min read",
-        coverImage: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80",
-        topic: { title: "ACADEMIC GROWTH • FACULTY & RESEARCH" },
-        author: {
-            name: "Meet Dave",
-            role: "Chief Technology Officer · AiRA Lab",
-            avatar: "https://yaqbjopgwshxzcwynskf.supabase.co/storage/v1/object/public/uploads/avatars/9220d34e-68ac-4dd6-b1af-f68497466e7c.png"
-        },
-        content: `The academic year 2025–26 has been a remarkable journey of dedication, scholarship, and impactful research at AiRA Lab. Excellence goes beyond routine engineering: it reflects a deeper engagement with issues that shape society, industry, and national capability.
-
-### 1. Bridging the "Skill Gap" in the Modern Economy
-Today's employers, whether in the tech sector or deep-tech hardware labs, are looking for hands-on architectural mastery alongside purely theoretical grades. At AiRA, we cultivate core attributes that prepare students directly for high-pressure industry environments:
-- **Decision-Making Under Pressure:** Fast iterations during robotics trials and drone navigation testbeds.
-- **Systematic Architecture:** Building full-stack autonomous rovers, SLAM mapping, and neural perception models from the ground up.
-- **Interdisciplinary Collaboration:** Fostering synergy across computer science, electronics, mechanical fabrication, and design.
-
-### 2. Technology & Modern Training
-Modern lab training has evolved in tandem with global standards. Students engage in edge-computing robotics, computer vision pipelines with YOLOv8, and autonomous agent orchestration. In today's landscape, digital literacy must encompass cybersecurity, prompt architecture, and physical computing.
-
-### 3. Conclusion: The New India Vision
-In the current era, student innovators are poised to be global leaders. However, technical prowess alone is insufficient without strong ethical character, self-discipline, and a passion for national progress. In short, the lab is a vital preparatory ground ensuring today's youth are ready for the responsibilities of tomorrow.`
-    },
-    {
-        id: "mag-sample-3",
-        title: "Delving into Talent, Tradition and Self: Campus & Cultural Retrospective",
-        readTime: "5 min read",
-        coverImage: "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80",
-        topic: { title: "CULTURAL ACTIVITIES & PHOTO ARCHIVE" },
-        author: {
-            name: "AiRA Editorial Wing",
-            role: "Media & Documentation Team",
-            avatar: "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=200&q=80"
-        },
-        content: `The academic year is not only about the syllabus; it is much more. In its rich, textured experience, it is exploring our inner creativity, our organizational abilities, relationships that are forged for life, and most importantly, the testing of our limits and our resilience to go that extra mile.
-
-The highlight of the semester was our active participation in the University Youth Festival and National Robotics Symposium. From dramatic adaptations of classic literature to high-energy folk dance showcases, the campus transformed into a crucible of creative and technical energy.
-
-### Art Meets Engineering
-Translating concepts into physical reality is the heart of both theater and robotics. Students stepped into complex roles, fabricated stage sets with micro-controllers, and synchronized lighting with automated DMX boards. 
-
-The experience brought immense pride, confidence, and camaraderie. As we look forward to the upcoming hackathon season, these memories remind us that engineering without soul is empty, and art without structure is ephemeral.`
-    },
-    {
-        id: "mag-sample-4",
-        title: "Success Beyond the Spotlight: More Than Just A Degree",
-        readTime: "5 min read",
-        coverImage: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80",
-        topic: { title: "SUCCESS BEYOND THE SPOTLIGHT • ALUMNI" },
-        author: {
-            name: "Shreya Nandi",
-            role: "Actuarial Analyst · AiRA Alumna",
-            avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80"
-        },
-        content: `When I look back at my time at college and AiRA Lab, I don't think of one big turning point. I think of small, consistent habits that slowly added up.
-
-I had already decided to pursue analytical engineering, so college for me was about building the right base — not rushing ahead, but strengthening what would matter later. The lectures, hackathon sprints, internal assessments, and discussions with mentors all created a steady rhythm that taught me something critical: progress does not always feel dramatic, but it is happening.
-
-### 1. Learning Beyond Academics
-Lab life extends far beyond classrooms. Organizing symposiums and participating in technical competitions outside the campus adds a different kind of learning: you learn how to manage stress and team dynamics.
-
-### 2. Building Professional Readiness
-When you step into technical interviews, employers already expect baseline coding proficiency. What sets you apart is clarity — how you think through a problem, how you respond when you don't immediately know an answer, and how composed you remain.
-
-### 3. Message to Current Students
-To current students, my advice would be simple: use your time intentionally. Build clarity in your subjects. Participate beyond exams. Seek guidance when needed. Small, disciplined efforts compound in ways you may not immediately notice — but they make a massive difference when opportunities arrive.`
-    }
-];
 
 export default function MagazineReaderPage() {
     const { id } = useParams<{ id: string }>();
@@ -299,7 +192,7 @@ export default function MagazineReaderPage() {
     }
 
     const dbArticles: any[] = mag.posts?.map((mp: any) => mp.post || mp.BlogPost || mp).filter((p: any) => p && p.title) ?? [];
-    const articles: any[] = dbArticles.length > 0 ? dbArticles : DEFAULT_ARTICLES;
+    const articles: any[] = dbArticles;
     const current = pageIdx >= 0 ? articles[pageIdx] ?? null : null;
     const progressPercent = pageIdx === -1 ? 0 : Math.round(((pageIdx + 1) / articles.length) * 100);
 
