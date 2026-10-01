@@ -128,6 +128,7 @@ import LenisProvider from "@/components/providers/LenisProvider";
 import CustomCursor from "@/components/ui/CustomCursor";
 import NoiseOverlay from "@/components/ui/NoiseOverlay";
 import CookieConsent from "@/components/ui/CookieConsent";
+import WalkInGate from "@/components/auth/WalkInGate";
 
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
@@ -172,6 +173,7 @@ export default function RootLayout({
                                 {children}
                             </ErrorBoundary>
                             <CookieConsent />
+                            <WalkInGate />
                             <Toaster
                                 position="top-right"
                                 toastOptions={{

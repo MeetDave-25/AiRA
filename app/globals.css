@@ -12,6 +12,11 @@
   --magenta: #E2E8F0;
   --purple: #60A5FA;
   --gold: #F59E0B;
+  --c-aira-bg: 7 8 12;
+  --c-aira-surface: 13 15 21;
+  --c-aira-card: 18 21 29;
+  --c-aira-border: 30 35 48;
+  --c-aira-cyan: 56 189 248;
 }
 
 * {
@@ -479,4 +484,98 @@ body {
 .text-outline-accent {
   color: transparent;
   -webkit-text-stroke: 1px rgba(56, 189, 248, 0.55);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   NB CONSOLE — the logged-in admin + member area.
+   "Dark neo-brutal": ink floor, paper text, sun accent, chunky 2px
+   outlines and hard offset shadows. Re-skins every portal/admin page
+   through shared classes instead of page-by-page rewrites.
+   ══════════════════════════════════════════════════════════════════ */
+.nb-console {
+  --c-aira-bg: 17 17 17;
+  --c-aira-surface: 23 23 23;
+  --c-aira-card: 29 29 29;
+  --c-aira-border: 58 56 52;
+  --c-aira-cyan: 255 216 77;
+  --cyan: #FFD84D;
+  background-color: #111111;
+  background-image:
+    linear-gradient(rgba(243, 239, 228, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(243, 239, 228, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+  color: #F3EFE4;
+}
+
+.nb-console .font-orbitron {
+  font-family: var(--font-brico), "Bricolage Grotesque", sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.nb-console .glass,
+.nb-console .glass-strong,
+.nb-console .glass-neon {
+  background: #1B1B1B;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 2px solid rgba(243, 239, 228, 0.14);
+  box-shadow: 4px 4px 0 0 #000;
+}
+
+.nb-console .card-3d:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 0 #6C5CE7;
+}
+
+.nb-console .glow-cyan { box-shadow: 4px 4px 0 0 #6C5CE7; }
+.nb-console .text-glow-cyan { text-shadow: none; }
+
+.nb-console .gradient-text-cyan,
+.nb-console .gradient-text {
+  background: none;
+  -webkit-text-fill-color: #FFD84D;
+  color: #FFD84D;
+}
+
+.nb-console input,
+.nb-console textarea,
+.nb-console select {
+  border-width: 2px;
+}
+.nb-console input:focus,
+.nb-console textarea:focus,
+.nb-console select:focus {
+  border-color: #FFD84D;
+  box-shadow: 3px 3px 0 0 #6C5CE7;
+}
+
+.nb-console ::selection { background: #FFD84D; color: #111; }
+
+/* Primary gradient buttons become solid sun blocks with a hard shadow. */
+.nb-console button.bg-gradient-to-r.from-sky-400,
+.nb-console a.bg-gradient-to-r.from-sky-400 {
+  background: #FFD84D;
+  color: #111;
+  border: 2px solid #111;
+  box-shadow: 3px 3px 0 0 #6C5CE7;
+}
+.nb-console button.bg-gradient-to-r.from-sky-400:hover,
+.nb-console a.bg-gradient-to-r.from-sky-400:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 #6C5CE7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-console .card-3d:hover { transform: none; }
+}
+
+/* Console scroll reveal (see components/admin/ConsoleScrollReveal.tsx) */
+.nb-console .nb-reveal {
+  opacity: 0;
+  transform: translateY(36px) rotate(-0.8deg) scale(0.98);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nb-console .nb-reveal.nb-revealed {
+  opacity: 1;
+  transform: none;
 }

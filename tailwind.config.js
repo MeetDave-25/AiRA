@@ -8,11 +8,12 @@ module.exports = {
     theme: {
         extend: {
             colors: {
-                "aira-bg": "#07080C",
-                "aira-surface": "#0D0F15",
-                "aira-card": "#12151D",
-                "aira-border": "#1E2330",
-                "aira-cyan": "#38BDF8",
+                // Channel variables so the logged-in console (.nb-console) can re-skin every page at once.
+                "aira-bg": "rgb(var(--c-aira-bg) / <alpha-value>)",
+                "aira-surface": "rgb(var(--c-aira-surface) / <alpha-value>)",
+                "aira-card": "rgb(var(--c-aira-card) / <alpha-value>)",
+                "aira-border": "rgb(var(--c-aira-border) / <alpha-value>)",
+                "aira-cyan": "rgb(var(--c-aira-cyan) / <alpha-value>)",
                 "aira-magenta": "#E2E8F0",
                 "aira-purple": "#60A5FA",
                 "aira-gold": "#F59E0B",

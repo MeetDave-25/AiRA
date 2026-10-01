@@ -110,8 +110,8 @@ export default function FloatingAdminMenu() {
             <div
                 className={`fixed z-[9990] transition-all duration-500 ease-out pointer-events-auto ${
                     isIdle && !isOpen
-                        ? "bottom-8 -right-2 opacity-35 hover:opacity-100 hover:right-4 scale-75 hover:scale-100"
-                        : "bottom-5 right-5 md:bottom-8 md:right-8 opacity-100 scale-100"
+                        ? "bottom-24 md:bottom-8 -right-2 opacity-40 hover:opacity-100 hover:right-4 scale-75 hover:scale-100"
+                        : "bottom-24 right-4 md:bottom-8 md:right-8 opacity-100 scale-100"
                 }`}
                 onMouseEnter={() => {
                     setIsIdle(false);
@@ -120,23 +120,11 @@ export default function FloatingAdminMenu() {
             >
                 <button
                     onClick={handleFabClick}
-                    className="relative group w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-tr from-aira-cyan via-aira-purple to-aira-magenta p-[2px] shadow-2xl shadow-aira-cyan/40 hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-aira-cyan/40 flex items-center justify-center"
+                    className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl border-2 border-nb-ink bg-nb-sun text-nb-ink shadow-[4px_4px_0_0_#6C5CE7] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#6C5CE7] active:shadow-none transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-nb-violet/50 flex items-center justify-center"
                     aria-label="Toggle admin control menu"
                     title={isIdle ? "Click to expand menu" : "Open Admin Menu"}
                 >
-                    <span className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-white group-hover:bg-slate-900 transition-colors">
-                        {isOpen ? (
-                            <X size={26} className="text-white animate-spin-fast" />
-                        ) : isIdle ? (
-                            <ChevronLeft size={24} className="text-aira-cyan animate-pulse -ml-0.5" />
-                        ) : (
-                            <Menu size={26} className="text-aira-cyan" />
-                        )}
-                    </span>
-                    {/* Glowing pulse ring when active */}
-                    {!isIdle && (
-                        <span className="absolute -inset-1 rounded-full bg-gradient-to-r from-aira-cyan to-aira-magenta opacity-40 blur-md group-hover:opacity-75 transition-opacity -z-10 animate-pulse" />
-                    )}
+                    {isOpen ? <X size={24} /> : isIdle ? <ChevronLeft size={22} className="-ml-0.5" /> : <ShieldCheck size={24} />}
                 </button>
             </div>
 
@@ -150,24 +138,24 @@ export default function FloatingAdminMenu() {
 
             {/* Slide-out Sidebar Menu */}
             <aside
-                className={`w-[85vw] max-w-xs sm:w-80 h-full border-r border-white/10 bg-slate-950/98 backdrop-blur-2xl flex flex-col fixed left-0 top-0 bottom-0 z-[9985] shadow-2xl shadow-black transform transition-transform duration-300 ease-out ${
+                className={`w-[85vw] max-w-xs sm:w-80 h-full border-r-2 border-nb-sun bg-[#111] text-[#F3EFE4] flex flex-col fixed left-0 top-0 bottom-0 z-[9985] shadow-2xl shadow-black transform transition-transform duration-300 ease-out ${
                     isOpen ? "translate-x-0" : "-translate-x-full"
                 }`}
             >
                 {/* Header */}
-                <div className="p-5 border-b border-white/10 flex items-center justify-between bg-slate-900/50">
+                <div className="p-5 border-b-2 border-[#F3EFE4]/10 flex items-center justify-between">
                     <Link href="/admin" onClick={() => setIsOpen(false)} className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-aira-cyan to-aira-purple flex items-center justify-center shadow-lg shadow-aira-cyan/20">
-                            <ShieldCheck size={20} className="text-white" />
+                        <div className="w-10 h-10 rounded-xl border-2 border-nb-ink bg-nb-sun flex items-center justify-center shadow-[3px_3px_0_0_#6C5CE7]">
+                            <ShieldCheck size={19} className="text-nb-ink" />
                         </div>
                         <div>
-                            <span className="font-orbitron font-bold text-base gradient-text-cyan">Admin Panel</span>
-                            <p className="text-[10px] text-slate-400 font-orbitron">LAB COMMAND CENTER</p>
+                            <span className="font-brico font-extrabold text-base text-[#F3EFE4]">Admin console</span>
+                            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-nb-sun">Lab command centre</p>
                         </div>
                     </Link>
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                        className="p-1.5 rounded-lg border-2 border-[#F3EFE4]/15 text-[#F3EFE4]"
                         aria-label="Close menu"
                     >
                         <X size={20} />
@@ -188,20 +176,18 @@ export default function FloatingAdminMenu() {
                                 key={link.href}
                                 href={link.href}
                                 onClick={() => setIsOpen(false)}
-                                className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border-2 font-brico text-sm transition-all ${
                                     isActive
-                                        ? "bg-aira-cyan/15 text-aira-cyan border border-aira-cyan/40 shadow-sm shadow-aira-cyan/10 font-semibold"
-                                        : link.highlight
-                                            ? "bg-gradient-to-r from-aira-magenta/15 to-aira-purple/15 text-aira-magenta border border-aira-magenta/30 hover:border-aira-magenta/60"
-                                            : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
+                                        ? "bg-nb-sun text-nb-ink border-nb-ink font-extrabold shadow-[3px_3px_0_0_#6C5CE7]"
+                                        : "border-transparent text-[#F3EFE4]/70 font-semibold hover:text-[#F3EFE4] hover:bg-[#F3EFE4]/[0.06]"
                                 }`}
                             >
                                 <div className="flex items-center gap-3">
-                                    <Icon size={18} className={isActive ? "text-aira-cyan" : link.highlight ? "text-aira-magenta" : "text-slate-400"} />
+                                    <Icon size={17} className={isActive ? "text-nb-ink" : "text-[#F3EFE4]/45"} />
                                     <span>{link.label}</span>
                                 </div>
                                 {link.highlight && (
-                                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-aira-magenta text-white uppercase tracking-wider animate-pulse">
+                                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border-2 border-nb-ink bg-nb-peach text-nb-ink uppercase tracking-wider">
                                         Live
                                     </span>
                                 )}
@@ -211,21 +197,21 @@ export default function FloatingAdminMenu() {
                 </nav>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-white/10 space-y-2 bg-slate-900/40">
+                <div className="p-4 border-t-2 border-[#F3EFE4]/10 space-y-2">
                     <Link
                         href="/portal/dashboard"
                         onClick={() => setIsOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-300 hover:text-white hover:bg-white/5 border border-white/5 transition-all"
+                        className="flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 border-[#F3EFE4]/15 font-brico font-semibold text-sm text-[#F3EFE4]/80 hover:text-[#F3EFE4] transition-all"
                     >
-                        <BarChart3 size={17} className="text-aira-cyan" />
+                        <BarChart3 size={17} className="text-nb-sun" />
                         Member Portal View
                     </Link>
                     <button
                         onClick={() => signOut({ callbackUrl: "/" })}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-aira-magenta hover:bg-aira-magenta/10 hover:border-aira-magenta/30 border border-transparent transition-all"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-nb-ink bg-[#F3EFE4] font-brico font-bold text-sm text-nb-ink shadow-[3px_3px_0_0_#6C5CE7] transition-all"
                     >
                         <LogOut size={17} />
-                        Logout
+                        Log out
                     </button>
                 </div>
             </aside>
