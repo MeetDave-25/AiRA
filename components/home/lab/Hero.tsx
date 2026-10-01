@@ -110,7 +110,17 @@ export default function Hero({
                         <MevySays>Hey, I&apos;m Mevy — welcome to our community! Scroll and I&apos;ll show you around.</MevySays>
                     </motion.div>
 
-                    <h1 className="mt-8 font-brico font-extrabold tracking-[-0.04em] leading-[1.04] text-[clamp(2.6rem,5.6vw,5.6rem)]">
+                    <motion.p
+                        initial={{ opacity: 0, y: 10, rotate: -2 }}
+                        animate={ready ? { opacity: 1, y: 0, rotate: -2 } : {}}
+                        transition={{ type: "spring", stiffness: 240, damping: 16, delay: 0.05 }}
+                        className="mt-8 inline-flex items-center gap-2 rounded-full border-2 border-nb-ink bg-nb-sun px-4 py-1.5 font-brico font-extrabold text-sm sm:text-base shadow-nb-sm"
+                    >
+                        <span className="w-2.5 h-2.5 rounded-full border-2 border-nb-ink bg-nb-mint" aria-hidden="true" />
+                        Led by LJCCA Students
+                    </motion.p>
+
+                    <h1 className="mt-5 font-brico font-extrabold tracking-[-0.04em] leading-[1.04] text-[clamp(2.6rem,5.6vw,5.6rem)]">
                         <span className="sr-only">AiRA Lab — </span>
                         <Mask play={ready} delay={0.1}>
                             A student-led
@@ -154,7 +164,7 @@ export default function Hero({
 
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={ready ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.8, ease: EASE, delay: 0.7 }}>
                         <p className="mt-8 max-w-lg text-lg text-nb-muted leading-relaxed">
-                            AiRA Lab is a student-led community at L J College of Computer Application, Ahmedabad. Students team up to ship software,
+                            AiRA Lab is a community led by LJCCA students at L J College of Computer Application, Ahmedabad. Students team up to ship software,
                             train AI models and build robots — mentored by faculty, run by students.
                         </p>
                         <div className="mt-8 flex flex-wrap items-center gap-4">

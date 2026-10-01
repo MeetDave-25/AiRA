@@ -269,13 +269,15 @@ export default function AboutPage() {
             });
         });
 
-        result.sort((a, b) => {
-            const aIsExec = a.name.toLowerCase().includes("founder") || a.name.toLowerCase().includes("mentor") || a.name.toLowerCase().includes("executive") || a.name.toLowerCase().includes("tech");
-            const bIsExec = b.name.toLowerCase().includes("founder") || b.name.toLowerCase().includes("mentor") || b.name.toLowerCase().includes("executive") || b.name.toLowerCase().includes("tech");
-            if (aIsExec && !bIsExec) return -1;
-            if (!aIsExec && bIsExec) return 1;
-            return b.allMembers.length - a.allMembers.length;
-        });
+        // Hierarchy: founders/executives first, then mentors/advisors, then the tech wing, then the rest by size.
+        const rank = (name: string) => {
+            const n = name.toLowerCase();
+            if (n.includes("founder") || n.includes("president") || n.includes("executive") || n.includes("board")) return 0;
+            if (n.includes("mentor") || n.includes("advisor") || n.includes("faculty")) return 1;
+            if (n.includes("tech")) return 2;
+            return 3;
+        };
+        result.sort((a, b) => rank(a.name) - rank(b.name) || b.allMembers.length - a.allMembers.length);
 
         return result;
     }, [adminTeams, members, president]);
