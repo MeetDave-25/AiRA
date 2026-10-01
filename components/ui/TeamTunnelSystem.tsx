@@ -66,6 +66,9 @@ export function TeamTunnelSystem({ items, onSelectMember }: TeamTunnelSystemProp
 
     const progressRef       = useRef(0);
     const targetProgressRef = useRef(0);
+    const autoPlayRef       = useRef(true);
+    const visibleRef        = useRef(true);
+    const activeIdxRef      = useRef(0);
 
     const [profiles, setProfiles]           = useState<TeamTunnelMember[]>([]);
     const [activeSlideIndex, setActiveSlideIndex] = useState(0);
@@ -122,6 +125,18 @@ export function TeamTunnelSystem({ items, onSelectMember }: TeamTunnelSystemProp
         }
     }, [items]);
 
+    // Read inside the render loop, so toggling play/pause doesn't rebuild the WebGL scene.
+    useEffect(() => { autoPlayRef.current = isAutoPlaying; }, [isAutoPlaying]);
+
+    // Stop rendering while the tunnel is scrolled off-screen (saves battery on phones).
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el || typeof IntersectionObserver === "undefined") return;
+        const io = new IntersectionObserver(([entry]) => { visibleRef.current = entry.isIntersecting; }, { rootMargin: "100px" });
+        io.observe(el);
+        return () => io.disconnect();
+    }, []);
+
     // Lazy-load Three.js + WebGL render loop (bounded inside container)
     useEffect(() => {
         if (!canvasContainerRef.current || profiles.length === 0) return;
@@ -161,11 +176,13 @@ export function TeamTunnelSystem({ items, onSelectMember }: TeamTunnelSystemProp
             let   lastTime   = performance.now();
 
             const loop = (time: number) => {
-                const dt = time - lastTime;
+                animationFrameId = requestAnimationFrame(loop);
+                const dt = Math.min(time - lastTime, 100);
                 lastTime = time;
+                if (!visibleRef.current) return;
                 uniforms.iTime.value += dt * 0.001;
 
-                if (isAutoPlaying) {
+                if (autoPlayRef.current) {
                     targetProgressRef.current += 0.0012;
                     if (targetProgressRef.current >= totalCount - 0.1) {
                         targetProgressRef.current = totalCount - 0.1;
@@ -177,7 +194,10 @@ export function TeamTunnelSystem({ items, onSelectMember }: TeamTunnelSystemProp
                 uniforms.scrollOffset.value = p;
 
                 const currentIdx = Math.max(0, Math.min(totalCount - 1, Math.round(p)));
-                setActiveSlideIndex(currentIdx);
+                if (currentIdx !== activeIdxRef.current) {
+                    activeIdxRef.current = currentIdx;
+                    setActiveSlideIndex(currentIdx);
+                }
 
                 const isMob = window.innerWidth < 640;
                 slideRefs.current.forEach((el, idx) => {
@@ -194,7 +214,7 @@ export function TeamTunnelSystem({ items, onSelectMember }: TeamTunnelSystemProp
                         const d = Math.abs(targetZ);
                         opacity = Math.max(0, 1 - d / 3200);
                         scale   = Math.max(0.4, 1 - d / 5000);
-                        blur    = Math.min(10, d / 320);
+                        blur    = isMob ? 0 : Math.min(10, d / 320);
                         el.style.pointerEvents = d < 400 ? "auto" : "none";
                     } else { opacity = 0; scale = 0.3; el.style.pointerEvents = "none"; }
 
@@ -204,7 +224,6 @@ export function TeamTunnelSystem({ items, onSelectMember }: TeamTunnelSystemProp
                 });
 
                 renderer.render(scene, camera);
-                animationFrameId = requestAnimationFrame(loop);
             };
 
             animationFrameId = requestAnimationFrame(loop);
@@ -228,7 +247,7 @@ export function TeamTunnelSystem({ items, onSelectMember }: TeamTunnelSystemProp
         });
 
         return () => { cleanupFn?.(); };
-    }, [profiles.length, isAutoPlaying]);
+    }, [profiles.length]);
 
     // Input handlers
     const goToSlide = useCallback((index: number) => {
@@ -261,13 +280,19 @@ export function TeamTunnelSystem({ items, onSelectMember }: TeamTunnelSystemProp
             isDraggingRef.current = false;
         };
 
-        let touchX = 0;
+        let touchX = 0, touchY = 0;
         const onTouchStart = (e: TouchEvent) => {
             touchX = e.touches[0].clientX;
+            touchY = e.touches[0].clientY;
         };
         const onTouchMove = (e: TouchEvent) => {
-            const dx = (touchX - e.touches[0].clientX) * 0.003;
+            const rawDx = touchX - e.touches[0].clientX;
+            const rawDy = touchY - e.touches[0].clientY;
             touchX = e.touches[0].clientX;
+            touchY = e.touches[0].clientY;
+            // Vertical drags scroll the page; only sideways swipes move through the tunnel.
+            if (Math.abs(rawDx) <= Math.abs(rawDy)) return;
+            const dx = rawDx * 0.006;
             setIsAutoPlaying(false);
             targetProgressRef.current = Math.max(0, Math.min(profiles.length - 0.1, targetProgressRef.current + dx));
         };
@@ -293,7 +318,7 @@ export function TeamTunnelSystem({ items, onSelectMember }: TeamTunnelSystemProp
     return (
         <div
             ref={containerRef}
-            className="relative w-full h-[520px] sm:h-[600px] md:h-[640px] rounded-3xl overflow-hidden border border-white/15 bg-[#02050B] shadow-[0_0_50px_rgba(0,0,0,0.8)] select-none my-6"
+            className="relative w-full h-[470px] sm:h-[600px] md:h-[640px] rounded-2xl sm:rounded-3xl overflow-hidden border border-white/15 bg-[#02050B] shadow-[0_0_50px_rgba(0,0,0,0.8)] select-none my-2 sm:my-6"
         >
             {/* 3D WebGL Shader Canvas (bounded inside section) */}
             <div ref={canvasContainerRef} className="absolute inset-0" style={{ zIndex: 0 }} />
@@ -316,7 +341,7 @@ export function TeamTunnelSystem({ items, onSelectMember }: TeamTunnelSystemProp
                         <div
                             key={profile.id || idx}
                             ref={el => { slideRefs.current[idx] = el; }}
-                            className="absolute top-1/2 left-1/2 w-[300px] sm:w-[340px] h-[400px] sm:h-[430px] rounded-3xl p-1 pointer-events-auto cursor-pointer"
+                            className="absolute top-1/2 left-1/2 w-[min(250px,72vw)] sm:w-[340px] h-[320px] sm:h-[430px] rounded-3xl p-1 pointer-events-auto cursor-pointer"
                             style={{
                                 willChange: "transform, opacity, filter",
                                 transformStyle: "preserve-3d",
@@ -332,12 +357,12 @@ export function TeamTunnelSystem({ items, onSelectMember }: TeamTunnelSystemProp
                                 if (onSelectMember) onSelectMember(profile);
                             }}
                         >
-                            <div className="relative w-full h-full rounded-[22px] bg-[#070D1B] p-4 flex flex-col justify-between overflow-hidden border border-cyan-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
+                            <div className="relative w-full h-full rounded-[22px] bg-[#070D1B] p-3 sm:p-4 flex flex-col justify-between overflow-hidden border border-cyan-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
                                 <div className="flex justify-between items-center z-10">
-                                    <span className="px-3 py-1 rounded-full bg-cyan-950/90 border border-cyan-400/50 text-cyan-300 text-[10px] font-mono font-extrabold uppercase tracking-wider shadow-lg">
+                                    <span className="px-2.5 sm:px-3 py-1 rounded-full bg-cyan-950/90 border border-cyan-400/50 text-cyan-300 text-[9px] sm:text-[10px] font-mono font-extrabold uppercase tracking-wider shadow-lg truncate max-w-[65%]">
                                         {profile.tag}
                                     </span>
-                                    <span className="text-white/60 font-mono text-[11px] font-semibold tracking-widest">
+                                    <span className="text-white/60 font-mono text-[10px] sm:text-[11px] font-semibold tracking-widest">
                                         {profile.catalogId}
                                     </span>
                                 </div>
@@ -355,10 +380,10 @@ export function TeamTunnelSystem({ items, onSelectMember }: TeamTunnelSystemProp
 
                                 <div className="z-10 pt-0.5 flex items-center justify-between">
                                     <div className="min-w-0 flex-1">
-                                        <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-white font-mono uppercase truncate">
+                                        <h3 className="text-sm sm:text-lg font-extrabold tracking-tight text-white font-mono uppercase truncate">
                                             {profile.name}
                                         </h3>
-                                        <p className="text-cyan-400 text-[11px] font-mono font-bold tracking-wide truncate">
+                                        <p className="text-cyan-400 text-[10px] sm:text-[11px] font-mono font-bold tracking-wide truncate">
                                             {profile.role}
                                         </p>
                                     </div>
@@ -373,47 +398,52 @@ export function TeamTunnelSystem({ items, onSelectMember }: TeamTunnelSystemProp
             </div>
 
             {/* ── TOP SECTION HEADER (Inside Container — No Overlap with Navbar) ── */}
-            <div className="absolute top-0 left-0 w-full px-5 py-4 flex justify-between items-center z-20 pointer-events-auto bg-gradient-to-b from-black/70 via-black/30 to-transparent">
+            <div className="absolute top-0 left-0 w-full px-3 sm:px-5 py-3 sm:py-4 flex justify-between items-center gap-2 z-20 pointer-events-auto bg-gradient-to-b from-black/70 via-black/30 to-transparent">
                 <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-                    <span className="font-mono text-xs font-bold text-white tracking-widest uppercase">
-                        3D TEAM HYPERSPACE TUNNEL
+                    <span className="font-mono text-[10px] sm:text-xs font-bold text-white tracking-widest uppercase">
+                        <span className="sm:hidden">TEAM TUNNEL</span>
+                        <span className="hidden sm:inline">3D TEAM HYPERSPACE TUNNEL</span>
                     </span>
                 </div>
                 <button
                     onClick={() => setIsAutoPlaying(p => !p)}
+                    aria-label={isAutoPlaying ? "Pause tunnel" : "Play tunnel"}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-[11px] font-mono tracking-wider transition-all cursor-pointer"
                 >
                     {isAutoPlaying ? <Pause size={12} /> : <Play size={12} />}
-                    <span>{isAutoPlaying ? "PAUSE" : "AUTO PLAY"}</span>
+                    <span className="hidden sm:inline">{isAutoPlaying ? "PAUSE" : "AUTO PLAY"}</span>
                 </button>
             </div>
 
             {/* ── BOTTOM SECTION CONTROLS (Inside Container — No Overlap with MEVY AI) ── */}
-            <div className="absolute bottom-0 left-0 w-full px-5 py-4 flex flex-col sm:flex-row justify-between items-center gap-3 z-20 pointer-events-auto bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+            <div className="absolute bottom-0 left-0 w-full px-3 sm:px-5 py-3 sm:py-4 flex justify-between items-center gap-3 z-20 pointer-events-auto bg-gradient-to-t from-black/80 via-black/40 to-transparent">
                 {/* Active profile badge */}
-                <div className="flex items-center gap-2">
-                    <span className="font-mono text-cyan-400 text-xs font-bold tracking-widest">
+                <div className="flex items-center gap-2 min-w-0">
+                    <span className="shrink-0 font-mono text-cyan-400 text-xs font-bold tracking-widest">
                         {String(activeSlideIndex + 1).padStart(2, "0")} / {String(profiles.length).padStart(2, "0")}
                     </span>
-                    <span className="text-white/30">•</span>
-                    <span className="font-mono text-xs text-white/90 tracking-wide uppercase truncate max-w-[200px] sm:max-w-[280px]">
+                    <span className="hidden sm:inline text-white/30">•</span>
+                    <span className="hidden sm:inline font-mono text-xs text-white/90 tracking-wide uppercase truncate max-w-[280px]">
                         {currentProfile?.name} ({currentProfile?.role})
+                    </span>
+                    <span className="sm:hidden font-mono text-[10px] text-white/50 uppercase tracking-wider truncate">
+                        ← swipe →
                     </span>
                 </div>
 
                 {/* Arrow Controls & Dots */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                     <button
                         onClick={() => goToSlide(Math.max(0, activeSlideIndex - 1))}
                         disabled={activeSlideIndex === 0}
-                        className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 border border-white/15 text-white transition-all cursor-pointer"
+                        className="p-2.5 sm:p-1.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 border border-white/15 text-white transition-all cursor-pointer"
                         aria-label="Previous"
                     >
                         <ChevronLeft size={15} />
                     </button>
 
-                    <div className="flex items-center gap-1 px-1">
+                    <div className="hidden sm:flex items-center gap-1 px-1">
                         {profiles.slice(0, 12).map((_, i) => (
                             <button
                                 key={i}
@@ -429,7 +459,7 @@ export function TeamTunnelSystem({ items, onSelectMember }: TeamTunnelSystemProp
                     <button
                         onClick={() => goToSlide(Math.min(profiles.length - 1, activeSlideIndex + 1))}
                         disabled={activeSlideIndex === profiles.length - 1}
-                        className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 border border-white/15 text-white transition-all cursor-pointer"
+                        className="p-2.5 sm:p-1.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 border border-white/15 text-white transition-all cursor-pointer"
                         aria-label="Next"
                     >
                         <ChevronRight size={15} />

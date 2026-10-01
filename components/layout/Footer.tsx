@@ -12,6 +12,7 @@ const NAV = [
     { href: "/achievements", label: "Achievements" },
     { href: "/leadership", label: "Leadership" },
     { href: "/join", label: "Join us" },
+    { href: "/contact", label: "Contact" },
 ];
 
 const SOCIAL = [
@@ -27,7 +28,7 @@ export default function Footer() {
                 {/* Big call to action */}
                 <div className="p-8 sm:p-12 lg:p-14 border-b-2 border-nb-paper/15 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
                     <div>
-                        <p className="font-mono text-xs uppercase tracking-[0.16em] text-nb-paper/50">Student-led · Software · AI · Robotics</p>
+                        <p className="font-mono text-xs uppercase tracking-[0.16em] text-nb-paper/50">Led by LJCCA students · Software · AI · Robotics</p>
                         <p className="mt-3 font-brico font-extrabold tracking-[-0.04em] leading-[0.92] text-[clamp(2.6rem,6.5vw,5.75rem)]">
                             Come build
                             <br />

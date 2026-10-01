@@ -2,7 +2,10 @@
 
 import { useEffect, useRef } from "react";
 
+export const ADSENSE_CLIENT = "ca-pub-3747182240775238";
+
 interface GoogleAdSlotProps {
+    /** Numeric ad-unit ID from AdSense → Ads → By ad unit. Falls back to NEXT_PUBLIC_ADSENSE_SLOT. */
     slot?: string;
     format?: "auto" | "fluid" | "rectangle" | "horizontal" | "vertical";
     responsive?: boolean;
@@ -10,11 +13,12 @@ interface GoogleAdSlotProps {
 }
 
 /**
- * Reusable Google AdSense Ad Unit Component
- * Automatically pushes to adsbygoogle array when mounted on client.
+ * Reusable Google AdSense ad unit.
+ * Renders nothing until a real ad-unit ID is configured (Auto ads from the head script still work),
+ * reserves height to avoid layout shift, and is clearly labelled as required by AdSense policy.
  */
 export default function GoogleAdSlot({
-    slot = "3747182240775238",
+    slot = process.env.NEXT_PUBLIC_ADSENSE_SLOT,
     format = "auto",
     responsive = true,
     className = "",
@@ -22,27 +26,33 @@ export default function GoogleAdSlot({
     const adRef = useRef<HTMLModElement>(null);
 
     useEffect(() => {
+        const el = adRef.current;
+        // Push once per <ins>; React strict mode re-runs effects, and a second push throws.
+        if (!el || el.dataset.adsPushed) return;
         try {
-            if (typeof window !== "undefined") {
-                const adsbygoogle = (window as any).adsbygoogle || [];
-                adsbygoogle.push({});
-            }
-        } catch (err) {
-            // ignore duplicate push or blocked ad errors
+            el.dataset.adsPushed = "1";
+            (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } catch {
+            // ad blocked or script not loaded yet
         }
-    }, []);
+    }, [slot]);
+
+    if (!slot) return null;
 
     return (
-        <div className={`my-6 flex items-center justify-center overflow-hidden ${className}`}>
-            <ins
-                ref={adRef}
-                className="adsbygoogle"
-                style={{ display: "block" }}
-                data-ad-client="ca-pub-3747182240775238"
-                data-ad-slot={slot}
-                data-ad-format={format}
-                data-full-width-responsive={responsive ? "true" : "false"}
-            />
-        </div>
+        <aside aria-label="Advertisement" className={`my-8 ${className}`}>
+            <p className="mb-1.5 text-center font-mono text-[10px] uppercase tracking-[0.16em] text-nb-muted">Advertisement</p>
+            <div className="min-h-[100px] flex items-center justify-center overflow-hidden">
+                <ins
+                    ref={adRef}
+                    className="adsbygoogle"
+                    style={{ display: "block", width: "100%" }}
+                    data-ad-client={ADSENSE_CLIENT}
+                    data-ad-slot={slot}
+                    data-ad-format={format}
+                    data-full-width-responsive={responsive ? "true" : "false"}
+                />
+            </div>
+        </aside>
     );
 }

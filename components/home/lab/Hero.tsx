@@ -8,7 +8,7 @@ const STICKERS: { text: string; className: string; rotate: number; pos: string }
     { text: "Software", className: "bg-nb-sky", rotate: -12, pos: "left-[0%] top-[20%]" },
     { text: "AI ✦", className: "bg-nb-peach", rotate: 8, pos: "right-[2%] top-[24%]" },
     { text: "Robotics", className: "bg-nb-mint", rotate: -6, pos: "left-[-2%] bottom-[22%]" },
-    { text: "Student-led", className: "bg-nb-sun", rotate: 10, pos: "right-[0%] bottom-[16%]" },
+    { text: "Led by LJCCA students", className: "bg-nb-sun", rotate: 10, pos: "right-[0%] bottom-[16%]" },
 ];
 
 /** The lab "access pass": hangs on a lanyard, swings with the cursor and scroll; Mevy pops out of the photo window. */
@@ -184,7 +184,7 @@ export default function Hero({
                             initial={{ opacity: 0, scale: 0.5, rotate: s.rotate }}
                             animate={ready ? { opacity: 1, scale: 1, rotate: s.rotate } : {}}
                             transition={{ type: "spring", stiffness: 260, damping: 16, delay: 1.2 + i * 0.12 }}
-                            className={`absolute ${s.pos} z-20 cursor-grab touch-none select-none rounded-xl border-2 border-nb-ink px-4 py-2 font-brico font-extrabold text-lg shadow-nb ${s.className}`}
+                            className={`absolute ${s.pos} z-20 cursor-grab touch-none select-none whitespace-nowrap rounded-xl border-2 border-nb-ink px-4 py-2 font-brico font-extrabold text-lg shadow-nb ${s.className}`}
                         >
                             {s.text}
                         </motion.button>

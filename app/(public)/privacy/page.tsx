@@ -83,6 +83,27 @@ const sections: LegalSection[] = [
         ),
     },
     {
+        id: "advertising",
+        title: "Advertising and third-party cookies",
+        body: (
+            <>
+                <p>
+                    We use Google AdSense to show ads that help cover the lab&apos;s hosting costs. Third-party vendors, including Google, use
+                    cookies to serve ads based on a user&apos;s prior visits to this website or other websites. Google&apos;s use of advertising
+                    cookies enables it and its partners to serve ads to you based on your visit to this site and/or other sites on the Internet.
+                </p>
+                <p>
+                    You may opt out of personalised advertising by visiting{" "}
+                    <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer">Google Ads Settings</a>, or opt out of some
+                    third-party vendors&apos; use of cookies for personalised advertising at{" "}
+                    <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer">www.aboutads.info</a>. On this site,
+                    ads stay non-personalised unless you allow advertising cookies in <em>Cookie Settings</em>. See our{" "}
+                    <Link href="/cookies">Cookie Policy</Link> for details.
+                </p>
+            </>
+        ),
+    },
+    {
         id: "retention",
         title: "How long we keep data",
         body: (

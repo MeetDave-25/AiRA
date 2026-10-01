@@ -4,12 +4,13 @@ import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Github, Linkedin, ExternalLink, Sparkles, Zap, Cpu, Code2, BrainCircuit, Trophy, Users, Rocket, Crown, Quote, Orbit as OrbitIcon } from "lucide-react";
 import dynamic from "next/dynamic";
+import LabDNA from "@/components/about/LabDNA";
 import { BLOCK_COLORS, Block, Btn, Button, Card, Chip, EASE, Empty, Mask, MevySays, SearchInput, SectionHead, WRAP } from "@/components/nb/kit";
 
 const TeamTunnelSystem = dynamic(() => import("@/components/ui/TeamTunnelSystem"), {
     ssr: false,
     loading: () => (
-        <div className="w-full h-[540px] sm:h-[620px] flex items-center justify-center font-mono text-xs text-white/50 animate-pulse">
+        <div className="w-full h-[470px] sm:h-[620px] flex items-center justify-center font-mono text-xs text-white/50 animate-pulse">
             Loading the 3D team tunnel…
         </div>
     ),
@@ -357,10 +358,10 @@ export default function AboutPage() {
             {/* Hero */}
             <header className={`${WRAP} pt-32 sm:pt-36 pb-12 grid lg:grid-cols-12 gap-10 items-end`}>
                 <div className="lg:col-span-8">
-                    <MevySays className="mb-8">This is us — a student-led community. Let me introduce everyone!</MevySays>
-                    <p className="font-mono text-xs uppercase tracking-[0.16em] text-nb-muted">About AiRA Lab</p>
-                    <h1 className="mt-3 font-brico font-extrabold tracking-[-0.04em] leading-[1] text-[clamp(2.8rem,7vw,6rem)]">
-                        <Mask play>Run by students.</Mask>
+                    <MevySays className="mb-8">This is us — led by LJCCA students. Let me introduce everyone!</MevySays>
+                    <p className="font-mono text-xs uppercase tracking-[0.16em] text-nb-muted">About AiRA Lab · L J College of Computer Application</p>
+                    <h1 className="mt-3 font-brico font-extrabold tracking-[-0.04em] leading-[1.02] text-[clamp(2.25rem,7vw,6rem)] break-words">
+                        <Mask play>Led by LJCCA students.</Mask>
                         <Mask play delay={0.1}>
                             Built{" "}
                             <Block color="bg-nb-sun" tilt={-2}>
@@ -370,7 +371,7 @@ export default function AboutPage() {
                     </h1>
                     <p className="mt-6 max-w-2xl text-lg text-nb-muted leading-relaxed">
                         {settings.lab_about_text ||
-                            "AiRA Lab is a student-led community at L J College of Computer Application where students team up to build software, AI and robotics — and help each other learn along the way."}
+                            "AiRA Lab is led by LJCCA students — a community at L J College of Computer Application where students team up to build software, AI and robotics — and help each other learn along the way."}
                     </p>
                 </div>
                 <div className="lg:col-span-4 grid grid-cols-2 gap-3">
@@ -388,9 +389,9 @@ export default function AboutPage() {
 
             {/* 3D team tunnel — kept as a dark "screen" inside the page */}
             <section id="about-content" className={WRAP}>
-                <div className="rounded-[28px] border-2 border-nb-ink bg-nb-ink shadow-nb-lg overflow-hidden">
-                    <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 border-b-2 border-white/10 text-white">
-                        <span className="flex items-center gap-2 font-brico font-bold">
+                <div className="-mx-2 sm:mx-0 rounded-[22px] sm:rounded-[28px] border-2 border-nb-ink bg-nb-ink shadow-nb sm:shadow-nb-lg overflow-hidden">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 px-4 sm:px-5 py-3 border-b-2 border-white/10 text-white">
+                        <span className="flex items-center gap-2 font-brico font-bold text-sm sm:text-base">
                             <span className="flex gap-1.5" aria-hidden="true">
                                 <span className="w-3 h-3 rounded-full bg-nb-peach" />
                                 <span className="w-3 h-3 rounded-full bg-nb-sun" />
@@ -399,9 +400,9 @@ export default function AboutPage() {
                             <OrbitIcon size={16} className="ml-2" /> The team, in 3D
                         </span>
                         {activeTeamDivision ? (
-                            <span className="flex items-center gap-2 font-mono text-xs">
-                                Focused: <strong>{activeTeamDivision.name}</strong> · {activeTeamDivision.allMembers.length} members
-                                <button onClick={() => setSelectedTeamId(null)} className="rounded-lg border border-white/30 px-2 py-0.5 hover:bg-white/10">
+                            <span className="flex flex-wrap items-center gap-x-2 gap-y-1.5 font-mono text-xs">
+                                <span className="min-w-0 truncate">Focused: <strong>{activeTeamDivision.name}</strong> · {activeTeamDivision.allMembers.length} members</span>
+                                <button onClick={() => setSelectedTeamId(null)} className="shrink-0 rounded-lg border border-white/30 px-2 py-0.5 hover:bg-white/10">
                                     Show everyone ✕
                                 </button>
                             </span>
@@ -409,7 +410,7 @@ export default function AboutPage() {
                             <span className="font-mono text-xs text-white/50">Tap anyone to open their profile</span>
                         )}
                     </div>
-                    <div className="px-2 sm:px-4">
+                    <div className="px-1.5 sm:px-4">
                         <TeamTunnelSystem items={tunnelMembers} onSelectMember={(m) => setSelectedMember(m)} />
                     </div>
                 </div>
@@ -440,6 +441,11 @@ export default function AboutPage() {
                         );
                     })}
                 </div>
+            </section>
+
+            {/* Lab DNA — name + three taps grow a unique helix and match you to a team */}
+            <section className={`${WRAP} pt-24`}>
+                <LabDNA teams={teamDivisions} />
             </section>
 
             {/* Meet Mevy */}
