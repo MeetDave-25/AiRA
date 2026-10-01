@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import LandingLogoReveal from "@/components/ui/LandingLogoReveal";
+import WriteIntro from "@/components/home/WriteIntro";
 import Hero from "./Hero";
 import Deck from "./Deck";
 import Tickers from "./Tickers";
@@ -46,7 +46,7 @@ export default function LabHome() {
 
     return (
         <div className="relative bg-nb-paper text-nb-ink overflow-x-clip">
-            <LandingLogoReveal onComplete={onIntroDone} forceShow={replayIntro} />
+            <WriteIntro onComplete={onIntroDone} forceShow={replayIntro} />
             <Hero ready={ready} onReplayIntro={() => setReplayIntro(true)} stats={{ members: stats.members, projects: projects.length }} />
             <Deck />
             <Tickers stats={stats} projects={projects.length} loading={loading} />

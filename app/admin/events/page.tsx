@@ -85,8 +85,25 @@ export default function AdminEventsPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingModalData, setIsLoadingModalData] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [posterFile, setPosterFile] = useState<File | null>(null);
+    const [posterDragOver, setPosterDragOver] = useState(false);
     const [existingImages, setExistingImages] = useState<any[]>([]);
     const [draggedImageId, setDraggedImageId] = useState<string | null>(null);
+
+    const posterPreview = useMemo(() => (posterFile ? URL.createObjectURL(posterFile) : null), [posterFile]);
+    const currentPoster = useMemo(
+        () => existingImages.find((img) => img.isPrimary && !isVideoMedia(img)) || existingImages.find((img) => !isVideoMedia(img)) || null,
+        [existingImages]
+    );
+
+    const pickPoster = (file?: File | null) => {
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            toast.error("The poster must be an image (JPG, PNG or WebP).");
+            return;
+        }
+        setPosterFile(file);
+    };
 
     const selectedPreviews = useMemo(
         () => selectedFiles.map((file) => ({ url: URL.createObjectURL(file), mediaType: file.type })),
@@ -155,6 +172,7 @@ export default function AdminEventsPage() {
     const openCreateModal = () => {
         setForm({ ...baseForm, venue: "AiRA Lab", isUpcoming: true });
         setSelectedFiles([]);
+        setPosterFile(null);
         setExistingImages([]);
         setEditingEvent(null);
         setIsCreateOpen(true);
@@ -164,6 +182,7 @@ export default function AdminEventsPage() {
         setIsLoadingModalData(true);
         setEditingEvent(event);
         setSelectedFiles([]);
+        setPosterFile(null);
         try {
             const res = await fetch(`/api/events/${event.id}`);
             const full = await res.json();
@@ -197,12 +216,11 @@ export default function AdminEventsPage() {
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.error || "Failed to create event");
 
-            if (selectedFiles.length) {
-                try {
-                    await uploadImages(data.id, selectedFiles, true);
-                } catch (uploadError: any) {
-                    toast.error(uploadError?.message || "Event created but image upload failed");
-                }
+            try {
+                if (posterFile) await uploadImages(data.id, [posterFile], true);
+                if (selectedFiles.length) await uploadImages(data.id, selectedFiles, !posterFile);
+            } catch (uploadError: any) {
+                toast.error(uploadError?.message || "Event created but image upload failed");
             }
 
             toast.success("Event created!");
@@ -233,12 +251,11 @@ export default function AdminEventsPage() {
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.error || "Failed to update event");
 
-            if (selectedFiles.length) {
-                try {
-                    await uploadImages(editingEvent.id, selectedFiles, existingImages.length === 0);
-                } catch (uploadError: any) {
-                    toast.error(uploadError?.message || "Event updated but image upload failed");
-                }
+            try {
+                if (posterFile) await uploadImages(editingEvent.id, [posterFile], true);
+                if (selectedFiles.length) await uploadImages(editingEvent.id, selectedFiles, !posterFile && existingImages.length === 0);
+            } catch (uploadError: any) {
+                toast.error(uploadError?.message || "Event updated but image upload failed");
             }
 
             toast.success("Event updated!");
@@ -338,6 +355,49 @@ export default function AdminEventsPage() {
 
     const EventFormFields = (
         <div className="max-h-[68vh] overflow-y-auto pr-1 space-y-4">
+            {/* Event poster — becomes the event's main image on the website */}
+            <div className="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-4 rounded-xl border-2 border-dashed border-aira-cyan/40 bg-slate-900/40 p-3">
+                <label
+                    onDragOver={(e) => { e.preventDefault(); setPosterDragOver(true); }}
+                    onDragLeave={() => setPosterDragOver(false)}
+                    onDrop={(e) => { e.preventDefault(); setPosterDragOver(false); pickPoster(e.dataTransfer.files?.[0]); }}
+                    className={`relative mx-auto sm:mx-0 w-[180px] aspect-[4/5] rounded-xl border-2 overflow-hidden cursor-pointer flex items-center justify-center text-center transition-colors ${
+                        posterDragOver ? "border-aira-cyan bg-aira-cyan/10" : "border-white/15 bg-slate-900 hover:border-aira-cyan/60"
+                    }`}
+                >
+                    <input type="file" accept="image/*" className="sr-only" onChange={(e) => { pickPoster(e.target.files?.[0]); e.target.value = ""; }} />
+                    {posterPreview || currentPoster ? (
+                        <img src={posterPreview || currentPoster.url} alt="Event poster" className="absolute inset-0 w-full h-full object-cover" />
+                    ) : (
+                        <span className="px-3 text-xs text-slate-400">
+                            <ImagePlus size={26} className="mx-auto mb-2 text-aira-cyan" />
+                            Drop the poster here or <span className="text-aira-cyan font-semibold">browse</span>
+                        </span>
+                    )}
+                    {posterPreview && (
+                        <span className="absolute left-1.5 top-1.5 text-[10px] px-1.5 py-0.5 rounded bg-aira-cyan text-aira-bg font-bold">New</span>
+                    )}
+                </label>
+                <div className="flex flex-col justify-center gap-2 text-sm">
+                    <p className="font-semibold text-white">Event poster</p>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                        Shown on the events page, the event detail page and when the link is shared. A portrait image (4:5, e.g. 1080×1350) looks best.
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                        <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg bg-aira-cyan/20 px-3 py-1.5 text-xs font-semibold text-aira-cyan hover:bg-aira-cyan/30">
+                            <input type="file" accept="image/*" className="sr-only" onChange={(e) => { pickPoster(e.target.files?.[0]); e.target.value = ""; }} />
+                            <ImagePlus size={13} /> {posterPreview || currentPoster ? "Replace poster" : "Upload poster"}
+                        </label>
+                        {posterFile && (
+                            <button type="button" onClick={() => setPosterFile(null)} className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5">
+                                <Trash2 size={12} /> Undo
+                            </button>
+                        )}
+                    </div>
+                    {posterFile && <p className="text-[11px] text-slate-500 truncate">{posterFile.name} — uploads when you save</p>}
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                     <label className="block text-xs text-slate-400 mb-1">Event title</label>
@@ -420,7 +480,7 @@ export default function AdminEventsPage() {
             </div>
 
             <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3 space-y-2">
-                <label className="block text-xs text-slate-400">Add event media (images or videos)</label>
+                <label className="block text-xs text-slate-400">Gallery photos & videos (optional)</label>
                 <input
                     type="file"
                     multiple
@@ -437,7 +497,7 @@ export default function AdminEventsPage() {
                                 ) : (
                                     <img src={url} alt={`Selected ${idx + 1}`} className="h-full w-full object-cover" />
                                 )}
-                                {idx === 0 && <span className="absolute left-1 top-1 text-[10px] px-1.5 py-0.5 rounded bg-aira-cyan/80 text-aira-bg font-semibold">Primary</span>}
+                                {idx === 0 && !posterFile && !currentPoster && <span className="absolute left-1 top-1 text-[10px] px-1.5 py-0.5 rounded bg-aira-cyan/80 text-aira-bg font-semibold">Primary</span>}
                                 {mediaType.startsWith("video/") && (
                                     <span className="absolute right-1 top-1 inline-flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
                                         <Film size={10} /> Video
