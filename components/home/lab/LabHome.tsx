@@ -8,6 +8,7 @@ import Tickers from "./Tickers";
 import Metro from "./Metro";
 import WorkStrip, { toWorkItems } from "./WorkStrip";
 import Ticket from "./Ticket";
+import MevyLight from "./MevyLight";
 
 /**
  * Homepage — a guided tour of the lab, narrated by Mevy (our AI guide), in a neo-brutal style:
@@ -49,6 +50,7 @@ export default function LabHome() {
             <Hero ready={ready} onReplayIntro={() => setReplayIntro(true)} stats={{ members: stats.members, projects: projects.length }} />
             <Deck />
             <Tickers stats={stats} projects={projects.length} loading={loading} />
+            <MevyLight />
             <Metro />
             <WorkStrip items={work} />
             <Ticket />
