@@ -3,11 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-    Send, X, Trash2, Minus, Maximize2, Move, RotateCcw, 
-    Sparkles, Volume2, VolumeX, Mic, MicOff, Radio, 
-    Shield, Cpu, Zap, Activity, Terminal
-} from "lucide-react";
+import { Send, X, Trash2, Minus, Maximize2, RotateCcw, Sparkles, Volume2, VolumeX, Mic, MicOff, Radio } from "lucide-react";
 import toast from "react-hot-toast";
 import { playJarvisChime, playJarvisBlip, playJarvisTransmission, speakJarvis, stopSpeaking } from "@/lib/audio";
 
@@ -16,17 +12,13 @@ interface Message {
     content: string;
 }
 
-// 🤖 Official Holographic Arc Reactor Avatar for Jarvis / 3D Wolf
+// Mevy avatar tile (looping mascot clip) in the neo-brutal style.
 export function JarvisAvatar({ size = 38, isSpeaking = false }: { size?: number; isSpeaking?: boolean }) {
     return (
         <div
             style={{ width: `${size}px`, height: `${size}px` }}
-            className="relative shrink-0 rounded-2xl overflow-hidden border border-sky-400/70 shadow-[0_0_20px_rgba(56,189,248,0.5)] select-none bg-[#070b1a] flex items-center justify-center"
+            className={`relative shrink-0 rounded-xl overflow-hidden border-2 border-nb-ink bg-nb-lilac select-none ${isSpeaking ? "ring-2 ring-nb-sun ring-offset-1" : ""}`}
         >
-            {/* Spinning Arc Reactor Rings */}
-            <div className="absolute inset-0 rounded-2xl border border-dashed border-sky-400/40 animate-spin [animation-duration:10s] pointer-events-none" />
-            <div className="absolute inset-1 rounded-xl border border-purple-500/40 animate-spin [animation-duration:5s] [animation-direction:reverse] pointer-events-none" />
-
             <video
                 src="/aira-mascot-loop.mp4"
                 autoPlay
@@ -35,24 +27,27 @@ export function JarvisAvatar({ size = 38, isSpeaking = false }: { size?: number;
                 playsInline
                 preload="auto"
                 poster="/mascot.png"
-                className="w-full h-full object-cover object-center relative z-10"
+                className="w-full h-full object-cover object-center"
                 onEnded={(e) => {
                     e.currentTarget.currentTime = 0;
                     e.currentTarget.play().catch(() => {});
                 }}
             />
-
-            {/* Speaking Audio Glow Pulse */}
-            {isSpeaking && (
-                <div className="absolute inset-0 bg-sky-400/30 blur-sm animate-pulse z-20 pointer-events-none" />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-sky-950/60 via-transparent to-transparent pointer-events-none z-20" />
         </div>
     );
 }
 
 export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 sm:right-8 z-40" }: { className?: string }) {
     const [mounted, setMounted] = useState(false);
+    const [footerInView, setFooterInView] = useState(false);
+
+    useEffect(() => {
+        const footer = document.querySelector("footer");
+        if (!footer || typeof IntersectionObserver === "undefined") return;
+        const io = new IntersectionObserver(([e]) => setFooterInView(e.isIntersecting), { threshold: 0.05 });
+        io.observe(footer);
+        return () => io.disconnect();
+    }, []);
     const [isOpen, setIsOpen] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
     const [inputMessage, setInputMessage] = useState("");
@@ -251,7 +246,7 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
 
     return (
         <>
-            {/* ══ STARK ARC REACTOR TRIGGER BUTTON (FLOATING HUD ICON) ══ */}
+            {/* Floating launcher */}
             <div className={`${className} font-sans select-none pointer-events-auto flex items-center justify-end`}>
                 <motion.div
                     initial={{ scale: 0, opacity: 0 }}
@@ -259,68 +254,58 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
                     transition={{ type: "spring", stiffness: 260, damping: 20 }}
                     className="relative flex items-center"
                 >
-                    {/* Floating Label / Tooltip (Visible when closed) */}
-                    {!isOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, x: 10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="mr-3 hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-950/90 border border-sky-400/40 text-xs text-sky-300 font-orbitron font-bold shadow-[0_0_20px_rgba(56,189,248,0.25)] backdrop-blur-xl pointer-events-none"
-                        >
-                            <Sparkles size={12} className="text-cyan-300 animate-pulse" />
-                            <span>Ask MEVY AI</span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
-                        </motion.div>
-                    )}
+                    <AnimatePresence>
+                        {!isOpen && !footerInView && (
+                            <motion.button
+                                type="button"
+                                initial={{ opacity: 0, x: 10, rotate: 0 }}
+                                animate={{ opacity: 1, x: 0, rotate: -2 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                onClick={() => { setIsOpen(true); setIsMinimized(false); if (soundEnabled) playJarvisChime(); }}
+                                className="mr-3 hidden sm:inline-flex items-center gap-1.5 rounded-full border-2 border-nb-ink bg-nb-sun px-3 py-1.5 font-brico font-bold text-sm text-nb-ink shadow-[3px_3px_0_0_#111]"
+                            >
+                                <Sparkles size={13} /> Ask Mevy
+                                <span className="w-2 h-2 rounded-full border border-nb-ink bg-nb-mint" />
+                            </motion.button>
+                        )}
+                    </AnimatePresence>
 
-                    {/* Circular Arc Reactor Button */}
-                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center">
-                        {/* Perfect Circular Rotating Reactor Rings */}
-                        <div className="absolute -inset-1.5 rounded-full border border-dashed border-sky-400/40 animate-spin [animation-duration:14s] pointer-events-none" />
-                        <div className="absolute -inset-0.5 rounded-full bg-gradient-to-tr from-sky-400/30 via-cyan-400/20 to-purple-600/30 blur-md opacity-80 pointer-events-none" />
-
-                        <motion.button
-                            whileHover={{ scale: 1.08 }}
-                            whileTap={{ scale: 0.92 }}
-                            type="button"
-                            onClick={() => {
-                                const nextOpen = !isOpen;
-                                setIsOpen(nextOpen);
-                                setIsMinimized(false);
-                                if (soundEnabled) playJarvisChime();
-                            }}
-                            className="relative w-full h-full rounded-full bg-[#070b1a] hover:bg-[#0c142e] border-2 border-sky-400 hover:border-cyan-300 shadow-[0_0_30px_rgba(56,189,248,0.55)] text-white flex items-center justify-center cursor-pointer transition-all overflow-hidden z-10"
-                            title="Chat with Mevy - AiRA Lab AI Guide"
-                            aria-label="Open AI Assistant"
-                        >
-                            {isOpen ? (
-                                <div className="flex items-center justify-center text-sky-300">
-                                    <X size={24} className="hover:rotate-90 transition-transform" />
-                                </div>
-                            ) : (
-                                <div className="relative w-full h-full flex items-center justify-center">
-                                    <video
-                                        src="/aira-mascot-loop.mp4"
-                                        autoPlay
-                                        loop
-                                        muted
-                                        playsInline
-                                        preload="auto"
-                                        poster="/mascot.png"
-                                        className="w-full h-full object-cover object-center"
-                                        onEnded={(e) => {
-                                            e.currentTarget.currentTime = 0;
-                                            e.currentTarget.play().catch(() => {});
-                                        }}
-                                    />
-                                    {isSpeaking && (
-                                        <div className="absolute inset-0 bg-sky-400/30 blur-sm animate-pulse pointer-events-none" />
-                                    )}
-                                    {/* Live status dot */}
-                                    <span className="absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#070b1a] shadow-[0_0_8px_#34d399]" />
-                                </div>
-                            )}
-                        </motion.button>
-                    </div>
+                    <motion.button
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.94 }}
+                        type="button"
+                        onClick={() => {
+                            const nextOpen = !isOpen;
+                            setIsOpen(nextOpen);
+                            setIsMinimized(false);
+                            if (soundEnabled) playJarvisChime();
+                        }}
+                        className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 border-nb-ink bg-nb-lilac text-nb-ink shadow-[4px_4px_0_0_#111] overflow-hidden flex items-center justify-center cursor-pointer"
+                        title="Chat with Mevy, the AiRA Lab guide"
+                        aria-label={isOpen ? "Close Mevy chat" : "Open Mevy chat"}
+                    >
+                        {isOpen ? (
+                            <X size={24} />
+                        ) : (
+                            <>
+                                <video
+                                    src="/aira-mascot-loop.mp4"
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    preload="auto"
+                                    poster="/mascot.png"
+                                    className="w-full h-full object-cover object-center"
+                                    onEnded={(e) => {
+                                        e.currentTarget.currentTime = 0;
+                                        e.currentTarget.play().catch(() => {});
+                                    }}
+                                />
+                                <span className="absolute bottom-1 right-1 w-3 h-3 rounded-full border-2 border-nb-ink bg-nb-mint" />
+                            </>
+                        )}
+                    </motion.button>
                 </motion.div>
             </div>
 
@@ -342,40 +327,22 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.9, y: 30 }}
                                 transition={{ duration: 0.25, ease: "easeOut" }}
-                                className={`pointer-events-auto w-[95vw] sm:w-[410px] md:w-[450px] bg-[#070b1a] border-2 border-sky-400/60 rounded-3xl shadow-[0_0_70px_rgba(56,189,248,0.35)] flex flex-col overflow-hidden relative transition-all duration-300 z-[99999999] ${
+                                className={`pointer-events-auto w-[95vw] sm:w-[410px] md:w-[440px] bg-nb-paper text-nb-ink border-2 border-nb-ink rounded-[24px] shadow-[8px_8px_0_0_#111] flex flex-col overflow-hidden relative transition-[height] duration-300 z-[99999999] ${
                                     isMinimized ? "h-[68px]" : "h-[580px] max-h-[88vh]"
                                 }`}
                             >
-                                {/* ══ HOLOGRAPHIC SCANLINES & CYBER CORNERS ══ */}
-                                <div className="absolute inset-0 bg-[linear-gradient(rgba(56,189,248,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.03)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-                                
-                                {/* Corner Stark Brackets */}
-                                <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-sky-400 pointer-events-none" />
-                                <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-sky-400 pointer-events-none" />
-                                <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-purple-400 pointer-events-none" />
-                                <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-purple-400 pointer-events-none" />
-
                                 {/* ══ TOP STARK HUD HEADER - DRAG HANDLE ══ */}
-                                <div className="p-3 px-4 border-b border-sky-400/30 bg-[#050814] flex items-center justify-between relative z-10 shrink-0 cursor-grab active:cursor-grabbing select-none">
+                                <div className="p-3 px-4 border-b-2 border-nb-ink bg-nb-sun flex items-center justify-between relative z-10 shrink-0 cursor-grab active:cursor-grabbing select-none">
                                     <div
                                         className="flex items-center gap-3 cursor-pointer"
                                         onClick={() => setIsMinimized(!isMinimized)}
                                     >
                                         <JarvisAvatar size={34} isSpeaking={isSpeaking} />
                                         <div>
-                                            <div className="flex items-center gap-2">
-                                                <h3 className="font-orbitron font-black text-xs sm:text-sm text-transparent bg-clip-text bg-gradient-to-r from-white via-sky-200 to-cyan-300 tracking-wider">
-                                                    MEVY · AI GUIDE
-                                                </h3>
-                                                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/40 font-mono font-bold flex items-center gap-1">
-                                                    <Activity size={9} className="text-emerald-400" /> ONLINE
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
-                                                <span className="text-cyan-400 flex items-center gap-0.5">
-                                                    <Cpu size={10} /> NEURAL LINK 99.8%
-                                                </span>
-                                            </div>
+                                            <h3 className="font-brico font-extrabold text-base leading-none">Mevy</h3>
+                                            <p className="mt-1 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-nb-ink/70">
+                                                <span className="w-2 h-2 rounded-full border border-nb-ink bg-nb-mint" /> Online
+                                            </p>
                                         </div>
                                     </div>
 
@@ -390,11 +357,7 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
                                                 if (next) playJarvisBlip();
                                                 toast.success(next ? "Sound FX Enabled" : "Sound FX Muted");
                                             }}
-                                            className={`p-1.5 rounded-lg border transition-colors ${
-                                                soundEnabled
-                                                    ? "text-sky-300 border-sky-400/40 bg-sky-950/40"
-                                                    : "text-slate-500 border-white/10 hover:text-white"
-                                            }`}
+                                            className={`p-1.5 rounded-lg border-2 border-nb-ink transition-colors ${soundEnabled ? "bg-white" : "bg-transparent opacity-50"}`}
                                             title={soundEnabled ? "Mute UI Sound FX" : "Enable Sound FX"}
                                         >
                                             {soundEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
@@ -415,11 +378,7 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
                                                 }
                                                 toast.success(next ? "Voice Output Active 🗣️" : "Voice Output Disabled");
                                             }}
-                                            className={`p-1.5 rounded-lg border transition-colors ${
-                                                voiceOutputEnabled
-                                                    ? "text-purple-300 border-purple-500/50 bg-purple-950/60 animate-pulse"
-                                                    : "text-slate-500 border-white/10 hover:text-white"
-                                            }`}
+                                            className={`p-1.5 rounded-lg border-2 border-nb-ink transition-colors ${voiceOutputEnabled ? "bg-nb-violet text-white" : "bg-transparent opacity-50"}`}
                                             title={voiceOutputEnabled ? "Disable Jarvis Voice Output" : "Enable Jarvis Voice Output"}
                                         >
                                             <Radio size={13} />
@@ -429,7 +388,7 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
                                         <button
                                             type="button"
                                             onClick={handleResetPosition}
-                                            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                                            className="p-1.5 rounded-lg border-2 border-transparent hover:border-nb-ink hover:bg-white transition-colors"
                                             title="Reset HUD Position"
                                         >
                                             <RotateCcw size={13} />
@@ -439,7 +398,7 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
                                             <button
                                                 type="button"
                                                 onClick={handleClearChat}
-                                                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                                                className="p-1.5 rounded-lg border-2 border-transparent hover:border-nb-ink hover:bg-white transition-colors"
                                                 title="Purge Memory"
                                             >
                                                 <Trash2 size={13} />
@@ -449,7 +408,7 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
                                         <button
                                             type="button"
                                             onClick={() => setIsMinimized(!isMinimized)}
-                                            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                                            className="p-1.5 rounded-lg border-2 border-transparent hover:border-nb-ink hover:bg-white transition-colors"
                                             title={isMinimized ? "Expand HUD" : "Minimize HUD"}
                                         >
                                             {isMinimized ? <Maximize2 size={13} /> : <Minus size={14} />}
@@ -462,7 +421,7 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
                                                 setIsSpeaking(false);
                                                 setIsOpen(false);
                                             }}
-                                            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-rose-500/20 hover:text-rose-300 transition-colors"
+                                            className="p-1.5 rounded-lg border-2 border-nb-ink bg-white hover:bg-nb-peach transition-colors"
                                             title="Close HUD"
                                         >
                                             <X size={15} />
@@ -472,13 +431,13 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
 
                                 {/* ══ QUICK DIRECTIVE PROTOCOLS ══ */}
                                 {!isMinimized && (
-                                    <div className="px-3 py-2 overflow-x-auto flex gap-1.5 no-scrollbar shrink-0 bg-[#060918] border-b border-sky-500/20">
+                                    <div className="px-3 py-2.5 overflow-x-auto flex gap-1.5 shrink-0 bg-nb-paper border-b-2 border-nb-ink/15 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-lenis-prevent>
                                         {quickProtocols.map((proto, i) => (
                                             <button
                                                 key={i}
                                                 type="button"
                                                 onClick={() => handleSendMessage(proto.query)}
-                                                className="whitespace-nowrap text-[10px] px-2.5 py-1 rounded-full bg-sky-950/80 hover:bg-sky-900 border border-sky-400/40 text-sky-200 transition-all shrink-0 hover:scale-[1.02] shadow-sm flex items-center gap-1 font-mono font-medium"
+                                                className="whitespace-nowrap text-xs px-3 py-1 rounded-full border-2 border-nb-ink bg-white font-brico font-bold shadow-[2px_2px_0_0_#111] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all shrink-0 flex items-center gap-1"
                                             >
                                                 {proto.label}
                                             </button>
@@ -490,7 +449,8 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
                                 {!isMinimized && (
                                     <div
                                         ref={chatScrollRef}
-                                        className="flex-1 overflow-y-auto p-4 space-y-3.5 scroll-smooth text-xs bg-[#040612]"
+                                        className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3.5 text-sm bg-white [background-image:radial-gradient(rgba(17,17,17,0.08)_1px,transparent_1px)] [background-size:16px_16px]"
+                                        data-lenis-prevent
                                     >
                                         {messages.map((msg, idx) => (
                                             <div
@@ -503,23 +463,20 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
                                                     </div>
                                                 )}
                                                 <div
-                                                    className={`max-w-[85%] p-3.5 rounded-2xl leading-relaxed relative ${
+                                                    className={`max-w-[85%] px-3.5 py-3 rounded-2xl leading-relaxed relative border-2 border-nb-ink ${
                                                         msg.role === "user"
-                                                            ? "bg-gradient-to-r from-sky-600 to-indigo-600 text-white rounded-br-none shadow-[0_0_20px_rgba(56,189,248,0.3)] border border-sky-300/40"
-                                                            : "bg-[#090e24] text-slate-100 border border-sky-400/30 rounded-bl-none shadow-md"
+                                                            ? "bg-nb-violet text-white rounded-br-md shadow-[3px_3px_0_0_#111]"
+                                                            : "bg-nb-paper text-nb-ink rounded-bl-md shadow-[3px_3px_0_0_#111]"
                                                     }`}
                                                 >
                                                     {/* Assistant Protocol Prefix */}
                                                     {msg.role === "assistant" && (
-                                                        <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-sky-400/20 text-[9px] font-mono text-sky-300">
-                                                            <span className="flex items-center gap-1">
-                                                                <Terminal size={10} className="text-cyan-400" />
-                                                                DIRECTIVE RESPONSE
-                                                            </span>
+                                                        <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b-2 border-nb-ink/10 font-mono text-[10px] uppercase tracking-[0.12em] text-nb-violet">
+                                                            <span>Mevy</span>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleReadMessage(msg.content)}
-                                                                className="text-slate-400 hover:text-sky-300 transition-colors p-0.5"
+                                                                className="text-nb-ink/50 hover:text-nb-ink transition-colors p-0.5"
                                                                 title="Read message aloud"
                                                             >
                                                                 <Volume2 size={11} />
@@ -527,7 +484,7 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
                                                         </div>
                                                     )}
 
-                                                    <div className="whitespace-pre-wrap font-sans text-xs">
+                                                    <div className="whitespace-pre-wrap font-sans text-[13px]">
                                                         {msg.content}
                                                     </div>
                                                 </div>
@@ -535,15 +492,13 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
                                         ))}
 
                                         {loading && (
-                                            <div className="flex items-center gap-2.5 text-slate-400 text-xs py-1">
-                                                <JarvisAvatar size={24} isSpeaking={true} />
-                                                <div className="flex gap-1.5 items-center bg-[#090e24] px-3.5 py-2.5 rounded-2xl border border-sky-400/40">
-                                                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                                                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse [animation-delay:150ms]" />
-                                                    <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse [animation-delay:300ms]" />
-                                                    <span className="text-[11px] text-sky-300 ml-2 font-mono tracking-wider">
-                                                        COMPUTING NEURAL RESPONSE...
-                                                    </span>
+                                            <div className="flex items-center gap-2.5 py-1">
+                                                <JarvisAvatar size={26} isSpeaking={true} />
+                                                <div className="flex gap-1.5 items-center bg-nb-paper px-3.5 py-2.5 rounded-2xl rounded-bl-md border-2 border-nb-ink shadow-[3px_3px_0_0_#111]">
+                                                    <span className="w-2 h-2 rounded-full bg-nb-violet animate-bounce" />
+                                                    <span className="w-2 h-2 rounded-full bg-nb-violet animate-bounce [animation-delay:150ms]" />
+                                                    <span className="w-2 h-2 rounded-full bg-nb-violet animate-bounce [animation-delay:300ms]" />
+                                                    <span className="ml-1.5 text-xs text-nb-muted">Mevy is typing…</span>
                                                 </div>
                                             </div>
                                         )}
@@ -557,16 +512,14 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
                                             e.preventDefault();
                                             handleSendMessage();
                                         }}
-                                        className="p-3 bg-[#050814] border-t border-sky-400/30 flex items-center gap-2 shrink-0 relative z-10"
+                                        className="p-3 bg-nb-paper border-t-2 border-nb-ink flex items-center gap-2 shrink-0 relative z-10"
                                     >
                                         {/* Microphone Dictation Button */}
                                         <button
                                             type="button"
                                             onClick={toggleVoiceRecording}
-                                            className={`p-2.5 rounded-xl border transition-all ${
-                                                isRecordingVoice
-                                                    ? "bg-rose-600 border-rose-400 text-white animate-ping shadow-[0_0_20px_rgba(244,63,94,0.6)]"
-                                                    : "bg-slate-900/90 border-white/10 hover:border-sky-400/60 text-slate-300 hover:text-white"
+                                            className={`p-2.5 rounded-xl border-2 border-nb-ink transition-all ${
+                                                isRecordingVoice ? "bg-nb-peach animate-pulse" : "bg-white hover:bg-nb-lilac"
                                             }`}
                                             title={isRecordingVoice ? "Stop Recording" : "Voice Input Directive 🎙️"}
                                         >
@@ -579,13 +532,13 @@ export function AiraAiChatbot({ className = "fixed bottom-5 right-5 sm:bottom-8 
                                             onChange={(e) => setInputMessage(e.target.value)}
                                             placeholder={isRecordingVoice ? "Listening to voice command..." : "Ask Mevy anything..."}
                                             disabled={loading}
-                                            className="flex-1 bg-slate-950 border border-white/10 focus:border-sky-400/80 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-slate-500 outline-none transition-colors font-mono"
+                                            className="flex-1 min-w-0 bg-white border-2 border-nb-ink rounded-xl px-3.5 py-2.5 text-sm text-nb-ink placeholder:text-nb-muted/70 outline-none transition-shadow focus:shadow-[3px_3px_0_0_#6C5CE7]"
                                         />
 
                                         <button
                                             type="submit"
                                             disabled={!inputMessage.trim() || loading}
-                                            className="p-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(56,189,248,0.6)] transition-all shrink-0 font-bold"
+                                            className="p-2.5 rounded-xl border-2 border-nb-ink bg-nb-violet text-white shadow-[3px_3px_0_0_#111] disabled:opacity-40 disabled:cursor-not-allowed hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#111] transition-all shrink-0"
                                             title="Execute Directive"
                                         >
                                             <Send size={15} />

@@ -23,7 +23,7 @@ const SOCIAL = [
 
 export default function Footer() {
     return (
-        <footer className="relative z-10 bg-nb-paper text-nb-ink px-3 sm:px-6 pb-6">
+        <footer className="relative z-10 bg-nb-paper text-nb-ink px-3 sm:px-6 pb-24 sm:pb-28">
             <div className="mx-auto max-w-[1360px] rounded-[28px] border-2 border-nb-ink bg-nb-ink text-nb-paper shadow-nb-lg overflow-hidden">
                 {/* Big call to action */}
                 <div className="p-8 sm:p-12 lg:p-14 border-b-2 border-nb-paper/15 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
