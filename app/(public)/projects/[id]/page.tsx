@@ -9,6 +9,7 @@ import { useSession } from "next-auth/react";
 import MediumArticleContent from "@/components/ui/MediumArticleContent";
 import { Btn, Button, Card, EASE, Empty, Mask, SkeletonCard, Tag, inputClass } from "@/components/nb/kit";
 
+import GoogleAdSlot from "@/components/ui/GoogleAdSlot";
 export default function ProjectDetailsPage() {
     const { id } = useParams<{ id: string }>();
     const router = useRouter();
@@ -209,6 +210,8 @@ export default function ProjectDetailsPage() {
                     <Sparkles size={20} /> Case study
                 </h2>
                 <MediumArticleContent content={project.description} variant="light" className="text-[17px] sm:text-[19px]" />
+                {/* Ad: after the case study */}
+                <GoogleAdSlot className="my-10" />
                 {project.tags?.length > 0 && (
                     <div className="mt-10 pt-6 border-t-2 border-dashed border-nb-ink/20">
                         <p className="font-mono text-xs uppercase tracking-[0.14em] text-nb-muted mb-3">Built with</p>

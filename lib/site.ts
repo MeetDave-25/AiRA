@@ -6,6 +6,9 @@ export const SITE_URL = (
     "https://www.aira-lab.in"
 ).replace(/\/$/, "");
 
+/** Google AdSense publisher ID (also in public/ads.txt). */
+export const ADSENSE_CLIENT = "ca-pub-5703131355932374";
+
 export const siteConfig = {
     name: "AiRA Lab",
     shortName: "AiRA Lab",

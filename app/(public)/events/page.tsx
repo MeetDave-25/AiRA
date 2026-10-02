@@ -7,6 +7,7 @@ import { Calendar, MapPin, Users, Film, ArrowUpRight } from "lucide-react";
 import { isVideoMedia } from "@/lib/media";
 import { BLOCK_COLORS, Chip, EASE, Empty, PageHero, SearchInput, WRAP } from "@/components/nb/kit";
 
+import GoogleAdSlot from "@/components/ui/GoogleAdSlot";
 function EventCard({ event, index }: { event: any; index: number }) {
     const primaryImage = event.images?.find((img: any) => img.isPrimary) || event.images?.[0];
     const isUpcoming = new Date(event.date) > new Date();
@@ -132,6 +133,8 @@ export default function EventsPage() {
                         </AnimatePresence>
                     </motion.div>
                 )}
+                {/* Ad: below the list, only when there is enough content around it */}
+                {!loading && filtered.length >= 4 && <GoogleAdSlot className="mt-14" />}
             </div>
         </div>
     );

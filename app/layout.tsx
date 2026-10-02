@@ -5,7 +5,7 @@ import { Toaster } from "react-hot-toast";
 import SessionProvider from "@/components/providers/SessionProvider";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
 import PwaProvider from "@/components/providers/PwaProvider";
-import { SITE_URL, siteConfig, absoluteUrl } from "@/lib/site";
+import { SITE_URL, siteConfig, absoluteUrl, ADSENSE_CLIENT } from "@/lib/site";
 
 // Self-hosted via next/font: no render-blocking Google Fonts request, no layout shift.
 const orbitron = Orbitron({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-orbitron", display: "swap" });
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
         ? { verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } }
         : {}),
     other: {
-        "google-adsense-account": "ca-pub-3747182240775238",
+        "google-adsense-account": ADSENSE_CLIENT,
     },
 };
 
@@ -145,12 +145,7 @@ export default function RootLayout({
 
                 <script dangerouslySetInnerHTML={{ __html: consentDefaults }} />
 
-                {/* ══ GOOGLE ADSENSE (respects Consent Mode above) ══ */}
-                <script
-                    async
-                    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3747182240775238"
-                    crossOrigin="anonymous"
-                />
+                {/* AdSense loads only on public pages — see app/(public)/layout.tsx */}
                 <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

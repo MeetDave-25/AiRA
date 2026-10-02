@@ -2,7 +2,9 @@
 
 import { useEffect, useRef } from "react";
 
-export const ADSENSE_CLIENT = "ca-pub-3747182240775238";
+import { ADSENSE_CLIENT } from "@/lib/site";
+
+export { ADSENSE_CLIENT };
 
 interface GoogleAdSlotProps {
     /** Numeric ad-unit ID from AdSense → Ads → By ad unit. Falls back to NEXT_PUBLIC_ADSENSE_SLOT. */

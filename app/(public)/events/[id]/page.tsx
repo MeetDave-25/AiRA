@@ -9,6 +9,7 @@ import { formatDate } from "@/lib/utils";
 import EventRegistrationForm from "@/components/EventRegistrationForm";
 import { Btn, Card, EASE, Empty, Mask, SkeletonCard, Tag, WRAP } from "@/components/nb/kit";
 
+import GoogleAdSlot from "@/components/ui/GoogleAdSlot";
 function ImageCarousel({
     images,
     current,
@@ -181,6 +182,9 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                     {event.outcome && <Section icon={Star} title="Outcomes & benefits" color="bg-nb-mint">{event.outcome}</Section>}
 
                     {isUpcoming && <EventRegistrationForm eventId={event.id} />}
+
+                    {/* Ad: end of event details, kept clear of the registration button */}
+                    <GoogleAdSlot className="mt-12" />
                 </div>
 
                 <aside className="lg:col-span-2">

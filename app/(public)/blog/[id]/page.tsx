@@ -9,6 +9,7 @@ import Link from "next/link";
 import MediumArticleContent from "@/components/ui/MediumArticleContent";
 import { Btn, Button, Card, EASE, Empty, SkeletonCard, Tag, inputClass } from "@/components/nb/kit";
 
+import GoogleAdSlot from "@/components/ui/GoogleAdSlot";
 function Avatar({ person, size = "w-10 h-10" }: { person: any; size?: string }) {
     return person?.avatar ? (
         <img src={person.avatar} alt="" className={`${size} rounded-full border-2 border-nb-ink object-cover`} />
@@ -125,6 +126,9 @@ export default function BlogPostPage() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="mt-10 mb-16">
                 <MediumArticleContent content={post.content} variant="light" className="text-[17px] sm:text-[19px]" />
             </motion.div>
+
+            {/* Ad: end of article */}
+            <GoogleAdSlot className="mb-16" />
 
             {/* Reviews */}
             <section className="pt-10 border-t-2 border-nb-ink">

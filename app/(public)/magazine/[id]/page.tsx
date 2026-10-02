@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import MediumArticleContent from "@/components/ui/MediumArticleContent";
 import { Btn, Button, Empty, SkeletonCard } from "@/components/nb/kit";
 
+import GoogleAdSlot from "@/components/ui/GoogleAdSlot";
 function WorldwideShareModal({ isOpen, mag, onClose }: { isOpen: boolean; mag: any; onClose: () => void }) {
     const [copied, setCopied] = useState(false);
 
@@ -396,6 +397,9 @@ export default function MagazineReaderPage() {
                                 >
                                     <MediumArticleContent content={current.content} variant="light" />
                                 </div>
+
+                                {/* Ad: between articles */}
+                                <GoogleAdSlot />
 
                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border-2 border-nb-ink bg-nb-paper p-4">
                                     <div className="flex items-center gap-3.5">
