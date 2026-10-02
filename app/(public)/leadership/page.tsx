@@ -160,7 +160,9 @@ export default function LeadershipPage() {
                         grp.includes("lead")
                     );
                 });
-                setLeaders(dbLeaders);
+                // Director first, then the founder/president, then everyone in sort order.
+                const rank = (m: any) => ((m.role || "").trim().toLowerCase() === "director" ? 0 : m.isPresident ? 1 : 2);
+                setLeaders([...dbLeaders].sort((a: any, b: any) => rank(a) - rank(b) || (a.sortOrder ?? 99) - (b.sortOrder ?? 99)));
             }
             setSettings(settingsData || {});
             setIsLoading(false);
