@@ -171,7 +171,7 @@ export default function MevyLight() {
             const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
             const total = new DataView(buf).getUint32(0, true);
             // Points were sampled in random order, so the first N are an even subset.
-            const N = isMobile ? Math.min(total, 26000) : total;
+            const N = isMobile ? Math.min(total, 16000) : total;
 
             const pos = new Int16Array(buf, 4, total * 3);
             const col = new Uint8Array(buf, 4 + total * 6, total * 3);
@@ -213,7 +213,7 @@ export default function MevyLight() {
             geo.setAttribute("aBrand", new THREE.BufferAttribute(brand, 3));
             geo.setAttribute("aRand", new THREE.BufferAttribute(rnd, 1));
 
-            const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.75 : 2);
+            const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.25 : 2);
             const uniforms = {
                 uTime: { value: 0 },
                 uAssemble: { value: reduced ? 1 : 0 },
@@ -223,7 +223,7 @@ export default function MevyLight() {
                 uMouse: { value: new THREE.Vector3(99, 99, 0) },
                 uMouseOn: { value: 0 },
                 uField: { value: isMobile ? 0.22 : 0.38 },
-                uSize: { value: isMobile ? 26 : 22 },
+                uSize: { value: isMobile ? 24 : 22 },
                 uPixelRatio: { value: dpr },
             };
             const mat = new THREE.ShaderMaterial({ vertexShader, fragmentShader, uniforms, transparent: true, depthWrite: false });
@@ -245,7 +245,7 @@ export default function MevyLight() {
             };
             fitCamera();
 
-            const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: "high-performance" });
+            const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: "high-performance", stencil: false, depth: false });
             renderer.setPixelRatio(dpr);
             renderer.setSize(host.clientWidth, host.clientHeight);
             renderer.domElement.style.cssText = "position:absolute;inset:0;width:100%;height:100%;";
@@ -258,33 +258,59 @@ export default function MevyLight() {
             const hit = new THREE.Vector3();
             let pointerOn = false;
             let lookX = 0;
-            const onMove = (e: PointerEvent) => {
+            const aim = (e: PointerEvent) => {
                 const r = host.getBoundingClientRect();
                 ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
                 lookX = ndc.x;
+            };
+            // Mouse/pen hover drives the force field. Fingers are for scrolling, so touch never does.
+            const onMove = (e: PointerEvent) => {
+                if (e.pointerType === "touch") return;
+                aim(e);
                 pointerOn = true;
             };
             const onLeave = () => { pointerOn = false; };
-            const onTap = (e: PointerEvent) => { onMove(e); burstRef.current = 1; };
-            // Fingers do not hover: drop the force field as soon as the touch ends.
-            const onUp = (e: PointerEvent) => { if (e.pointerType !== "mouse") pointerOn = false; };
+            // Shockwave only on a real tap/click: short press that barely moved (a scroll swipe is not a tap).
+            let down: { x: number; y: number; t: number } | null = null;
+            const onTap = (e: PointerEvent) => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; };
+            const onUp = (e: PointerEvent) => {
+                if (down && performance.now() - down.t < 300 && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 10) {
+                    aim(e);
+                    burstRef.current = 1;
+                }
+                down = null;
+                if (e.pointerType !== "mouse") pointerOn = false;
+            };
             host.addEventListener("pointermove", onMove);
             host.addEventListener("pointerdown", onTap);
             host.addEventListener("pointerleave", onLeave);
             host.addEventListener("pointerup", onUp);
-            host.addEventListener("pointercancel", onLeave);
+            const onCancel = () => { down = null; onLeave(); };
+            host.addEventListener("pointercancel", onCancel);
 
             let visible = true;
             const io = new IntersectionObserver(([en]) => { visible = en.isIntersecting; });
             io.observe(host);
 
+            let lastW = host.clientWidth;
+            let lastH = host.clientHeight;
             const onResize = () => {
+                const w = host.clientWidth;
+                const h = host.clientHeight;
+                if (w === lastW && Math.abs(h - lastH) < 160) return;
+                lastW = w;
+                lastH = h;
                 fitCamera();
-                renderer.setSize(host.clientWidth, host.clientHeight);
+                renderer.setSize(w, h);
             };
             window.addEventListener("resize", onResize);
 
             const smooth = { a: uniforms.uAssemble.value, t: 0, d: 0, mouse: 0, rotY: 0 };
+            // Scroll position follows the page through a critically damped spring: no snapping, no overshoot.
+            const spring = { x: progressRef.current, v: 0 };
+            const omega = isMobile ? 5.5 : 7; // lower = softer, more "buttery"
+            const ease = (x: number) => x * x * (3 - 2 * x); // smoothstep: each morph eases in and out
+            const phase = (p: number, start: number, len: number) => ease(Math.min(1, Math.max(0, (p - start) / len)));
             let last = performance.now();
             let raf = 0;
             const loop = (now: number) => {
@@ -294,15 +320,14 @@ export default function MevyLight() {
                 last = now;
                 uniforms.uTime.value += dt;
 
-                // Scroll timeline → targets, eased so fast scrolling still looks fluid.
-                const p = reduced ? 0.4 : progressRef.current;
-                const ta = Math.min(1, Math.max(0, (p - 0.04) / 0.24));
-                const tt = Math.min(1, Math.max(0, (p - 0.54) / 0.2));
-                const td = Math.min(1, Math.max(0, (p - 0.86) / 0.14));
-                const k = 1 - Math.pow(0.0025, dt);
-                smooth.a += (ta - smooth.a) * k;
-                smooth.t += (tt - smooth.t) * k;
-                smooth.d += (td - smooth.d) * k;
+                // Scroll timeline → spring-smoothed progress → eased morph amounts.
+                const target = reduced ? 0.4 : progressRef.current;
+                spring.v += ((target - spring.x) * omega * omega - 2 * omega * spring.v) * dt;
+                spring.x += spring.v * dt;
+                const p = spring.x;
+                smooth.a = phase(p, 0.04, 0.24);
+                smooth.t = phase(p, 0.54, 0.2);
+                smooth.d = phase(p, 0.86, 0.14);
                 uniforms.uAssemble.value = smooth.a;
                 uniforms.uText.value = smooth.t;
                 uniforms.uDissolve.value = smooth.d;
@@ -340,7 +365,8 @@ export default function MevyLight() {
                 host.removeEventListener("pointerdown", onTap);
                 host.removeEventListener("pointerleave", onLeave);
                 host.removeEventListener("pointerup", onUp);
-                host.removeEventListener("pointercancel", onLeave);
+                host.removeEventListener("pointercancel", onCancel);
+
                 geo.dispose();
                 mat.dispose();
                 renderer.dispose();
@@ -357,13 +383,13 @@ export default function MevyLight() {
     const s = STAGES[stage];
 
     return (
-        <section ref={sectionRef} aria-label="Meet Mevy, made of light" className="relative h-[420vh] bg-nb-ink text-nb-paper">
+        <section ref={sectionRef} aria-label="Meet Mevy, made of light" className="relative h-[300vh] sm:h-[420vh] bg-nb-ink text-nb-paper">
             <div className="sticky top-0 h-[100svh] overflow-hidden [background-image:linear-gradient(rgba(243,239,228,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(243,239,228,0.05)_1px,transparent_1px)] [background-size:32px_32px]">
                 {/* Glow behind the particles */}
                 <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_55%,rgba(108,92,231,0.28),transparent_55%)]" />
 
                 {/* WebGL stage */}
-                <div ref={stageRef} className="absolute inset-0 touch-pan-y cursor-crosshair" aria-hidden="true" />
+                <div ref={stageRef} className="absolute inset-0 touch-pan-y sm:cursor-crosshair" aria-hidden="true" />
 
                 {fallback && (
                     <img src="/mevy-cutout.webp" alt="Mevy, the AiRA Lab mascot" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[60vh] w-auto drop-shadow-[6px_8px_0_rgba(0,0,0,0.9)]" />
