@@ -123,6 +123,7 @@ interface TeamDivisionInfo {
     accentColor: string;
     description: string;
     lead: any | null;
+    leadIds: string[];
     members: any[];
     allMembers: any[];
 }
@@ -162,28 +163,11 @@ export default function AboutPage() {
         });
     }, []);
 
-    // Helper: Determine if a member is a Team Leader
-    const isLeaderMember = (m: any) => {
-        if (!m) return false;
-        if (m.isPresident || m.isTeamLead) return true;
-        const role = (m.role || "").toLowerCase();
-        return (
-            role.includes("lead") ||
-            role.includes("head") ||
-            role.includes("leader") ||
-            role.includes("director") ||
-            role.includes("captain") ||
-            role.includes("coordinator") ||
-            role.includes("president") ||
-            role.includes("chief") ||
-            role.includes("founder") ||
-            role.includes("manager")
-        );
-    };
-
-    const president = useMemo(() => {
-        return members.find((m) => m.isPresident) || members[0] || null;
-    }, [members]);
+    // Teams a member belongs to (from the API), falling back to their single profile group.
+    const teamsOf = (m: any): { name: string; color?: string | null; description?: string | null; isLead: boolean }[] =>
+        Array.isArray(m?.teams) && m.teams.length ? m.teams : m?.teamGroup ? [{ name: m.teamGroup, isLead: !!m.isTeamLead }] : [];
+    const leadsTeam = (m: any, teamName: string) =>
+        teamsOf(m).some((t) => t.isLead && t.name.trim().toLowerCase() === teamName.trim().toLowerCase());
 
     // Structured team divisions — from admin teams + every member's teamGroup
     const teamDivisions = useMemo<TeamDivisionInfo[]>(() => {
@@ -202,17 +186,17 @@ export default function AboutPage() {
         });
 
         members.forEach((m) => {
-            const grp = (m.teamGroup || "").trim();
-            if (grp) {
+            teamsOf(m).forEach((t) => {
+                const grp = (t.name || "").trim();
                 const lower = grp.toLowerCase();
-                if (!teamMap.has(lower)) {
+                if (grp && !teamMap.has(lower)) {
                     teamMap.set(lower, {
                         name: grp,
-                        color: m.teamColor || "#6C5CE7",
-                        description: m.teamDescription || `${grp} division at AiRA Lab`,
+                        color: t.color || "#6C5CE7",
+                        description: t.description || `${grp} division at AiRA Lab`,
                     });
                 }
-            }
+            });
         });
 
         if (teamMap.size === 0 && members.length > 0) {
@@ -229,10 +213,7 @@ export default function AboutPage() {
             const groupName = teamInfo.name;
             const lower = lowerKey;
 
-            let mList = members.filter((m) => {
-                const raw = (m.teamGroup || "").trim().toLowerCase();
-                return raw === lower;
-            });
+            let mList = members.filter((m) => teamsOf(m).some((t) => t.name.trim().toLowerCase() === lower));
 
             if (teamMap.size === 1 && mList.length === 0) {
                 mList = members;
@@ -248,24 +229,15 @@ export default function AboutPage() {
             else if (lower.includes("advisor") || lower.includes("research") || lower.includes("data") || lower.includes("science")) icon = Sparkles;
             else if (lower.includes("hackathon") || lower.includes("event") || lower.includes("council") || lower.includes("management") || lower.includes("treasurer")) icon = Trophy;
 
-            // Division lead priority: isTeamLead > isPresident > leader-like role > sortOrder
+            // Leads of this team first, then the president, then by sort order.
+            const leadIds = mList.filter((m) => leadsTeam(m, groupName)).map((m) => m.id);
+            const isLeadHere = (m: any) => leadIds.includes(m.id);
             const sorted = [...mList].sort((a, b) => {
-                if (a.isTeamLead && !b.isTeamLead) return -1;
-                if (!a.isTeamLead && b.isTeamLead) return 1;
-                if (a.isPresident && !b.isPresident) return -1;
-                if (!a.isPresident && b.isPresident) return 1;
-                const aLead = isLeaderMember(a);
-                const bLead = isLeaderMember(b);
-                if (aLead && !bLead) return -1;
-                if (!aLead && bLead) return 1;
+                if (isLeadHere(a) !== isLeadHere(b)) return isLeadHere(a) ? -1 : 1;
+                if (!!a.isPresident !== !!b.isPresident) return a.isPresident ? -1 : 1;
                 return (a.sortOrder || 0) - (b.sortOrder || 0);
             });
-
-            let lead = sorted[0] || null;
-            // Keep the president at the centre of the overview rather than as a team lead.
-            if (lead?.id === president?.id && sorted.length > 1) {
-                lead = sorted[1];
-            }
+            const lead = sorted.find(isLeadHere) || null;
             const subMembers = sorted.filter((m) => m.id !== lead?.id);
 
             result.push({
@@ -276,6 +248,7 @@ export default function AboutPage() {
                 accentColor: teamInfo.color || "#6C5CE7",
                 description: teamInfo.description || `${groupName} division at AiRA Lab`,
                 lead,
+                leadIds,
                 members: subMembers,
                 allMembers: sorted,
             });
@@ -293,7 +266,8 @@ export default function AboutPage() {
         result.sort((a, b) => rank(a.name) - rank(b.name) || b.allMembers.length - a.allMembers.length);
 
         return result;
-    }, [adminTeams, members, president]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [adminTeams, members]);
 
     const activeTeamDivision = useMemo(() => {
         if (!selectedTeamId) return null;
@@ -307,7 +281,8 @@ export default function AboutPage() {
             if (!teamOf.has(m.id)) teamOf.set(m.id, { name: div.name, color: BLOCK_COLORS[i % BLOCK_COLORS.length] });
         }));
         const source = activeTeamDivision ? activeTeamDivision.allMembers : members;
-        const rank = (m: any) => (isDirector(m) ? -1 : m.isPresident ? 0 : isLeaderMember(m) ? 1 : 2);
+        const leads = (m: any) => (activeTeamDivision ? activeTeamDivision.leadIds.includes(m.id) : !!m.isTeamLead);
+        const rank = (m: any) => (isDirector(m) ? -1 : m.isPresident ? 0 : leads(m) ? 1 : 2);
         return [...source]
             .sort((a, b) => rank(a) - rank(b) || (a.sortOrder || 0) - (b.sortOrder || 0))
             .map((m) => ({
@@ -316,7 +291,7 @@ export default function AboutPage() {
                 role: m.role,
                 photo: m.photo,
                 isPresident: !!m.isPresident,
-                isLead: !m.isPresident && isLeaderMember(m),
+                isLead: !m.isPresident && leads(m),
                 badge: isDirector(m) ? "Director" : undefined,
                 team: teamOf.get(m.id)?.name || m.teamGroup,
                 color: teamOf.get(m.id)?.color,
@@ -345,7 +320,7 @@ export default function AboutPage() {
                     return {
                         ...div,
                         allMembers: matchedMembers,
-                        lead: matchedMembers.find((m) => m.id === div.lead?.id) || matchedMembers[0],
+                        lead: matchedMembers.find((m) => m.id === div.lead?.id) || null,
                         members: matchedMembers.filter((m) => m.id !== div.lead?.id),
                     };
                 })
@@ -580,7 +555,7 @@ export default function AboutPage() {
 
                                     <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                         {division.allMembers.map((member, i) => {
-                                            const isLead = member.id === division.lead?.id || isLeaderMember(member);
+                                            const isLead = division.leadIds.includes(member.id) || !!member.isPresident || isDirector(member);
                                             return (
                                                 <motion.button
                                                     type="button"

@@ -8,19 +8,69 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, Dna, RotateCcw } from "lucide-react";
 import { Btn, Button, Card, EASE, inputClass } from "@/components/nb/kit";
 
-type Strand = "B" | "T" | "M" | "C";
+type Strand = "B" | "T" | "M" | "D" | "C";
 
-const STRANDS: Record<Strand, { name: string; title: string; desc: string; color: string; hex: string; keywords: string[] }> = {
-    B: { name: "Builder", title: "The Builder", desc: "You ship. Give you a problem and a keyboard and there's a working app by morning.", color: "bg-nb-sky", hex: "#9DD6FF", keywords: ["software", "web", "tech", "cloud", "full", "app", "dev"] },
-    T: { name: "Thinker", title: "The Thinker", desc: "You ask why it works, then teach a model to do it better. Data is your playground.", color: "bg-nb-peach", hex: "#FFB48A", keywords: ["ai", "ml", "data", "research", "neural", "vision", "science"] },
-    M: { name: "Maker", title: "The Maker", desc: "You want it to move. Sensors, motors, solder smoke — ideas become things you can hold.", color: "bg-nb-mint", hex: "#A8EFC9", keywords: ["robot", "hardware", "embedded", "circuit", "iot", "electronic"] },
-    C: { name: "Connector", title: "The Connector", desc: "You bring people together. Events, stories and community are how the lab grows.", color: "bg-nb-lilac", hex: "#D6CEFF", keywords: ["event", "management", "council", "media", "design", "content", "pr", "outreach", "creative"] },
+// `teams` are whole-word patterns for the real AiRA wings, best match first. Anything not listed
+// (Director, Founders, Treasurer, Women Empowerment, Social Cause, Decoration…) is never suggested.
+const STRANDS: Record<Strand, { name: string; title: string; desc: string; color: string; hex: string; teams: RegExp[] }> = {
+    B: {
+        name: "Builder", title: "The Builder", color: "bg-nb-sky", hex: "#9DD6FF",
+        desc: "You like turning ideas into working websites and apps that people actually use.",
+        teams: [/\bweb development\b/i, /\bapp development\b/i, /\btech(nology)? wing\b/i, /\b(web|app|software|full[- ]?stack)\b/i],
+    },
+    T: {
+        name: "Thinker", title: "The Thinker", color: "bg-nb-peach", hex: "#FFB48A",
+        desc: "You enjoy finding patterns in data and teaching machines to learn from them.",
+        teams: [/\bai\s*\/\s*ml\b/i, /\bdata science\b/i, /\bresearch\b/i, /\b(ai|ml|machine learning|data)\b/i],
+    },
+    M: {
+        name: "Maker", title: "The Maker", color: "bg-nb-mint", hex: "#A8EFC9",
+        desc: "You want to build things you can hold — robots, sensors and smart devices.",
+        teams: [/\biot\b.*\brobotics\b/i, /\brobotics?\b/i, /\b(iot|hardware|embedded|electronics)\b/i],
+    },
+    D: {
+        name: "Defender", title: "The Defender", color: "bg-nb-sun", hex: "#FFD84D",
+        desc: "You like solving puzzles and keeping systems safe from attackers.",
+        teams: [/\bcyber ?security\b/i, /\b(security|ctf)\b/i],
+    },
+    C: {
+        name: "Organiser", title: "The Organiser", color: "bg-nb-lilac", hex: "#D6CEFF",
+        desc: "You bring people together — events, workshops, content and community.",
+        teams: [/^events?$/i, /\bcontent creation\b/i, /\b(student council|organi[sz]ing)\b/i, /\bevents?\b/i, /\bhackathons?\b/i],
+    },
 };
 
 const QUESTIONS: { q: string; options: [string, Strand][] }[] = [
-    { q: "First thing you grab in the lab?", options: [["Laptop", "B"], ["A dataset", "T"], ["Soldering iron", "M"], ["The mic", "C"]] },
-    { q: "Your perfect Saturday?", options: [["A 24h hackathon", "B"], ["Reading papers", "T"], ["Building a rover", "M"], ["Running a meetup", "C"]] },
-    { q: "Pick a superpower.", options: [["Ship in a day", "B"], ["See patterns", "T"], ["Fix anything", "M"], ["Rally a crowd", "C"]] },
+    {
+        q: "Which project would you most like to work on?",
+        options: [
+            ["A website or app for our college", "B"],
+            ["An AI model that recognises or predicts", "T"],
+            ["A robot or smart IoT device", "M"],
+            ["Finding security flaws before hackers do", "D"],
+            ["Planning a tech workshop or event", "C"],
+        ],
+    },
+    {
+        q: "How do you like to learn?",
+        options: [
+            ["Build something and fix bugs as I go", "B"],
+            ["Explore data and spot patterns", "T"],
+            ["Take things apart and wire them up", "M"],
+            ["Solve puzzles and CTF challenges", "D"],
+            ["Learn in a group and help others", "C"],
+        ],
+    },
+    {
+        q: "What do you want to get better at this year?",
+        options: [
+            ["Full-stack development", "B"],
+            ["AI & machine learning", "T"],
+            ["Electronics & robotics", "M"],
+            ["Cybersecurity & ethical hacking", "D"],
+            ["Leadership, design & communication", "C"],
+        ],
+    },
 ];
 
 /** Small deterministic hash so the helix is stable for a given input. */
@@ -56,24 +106,27 @@ export default function LabDNA({ teams }: { teams: Team[] }) {
     // Base pairs: answered strands are woven in, the rest is grown from the name.
     const pairs = useMemo(() => {
         const r = rng(seed);
-        const keys: Strand[] = ["B", "T", "M", "C"];
+        const keys: Strand[] = ["B", "T", "M", "D", "C"];
         const chosen = answers.filter(Boolean) as Strand[];
         return Array.from({ length: 26 }, (_, i) => {
-            const base = chosen.length && r() < 0.55 ? chosen[i % chosen.length] : keys[Math.floor(r() * 4)];
+            const base = chosen.length && r() < 0.55 ? chosen[i % chosen.length] : keys[Math.floor(r() * keys.length)];
             return { base, wobble: 0.75 + r() * 0.5 };
         });
     }, [seed, answers]);
 
     const dominant = useMemo<Strand>(() => {
-        const count: Record<Strand, number> = { B: 0, T: 0, M: 0, C: 0 };
+        const count: Record<Strand, number> = { B: 0, T: 0, M: 0, D: 0, C: 0 };
         answers.forEach((a) => a && (count[a] += 2));
         pairs.forEach((p) => (count[p.base] += 0.1));
         return (Object.keys(count) as Strand[]).sort((a, b) => count[b] - count[a])[0];
     }, [answers, pairs]);
 
     const match = useMemo(() => {
-        const kw = STRANDS[dominant].keywords;
-        return teams.find((t) => kw.some((k) => t.name.toLowerCase().includes(k))) || teams[0] || null;
+        for (const pattern of STRANDS[dominant].teams) {
+            const found = teams.find((t) => pattern.test(t.name));
+            if (found) return found;
+        }
+        return null;
     }, [dominant, teams]);
 
     const code = `AIRA-${answers.map((a) => a || "·").join("")}-${seed.toString(16).slice(0, 4).toUpperCase().padStart(4, "0")}`;
@@ -140,7 +193,7 @@ export default function LabDNA({ teams }: { teams: Team[] }) {
                             <fieldset key={item.q}>
                                 <legend className="font-brico font-bold text-[15px]">{qi + 1}. {item.q}</legend>
                                 <div className="mt-2 grid grid-cols-2 gap-2">
-                                    {item.options.map(([label, strand]) => {
+                                    {item.options.map(([label, strand], oi) => {
                                         const on = answers[qi] === strand;
                                         return (
                                             <button
@@ -148,7 +201,7 @@ export default function LabDNA({ teams }: { teams: Team[] }) {
                                                 type="button"
                                                 aria-pressed={on}
                                                 onClick={() => setAnswers((a) => a.map((v, i) => (i === qi ? strand : v)))}
-                                                className={`rounded-xl border-2 border-nb-ink px-3 py-2 text-left text-sm font-semibold transition-all ${
+                                                className={`${oi === item.options.length - 1 && item.options.length % 2 ? "col-span-2" : ""} rounded-xl border-2 border-nb-ink px-3 py-2 text-left text-sm font-semibold leading-snug transition-all ${
                                                     on ? `${STRANDS[strand].color} shadow-none translate-x-[2px] translate-y-[2px]` : "bg-white shadow-nb-sm hover:bg-nb-paper"
                                                 }`}
                                             >

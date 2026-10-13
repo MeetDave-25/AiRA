@@ -21,70 +21,86 @@ export async function GET() {
         const profileList = Array.isArray(profiles) ? [...profiles] : [];
         const teamList = Array.isArray(teams) ? teams : [];
 
-        // Track merged member items by normalized user/profile identifier
-        const processedMap = new Map<string, any>();
+        // A profile with no admin team: its own role text says whether it leads its group.
+        const roleIsLead = (role?: string | null) => {
+            const r = (role || "").toLowerCase();
+            return !/\bmember\b/.test(r) && /\b(lead|leader|head|captain|chief|cto)\b/.test(r);
+        };
 
-        // 3. Index existing TeamMemberProfiles
+        type TeamRef = { name: string; color: string | null; description: string | null; isLead: boolean };
+        // One entry per person, keyed by normalised name; `teams` lists every team they belong to,
+        // with lead/member decided per team (leading one team does not make them lead of another).
+        const people = new Map<string, any>();
+
         profileList.forEach((p) => {
             const key = (p.name || "").trim().toLowerCase();
-            if (key) {
-                processedMap.set(key, { ...p });
-            }
+            if (!key) return;
+            const own: TeamRef[] = p.teamGroup ? [{ name: p.teamGroup, color: null, description: null, isLead: roleIsLead(p.role) }] : [];
+            people.set(key, { ...p, teams: own, fromAdminTeams: false });
         });
 
-        // 4. Merge actual Teams created from /admin/teams
+        // Teams created in /admin/teams are the source of truth for anyone who belongs to one.
         teamList.forEach((team: any) => {
-            const teamMemberships = team.TeamMembership || [];
-            
-            teamMemberships.forEach((m: any) => {
+            (team.TeamMembership || []).forEach((m: any) => {
                 const user = m.User || {};
                 const userName = (user.name || "").trim();
-                const userKey = userName.toLowerCase();
-                const isLead = m.memberRole === "TEAM_LEAD";
-
-                if (userKey && processedMap.has(userKey)) {
-                    // Update existing profile with Team membership info
-                    const existing = processedMap.get(userKey);
-                    processedMap.set(userKey, {
-                        ...existing,
-                        teamGroup: team.name,
-                        teamColor: team.color || existing.teamColor || "#00D4FF",
-                        teamDescription: team.description || existing.teamDescription || null,
-                        isTeamLead: isLead || existing.isPresident || existing.isTeamLead,
-                        sortOrder: isLead ? 1 : (existing.sortOrder || 10),
-                        role: isLead && (!existing.role || existing.role === "Member" || existing.role === "Team Member")
-                            ? `Team Lead - ${team.name}`
-                            : (existing.role || (isLead ? "Team Lead" : "Team Member")),
-                        photo: existing.photo || user.avatar || null,
-                    });
-                } else if (userName) {
-                    // Create entry for team member from User / Team table
-                    const newEntry = {
-                        id: `team-user-${user.id || m.id}-${team.id}`,
+                const key = userName.toLowerCase() || (user.id ? `id-${user.id}` : "");
+                if (!key) return;
+                const ref: TeamRef = {
+                    name: team.name,
+                    color: team.color || "#00D4FF",
+                    description: team.description || null,
+                    isLead: m.memberRole === "TEAM_LEAD",
+                };
+                let person = people.get(key);
+                if (!person) {
+                    person = {
+                        id: `team-user-${user.id || m.id}`,
                         name: userName,
-                        role: isLead ? `Team Lead - ${team.name}` : (user.role === "ADMIN" ? "Admin" : "Team Member"),
+                        role: user.role === "ADMIN" ? "Admin" : "Team Member",
                         bio: null,
                         photo: user.avatar || null,
                         linkedin: null,
                         github: null,
-                        teamGroup: team.name,
-                        teamColor: team.color || "#00D4FF",
-                        teamDescription: team.description || null,
-                        sortOrder: isLead ? 1 : 10,
+                        sortOrder: 10,
                         isPresident: false,
-                        isTeamLead: isLead,
                         createdAt: m.joinedAt || team.createdAt || new Date().toISOString(),
+                        teams: [],
+                        fromAdminTeams: true,
                     };
-                    processedMap.set(userKey || `id-${user.id}`, newEntry);
+                    people.set(key, person);
                 }
+                if (!person.fromAdminTeams) {
+                    // First admin team replaces the free-text profile group.
+                    person.teams = [];
+                    person.fromAdminTeams = true;
+                }
+                if (!person.teams.some((t: TeamRef) => t.name === ref.name)) person.teams.push(ref);
+                person.photo = person.photo || user.avatar || null;
             });
         });
 
-        const merged = Array.from(processedMap.values()).sort((a, b) => {
-            if (a.isPresident && !b.isPresident) return -1;
-            if (!a.isPresident && b.isPresident) return 1;
-            if (a.isTeamLead && !b.isTeamLead) return -1;
-            if (!a.isTeamLead && b.isTeamLead) return 1;
+        const merged = Array.from(people.values()).map((person) => {
+            const { fromAdminTeams, ...rest } = person;
+            void fromAdminTeams;
+            const teamsOf: TeamRef[] = person.teams;
+            const leadTeams = teamsOf.filter((t) => t.isLead);
+            const primary = leadTeams[0] || teamsOf[0] || null;
+            const isTeamLead = leadTeams.length > 0;
+            const genericRole = !person.role || ["member", "team member", "admin"].includes(person.role.trim().toLowerCase());
+            return {
+                ...rest,
+                teams: teamsOf,
+                teamGroup: primary?.name || person.teamGroup || null,
+                teamColor: primary?.color || null,
+                teamDescription: primary?.description || null,
+                isTeamLead,
+                role: isTeamLead && genericRole ? `Team Lead - ${leadTeams[0].name}` : person.role,
+                sortOrder: isTeamLead ? Math.min(person.sortOrder ?? 10, 1) : person.sortOrder ?? 10,
+            };
+        }).sort((a, b) => {
+            if (a.isPresident !== b.isPresident) return a.isPresident ? -1 : 1;
+            if (a.isTeamLead !== b.isTeamLead) return a.isTeamLead ? -1 : 1;
             return (a.sortOrder || 0) - (b.sortOrder || 0);
         });
 
