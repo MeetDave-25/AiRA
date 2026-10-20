@@ -6,6 +6,12 @@ import { v4 as uuidv4 } from "uuid";
 
 const AUTHORIZED_ROLES = ["ADMIN", "SUPER_ADMIN"];
 
+/** Articles in table-of-contents order (Supabase doesn't order embedded rows). */
+function withOrderedPosts<T extends { posts?: { sortOrder?: number | null }[] | null }>(mag: T): T {
+    if (Array.isArray(mag?.posts)) mag.posts.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    return mag;
+}
+
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
     try {
         const { data: magazine, error } = await db
@@ -26,16 +32,7 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
             .maybeSingle();
 
         if (error || !magazine) {
-            return NextResponse.json({
-                id: params.id,
-                title: "AiRA Chronicles: The Campus Revolution",
-                edition: "Vol. 2025-26",
-                description: "Official annual lab reflection magazine spotlighting breakthrough autonomous robotics, AI neural architectures, and student innovation reflections.",
-                coverImage: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80",
-                status: "PUBLISHED",
-                publishedAt: "2026-08-01T00:00:00.000Z",
-                posts: []
-            });
+            return NextResponse.json({ error: "Not found" }, { status: 404 });
         }
 
         if (magazine.status !== "PUBLISHED") {
@@ -46,7 +43,7 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
             }
         }
 
-        return NextResponse.json(magazine);
+        return NextResponse.json(withOrderedPosts(magazine));
     } catch (e: any) {
         console.error("Error fetching magazine by ID:", e);
         return NextResponse.json({ error: e.message }, { status: 500 });

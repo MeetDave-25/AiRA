@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 const AUTHORIZED_ROLES = ["ADMIN", "SUPER_ADMIN"];
 
 // ── GET: list all editions (published → public, all → admin) ────────────────
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
         const session: any = await getServerSession(authOptions as any);
         const userRole = (session?.user?.role || "").toUpperCase();
@@ -30,61 +30,13 @@ export async function GET(req: NextRequest) {
             query = query.eq("status", "PUBLISHED");
         }
 
-        let { data: magazines, error } = await query.order("createdAt", { ascending: false });
+        const { data: magazines, error } = await query.order("createdAt", { ascending: false });
         if (error) throw error;
 
-        // Auto-seed flagship edition if no magazines exist yet
-        if (!magazines || magazines.length === 0) {
-            const { data: publishedPosts } = await db
-                .from("BlogPost")
-                .select("id, title, coverImage, readTime, author:User(name, avatar)")
-                .eq("status", "PUBLISHED")
-                .limit(5);
-
-            if (publishedPosts && publishedPosts.length > 0) {
-                const magId = uuidv4();
-                const now = new Date().toISOString();
-                
-                const { data: newMag } = await db
-                    .from("Magazine")
-                    .insert({
-                        id: magId,
-                        title: "AiRA Chronicles: The Campus Revolution",
-                        edition: "Vol. 2025-26",
-                        description: "Official annual lab reflection magazine spotlighting research breakthroughs, autonomous robotics, hackathons, and student engineering journeys.",
-                        coverImage: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80",
-                        status: "PUBLISHED",
-                        publishedAt: now,
-                        createdAt: now,
-                        updatedAt: now,
-                    })
-                    .select()
-                    .single();
-
-                if (newMag) {
-                    for (let i = 0; i < publishedPosts.length; i++) {
-                        await db.from("MagazinePost").insert({
-                            id: uuidv4(),
-                            magazineId: magId,
-                            postId: publishedPosts[i].id,
-                            sortOrder: i + 1,
-                        });
-                    }
-
-                    return NextResponse.json([
-                        {
-                            ...newMag,
-                            posts: publishedPosts.map((p: any, i: number) => ({
-                                id: `post-${i}`,
-                                sortOrder: i + 1,
-                                postId: p.id,
-                                post: p,
-                            })),
-                        },
-                    ]);
-                }
-            }
-        }
+        // Articles in table-of-contents order (Supabase doesn't order embedded rows).
+        (magazines || []).forEach((m: any) => {
+            if (Array.isArray(m.posts)) m.posts.sort((x: any, y: any) => (x.sortOrder ?? 0) - (y.sortOrder ?? 0));
+        });
 
         return NextResponse.json(magazines || []);
     } catch (e: any) {
