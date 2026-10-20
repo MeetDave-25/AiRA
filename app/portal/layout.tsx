@@ -20,7 +20,8 @@ import {
     Briefcase,
     MessageSquare,
     BookOpen,
-    Newspaper
+    Newspaper,
+    FolderKanban
 } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { signOut } from "next-auth/react";
@@ -76,6 +77,7 @@ export default function PortalLayout({
         { href: "/portal/tasks", label: "Tasks Board", icon: CheckSquare, roles: ["ADMIN", "TEAM_LEAD", "TEAM_MEMBER"] },
         { href: "/portal/requirements", label: "Requirements", icon: FileText, roles: ["ADMIN", "TEAM_LEAD", "TEAM_MEMBER"] },
         { href: "/admin/events", label: "Events Manager", icon: Calendar, roles: ["ADMIN", "CONTENT_MANAGER"] },
+        { href: "/admin/projects", label: "Projects", icon: FolderKanban, roles: ["ADMIN"] },
         { href: "/portal/events", label: "My Events", icon: Calendar, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
         { href: "/portal/team-dashboard", label: "Team Hub", icon: Briefcase, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },
         { href: "/portal/team-members", label: "Team Members", icon: Users, roles: ["TEAM_LEAD", "TEAM_MEMBER"] },

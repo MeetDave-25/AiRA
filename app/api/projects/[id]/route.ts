@@ -3,6 +3,21 @@ import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+/** Admins may change any project; the project's owner may edit or delete their own. */
+async function authorise(projectId: string) {
+    const session: any = await getServerSession(authOptions as any);
+    const user = session?.user;
+    if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+    const isAdmin = user.role === "ADMIN";
+    if (isAdmin) return { isAdmin, user, currentStatus: null as string | null };
+    const { data: project } = await db.from("Project").select("authorId, status").eq("id", projectId).maybeSingle();
+    if (!project) return { error: NextResponse.json({ error: "Project not found" }, { status: 404 }) };
+    if (!project.authorId || project.authorId !== user.id) {
+        return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+    }
+    return { isAdmin, user, currentStatus: (project.status as string) || null };
+}
+
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
     try {
         const { data: project, error } = await db
@@ -33,8 +48,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+    const auth = await authorise(params.id);
+    if (auth.error) return auth.error;
     try {
-        const session: any = await getServerSession(authOptions as any);
         const body = await req.json();
 
         const updateData: Record<string, any> = {
@@ -49,10 +65,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         if (body.demoUrl !== undefined) updateData.demoUrl = body.demoUrl || null;
         if (body.githubUrl !== undefined) updateData.githubUrl = body.githubUrl || null;
         if (body.tags) updateData.tags = Array.isArray(body.tags) ? body.tags : body.tags.split(",").map((t: string) => t.trim());
-        if (body.featured !== undefined) updateData.featured = Boolean(body.featured);
-        // Admin-controlled fields
+        // Featuring is admin-only.
+        if (auth.isAdmin && body.featured !== undefined) updateData.featured = Boolean(body.featured);
+        // Status: admins can set anything; owners can publish or unpublish their own project,
+        // but cannot override an admin's rejection.
         if (body.status && ["PENDING", "PUBLISHED", "REJECTED"].includes(body.status)) {
-            updateData.status = body.status;
+            if (auth.isAdmin) {
+                updateData.status = body.status;
+            } else if (body.status !== "REJECTED") {
+                if (auth.currentStatus === "REJECTED") {
+                    return NextResponse.json({ error: "This project was rejected by an admin. Please contact the AiRA Lab team." }, { status: 403 });
+                }
+                updateData.status = body.status;
+            }
         }
 
 
@@ -73,8 +98,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+    const auth = await authorise(params.id);
+    if (auth.error) return auth.error;
     try {
-        const session: any = await getServerSession(authOptions as any);
         const { error } = await db.from("Project").delete().eq("id", params.id);
         if (error) throw error;
         return NextResponse.json({ success: true });

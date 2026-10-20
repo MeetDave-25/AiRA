@@ -99,7 +99,8 @@ export async function POST(req: NextRequest) {
             githubUrl,
             tags,
             featured: false,
-            status: body.status || "PUBLISHED",
+            // Members publish straight away (or save a draft); only admins can reject.
+            status: body.status === "PENDING" ? "PENDING" : "PUBLISHED",
             authorId: session?.user?.id || null,
             authorName,
             likes: 0,
